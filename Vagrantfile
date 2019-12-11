@@ -28,6 +28,6 @@ Vagrant.configure("2") do |config|
     service lockd start
     service statd start
     pkg update
-    pkg install -y rust
+    pkg install -y rust vim-tiny
   SHELL
 end
