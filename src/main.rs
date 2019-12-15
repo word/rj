@@ -56,17 +56,26 @@ fn zfs_ds_exist(ds: &str) -> GenResult<bool> {
             if e.to_string() == not_exists {
                 return Ok(false)
             } else {
-                return Err(GenError::from(e));
+                return Err(GenError::from(e))
             }
         }
     }
 }
 
-fn zfs_create(ds: &str) -> GenResult<()> {
-    let mut zfs = Command::new("zfs");
-    zfs.arg("create").arg(&ds);
-    run(&mut zfs)?;
-    Ok(())
+fn zfs_create_ds(ds: &str) -> GenResult<()> {
+    match zfs_ds_exist(&ds) {
+        Ok(true) => {
+            println!("Data set already exists, skipping");
+            return Ok(())
+        }
+        Ok(false) => {
+            let mut zfs = Command::new("zfs");
+            zfs.arg("create").arg(&ds);
+            run(&mut zfs)?;
+            return Ok(())
+        }
+        Err(e) => return Err(GenError::from(e))
+    }
 }
 
 fn main() {
@@ -74,21 +83,31 @@ fn main() {
     let jdataset = "zroot/jails";
     let bjdataset = format!("{}/basejail", &jdataset);
 
-    println!("Creating base jail data set {}", &bjdataset);
+    println!("Creating jail data set {}", &jdataset);
+    zfs_create_ds(&jdataset).unwrap_or_else(|err| {
+        eprintln!("ERROR: {}", err);
+        process::exit(1);
+    });
 
-    match zfs_ds_exist(&bjdataset) {
-        Ok(true) => println!("Data set exists already, skipping"),
-        Ok(false) => {
-            zfs_create(&bjdataset).unwrap_or_else(|err| {
-                eprintln!("ERROR: {}", err);
-                process::exit(1);
-            });
-        }
-        Err(e) => {
-            eprintln!("ERROR: {}", e);
-            process::exit(1);
-        }
-    }
+    println!("Creating base jail data set {}", &bjdataset);
+    zfs_create_ds(&bjdataset).unwrap_or_else(|err| {
+        eprintln!("ERROR: {}", err);
+        process::exit(1);
+    });
+
+    // match zfs_ds_exist(&bjdataset) {
+    //     Ok(true) => println!("Data set exists already, skipping"),
+    //     Ok(false) => {
+    //         zfs_create(&bjdataset).unwrap_or_else(|err| {
+    //             eprintln!("ERROR: {}", err);
+    //             process::exit(1);
+    //         });
+    //     }
+    //     Err(e) => {
+    //         eprintln!("ERROR: {}", e);
+    //         process::exit(1);
+    //     }
+    // }
 
 
 
