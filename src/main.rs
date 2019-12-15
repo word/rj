@@ -60,7 +60,13 @@ fn zfs_ds_exist(ds: &str) -> GenResult<bool> {
             }
         }
     }
+}
 
+fn zfs_create(ds: &str) -> GenResult<()> {
+    let mut zfs = Command::new("zfs");
+    zfs.arg("create").arg(&ds);
+    run(&mut zfs)?;
+    Ok(())
 }
 
 fn main() {
@@ -72,7 +78,12 @@ fn main() {
 
     match zfs_ds_exist(&bjdataset) {
         Ok(true) => println!("Data set exists already, skipping"),
-        Ok(false) => println!("TODO: create data set"),
+        Ok(false) => {
+            zfs_create(&bjdataset).unwrap_or_else(|err| {
+                eprintln!("ERROR: {}", err);
+                process::exit(1);
+            });
+        }
         Err(e) => {
             eprintln!("ERROR: {}", e);
             process::exit(1);
