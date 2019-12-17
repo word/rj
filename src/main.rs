@@ -79,36 +79,23 @@ fn zfs_create_ds(ds: &str) -> GenResult<()> {
     }
 }
 
+fn zfs_create_all(sets: Vec<&str>) -> GenResult<()> {
+    for set in sets {
+        println!("Creating jail data set {}", set);
+        zfs_create_ds(&set)?;
+    };
+    Ok(())
+}
+
 fn main() {
     let _release = "12-RELEASE";
     let jdataset = "zroot/jails";
     let bjdataset = format!("{}/basejail", &jdataset);
 
-    println!("Creating jail data set {}", &jdataset);
-    zfs_create_ds(&jdataset).unwrap_or_else(|err| {
+    zfs_create_all(vec![&jdataset, &bjdataset]).unwrap_or_else(|err| {
         eprintln!("ERROR: {}", err);
         process::exit(1);
     });
-
-    println!("Creating base jail data set {}", &bjdataset);
-    zfs_create_ds(&bjdataset).unwrap_or_else(|err| {
-        eprintln!("ERROR: {}", err);
-        process::exit(1);
-    });
-
-    // match zfs_ds_exist(&bjdataset) {
-    //     Ok(true) => println!("Data set exists already, skipping"),
-    //     Ok(false) => {
-    //         zfs_create(&bjdataset).unwrap_or_else(|err| {
-    //             eprintln!("ERROR: {}", err);
-    //             process::exit(1);
-    //         });
-    //     }
-    //     Err(e) => {
-    //         eprintln!("ERROR: {}", e);
-    //         process::exit(1);
-    //     }
-    // }
 
 
 
