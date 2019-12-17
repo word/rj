@@ -9,7 +9,7 @@ pub struct RunError {
 impl fmt::Display for RunError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self.code {
-            Some(code) => write!(f, "{}, {}", code, self.message),
+            Some(code) => write!(f, "({}) {}", code, self.message),
             None       => write!(f, "{}", self.message),
         }
     }
