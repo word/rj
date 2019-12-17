@@ -1,34 +1,35 @@
 use std::process;
 use std::process::Command;
-use std::io::{Error, ErrorKind};
-use std::io;
 use std::str;
+use std::fmt;
 
-// fn run(cmd: &str, args: &[&str]) -> Result<std::process::Output, io::Error> {
-// fn run(cmd: &str) -> Result<std::process::Output, io::Error> {
-
-//     // split the command into a vector
-//     let mut cmd_vec: Vec<&str> = cmd.split_whitespace().collect();
-
-//     // use the first part as thecommand and the rest as arguments
-//     let output = Command::new(cmd_vec.remove(0)).args(cmd_vec).output()?;
-//     Ok(output)
-
-//     // {
-//     //     Ok(output)  => output,
-//     //     Err(e)      => {
-//     //         eprintln!("muchas problemos: {}", e);
-//     //         process::exit(1);
-//     //     },
-//     // };
-
-//     // return test
-// }
-
-type GenError = Box<std::error::Error>;
+// These type aliases make it possible to propagate different types of errors a function using
+// Result.
+type GenError = Box<dyn std::error::Error>;
 type GenResult<T> = Result<T, GenError>;
 
-fn run(command:&mut Command) -> GenResult<String> {
+#[derive(Debug, Clone)]
+pub struct RunError {
+    code: Option<i32>,
+    message: String,
+}
+
+impl fmt::Display for RunError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match self.code {
+            Some(code) => write!(f, "{}, {}", code, self.message),
+            None       => write!(f, "{}", self.message),
+        }
+    }
+}
+
+impl std::error::Error for RunError {
+    fn description(&self) -> &str {
+        &self.message
+    }
+}
+
+fn run(command:&mut Command) -> GenResult<(String)> {
     // execute the command
     let output = command.output()?;
 
@@ -36,12 +37,12 @@ fn run(command:&mut Command) -> GenResult<String> {
     if output.status.success() {
         return Ok(String::from_utf8(output.stdout)?);
     } else {
-        let cmd_error = Error::new(ErrorKind::Other, String::from_utf8(output.stderr)?);
-        return Err(GenError::from(cmd_error));
+        let cmd_err = GenError::from(RunError {
+            code: output.status.code(),
+            message: String::from_utf8(output.stderr)?,
+        });
+        return Err(cmd_err);
     }
-
-    // todo - would be good to return the status too.  Probably needs to return a struct instead of
-    // a String
 }
 
 fn zfs_ds_exist(ds: &str) -> GenResult<bool> {
@@ -119,32 +120,32 @@ fn main() {
     //     process::exit(1);
     // });
 
-    process::exit(0);
-    let output = Command::new("zfs").args(&["list", &bjdataset]).output().unwrap();
+    // process::exit(0);
+    // let output = Command::new("zfs").args(&["list", &bjdataset]).output().unwrap();
 
-    if !output.status.success() {
+    // if !output.status.success() {
 
-        let err_msg = str::from_utf8(&output.stderr).unwrap();
-        let not_exist_msg = format!("cannot open \'{}\': dataset does not exist\n", &bjdataset);
+    //     let err_msg = str::from_utf8(&output.stderr).unwrap();
+    //     let not_exist_msg = format!("cannot open \'{}\': dataset does not exist\n", &bjdataset);
 
-        if err_msg == not_exist_msg {
-            // Create the data set
-            if let Err(err) = Command::new("zfs").args(&["create", &bjdataset]).status() {
-                eprintln!("Error creating data set: {}", &err);
-            }
-        } else {
-            eprintln!("Unexpected error: {}", &err_msg);
-            process::exit(1);
-        };
+    //     if err_msg == not_exist_msg {
+    //         // Create the data set
+    //         if let Err(err) = Command::new("zfs").args(&["create", &bjdataset]).status() {
+    //             eprintln!("Error creating data set: {}", &err);
+    //         }
+    //     } else {
+    //         eprintln!("Unexpected error: {}", &err_msg);
+    //         process::exit(1);
+    //     };
 
-        // match err {
-        //     "dataset does not exist" => println!("no exist"),
-        //     _ => println!("big trouble"),
-        // }
-        // println!("{:?}", &err);
-    } else {
-        println!("Dataset exists already, skipping");
-    };
+    //     // match err {
+    //     //     "dataset does not exist" => println!("no exist"),
+    //     //     _ => println!("big trouble"),
+    //     // }
+    //     // println!("{:?}", &err);
+    // } else {
+    //     println!("Dataset exists already, skipping");
+    // };
 
     // let cmd = format!("zfs list {}", &bjdataset);
     // let status = run(&cmd).unwrap().status;
