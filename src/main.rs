@@ -1,33 +1,14 @@
 use std::process;
 use std::process::Command;
 use std::str;
-use std::fmt;
 
-// These type aliases make it possible to propagate different types of errors a function using
+mod errors;
+use errors::RunError;
+
+// These type aliases make it possible to propagate different types of errors from a function using
 // Result.
 type GenError = Box<dyn std::error::Error>;
 type GenResult<T> = Result<T, GenError>;
-
-#[derive(Debug, Clone)]
-pub struct RunError {
-    code: Option<i32>,
-    message: String,
-}
-
-impl fmt::Display for RunError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self.code {
-            Some(code) => write!(f, "{}, {}", code, self.message),
-            None       => write!(f, "{}", self.message),
-        }
-    }
-}
-
-impl std::error::Error for RunError {
-    fn description(&self) -> &str {
-        &self.message
-    }
-}
 
 fn run(command:&mut Command) -> GenResult<(String)> {
     // execute the command
