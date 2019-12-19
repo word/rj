@@ -9,7 +9,7 @@ pub fn ds_exist(ds: &str) -> Result<bool> {
     match cmd::run(&mut zfs) {
         Ok(_) => Ok(true),
         Err(e) => {
-            let not_exists = format!("cannot open \'{}\': dataset does not exist\n", &ds);
+            let not_exists = format!("(1) cannot open \'{}\': dataset does not exist\n", &ds);
             if e.to_string() == not_exists {
                 Ok(false)
             } else {
