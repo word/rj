@@ -25,7 +25,7 @@ fn main() {
         });
     };
 
-    let url = format!("http://ftp.uk.freebsd.org/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz", release, dists[0]);
+    let url = format!("http://ftp.uk.freebsd.org/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz", release, dists[1]);
     let response = reqwest::get(&url).unwrap();
     let decompressor = XzDecoder::new(response);
     let mut archive = Archive::new(decompressor);
@@ -43,8 +43,10 @@ fn main() {
         // }
 
         if file.header().link_name().unwrap().is_some() {
-            println!("removing link {:?}", &dst_path);
-            fs::remove_file(&dst_path).unwrap();
+            if dst_path.is_file() {
+                println!("removing link {:?}", &dst_path);
+                fs::remove_file(&dst_path).unwrap();
+            }
         }
 
 
