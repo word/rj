@@ -6,7 +6,7 @@ mod zfs;
 
 use reqwest;
 use xz2::read::XzDecoder;
-use std::fs::File;
+use std::fs;
 use tar::Archive;
 use std::path::Path;
 
@@ -30,10 +30,25 @@ fn main() {
     let decompressor = XzDecoder::new(response);
     let mut archive = Archive::new(decompressor);
     archive.set_preserve_permissions(true);
+
     for (_, file) in archive.entries().unwrap().enumerate() {
         let mut file = file.unwrap();
         let dst_path = Path::new(&bj_dir).join(file.path().unwrap());
-        println!("{:?}", dst_path);
+
+        // let meta = dst_path.symlink_metadata().unwrap();
+        // println!("{:?}", meta);
+        // if dst_path.is_file() == false && dst_path.is_dir() == false {
+        //     println!("removing link {:?}", &dst_path);
+        //     fs::remove_file(&dst_path).unwrap();
+        // }
+
+        if file.header().link_name().unwrap().is_some() {
+            println!("removing link {:?}", &dst_path);
+            fs::remove_file(&dst_path).unwrap();
+        }
+
+
+        // println!("{:?}", file.header().link_name());
         // if dst_path.is_file() {
         //     println!("exists");
         // }
