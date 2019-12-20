@@ -35,13 +35,6 @@ fn main() {
         let mut file = file.unwrap();
         let dst_path = Path::new(&bj_dir).join(file.path().unwrap());
 
-        // let meta = dst_path.symlink_metadata().unwrap();
-        // println!("{:?}", meta);
-        // if dst_path.is_file() == false && dst_path.is_dir() == false {
-        //     println!("removing link {:?}", &dst_path);
-        //     fs::remove_file(&dst_path).unwrap();
-        // }
-
         if file.header().link_name().unwrap().is_some() {
             if dst_path.is_file() {
                 println!("removing link {:?}", &dst_path);
@@ -49,14 +42,7 @@ fn main() {
             }
         }
 
-
-        // println!("{:?}", file.header().link_name());
-        // if dst_path.is_file() {
-        //     println!("exists");
-        // }
         file.unpack_in(&bj_dir).unwrap();
     }
-    // archive.unpack("/tmp/test2").unwrap();
-    // archive.unpack(bj_dir).unwrap();
 
 }
