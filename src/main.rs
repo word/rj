@@ -11,7 +11,9 @@ use std::path::Path;
 use tar::Archive;
 use xz2::read::XzDecoder;
 
+// fetch an xz archive using http and extract it to a destination directory
 fn fetch_extract(url: &str, dest: &str) -> Result<()> {
+
     let response = reqwest::get(url)?;
     let decompressor = XzDecoder::new(response);
     let mut archive = Archive::new(decompressor);
