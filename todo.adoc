@@ -1,0 +1,22 @@
+== Todo
+
+* zfs
+  * refactor zfs into a struct
+  * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails
+  * zfs snapshot method
+  * zfs clone method
+* read config from a toml file
+* try testing commands with mockall
+* run
+  * in chroot
+  * in jail
+* freebsd-update jail
+* provision jail
+  * shell script
+  * puppet
+* jail
+  * create
+  * maintain jail.conf
+  * start
+  * stop
+* propper logger
