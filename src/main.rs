@@ -15,9 +15,11 @@ fn make_it_so() -> Result<()> {
     let dists = ["base", "lib32"];
 
     // Create ZFS data sets for jails
-    for set in vec![&j_ds, &bj_ds] {
+    for set in vec![j_ds, bj_ds] {
         println!("Creating zfs data set {}", set);
-        zfs::create_ds(&set)?;
+        let mut ds = zfs::DataSet::new(set);
+        // ds.mount_point = String::from("test");
+        ds.create()?;
     }
 
     // process::exit(0);
