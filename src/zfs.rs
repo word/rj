@@ -6,15 +6,15 @@ use crate::cmd;
 #[derive(Debug)]
 pub struct DataSet {
     pub path: String,
-    pub mount_point: Option<String>,
+    pub mountpoint: String,
 }
 
 impl DataSet {
 
-    pub fn new(path: String, mount_point: Option<String>) -> Result<Self> {
+    pub fn new(path: String, mountpoint: String) -> Result<Self> {
         let mut ds = DataSet {
             path: String::from(path),
-            mount_point: mount_point,
+            mountpoint: mountpoint,
         };
 
         ds.create()?;
@@ -32,27 +32,17 @@ impl DataSet {
                 println!("Creating zfs data set {}", &self.path);
                 let mut zfs = Command::new("zfs");
                 zfs.arg("create");
+                zfs.arg("-o");
+                zfs.arg(format!("mountpoint={}", &self.mountpoint));
                 zfs.arg(&self.path);
                 cmd::run(&mut zfs)?;
-
-                // either set the mount point if provided or get it if not
-                match &self.mount_point {
-                    Some(m) => {
-                        self.set("mountpoint", m)?;
-                    },
-                    None => {
-                        let mount_point = self.get("mountpoint")?;
-                        if mount_point != "none" {
-                            self.mount_point = Some(mount_point);
-                        }
-                    }
-                }
                 Ok(())
             }
             Err(e) => Err(e)
         }
     }
 
+    #[allow(dead_code)]
     pub fn set(&self, property: &str, value: &str) -> Result<()> {
         let mut zfs = Command::new("zfs");
         zfs.arg("set");
@@ -62,6 +52,7 @@ impl DataSet {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, property: &str) -> Result<String> {
         // zfs get -H -o value mountpoint zroot/jails
         let mut zfs = Command::new("zfs");

@@ -7,38 +7,30 @@ mod lib;
 mod zfs;
 
 fn make_it_so() -> Result<()> {
-    let j_mount_point = String::from("/jails");
-    let j_ds_path = String::from("zroot/jails");
-    let bj_dir = String::from("/jails/basejail");
     let mirror = String::from("ftp.uk.freebsd.org");
     let release = String::from("12.0-RELEASE");
     let dists = ["base", "lib32"];
 
-    // Create ZFS data sets for jails
-    // let mut j_ds = zfs::DataSet { path: j_ds_path, mount_point: Some(j_mount_point) };
-    // let mut bj_ds = zfs::DataSet { path: bj_ds_path, mount_point: None };
-    // j_ds.create()?;
-    // bj_ds.create()?;
     let j_ds = zfs::DataSet::new(
-        String::from("zroot/jails"),
-        Some(String::from("/jails"))
+        "zroot/jails".to_string(),
+        "/jails".to_string(),
     )?;
     let bj_ds = zfs::DataSet::new(
         format!("{}/basejail", &j_ds.path),
-        None
+        format!("{}/basejail", &j_ds.mountpoint),
     )?;
 
     // process::exit(0);
 
     // Extract FreeBSD base jail
     for dist in &dists {
-        println!("Extracing {} to {}", &dist, &bj_dir);
+        println!("Extracing {} to {}", &dist, &bj_ds.mountpoint);
 
         let url = format!(
             "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
             mirror, release, dist
         );
-        lib::fetch_extract(&url, &bj_dir)?;
+        lib::fetch_extract(&url, &bj_ds.mountpoint)?;
     }
 
     Ok(())
