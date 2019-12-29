@@ -6,24 +6,28 @@ use crate::cmd;
 #[derive(Debug)]
 pub struct DataSet {
     pub path: String,
-    pub mount_point: String,
+    pub mount_point: Option<String>,
 }
 
 impl DataSet {
 
-    pub fn new(path: String) -> Self {
-        DataSet { path: path, mount_point: String::from("") }
-    }
-
+    // create the zfs data set if it doesn't exist already
     pub fn create(&self) -> Result<()> {
         match self.exists() {
             Ok(true) => {
-                println!("Data set already exists, skipping");
+                println!("Data set {} already exists, skipping", &self.path);
                 Ok(())
             }
             Ok(false) => {
+                println!("Creating zfs data set {}", &self.path);
                 let mut zfs = Command::new("zfs");
-                zfs.arg("create").arg(&self.path);
+                zfs.arg("create");
+                if self.mount_point.is_some() {
+                    let mount_point = self.mount_point.as_ref();
+                    zfs.arg("-o");
+                    zfs.arg(format!("mountpoint={}", mount_point.unwrap()));
+                }
+                zfs.arg(&self.path);
                 cmd::run(&mut zfs)?;
                 Ok(())
             }
@@ -31,7 +35,8 @@ impl DataSet {
         }
     }
 
-    pub fn exists(&self) -> Result<bool> {
+    // check if data set exists
+    fn exists(&self) -> Result<bool> {
         let mut zfs = Command::new("zfs");
         zfs.arg("list").arg(&self.path);
 

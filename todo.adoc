@@ -1,10 +1,17 @@
-== Todo
+= Todo
+
+== doing:
+* zfs
+  * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails
+
+== next up:
 
 * zfs
-  * refactor zfs into a struct
-  * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails
   * zfs snapshot method
   * zfs clone method
+
+== backlog:
+
 * read config from a toml file
 * try testing commands with mockall
 * run
@@ -20,3 +27,8 @@
   * start
   * stop
 * propper logger
+
+== Done:
+
+* zfs
+  * refactor zfs into a struct
