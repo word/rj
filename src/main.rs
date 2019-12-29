@@ -16,8 +16,8 @@ fn make_it_so() -> Result<()> {
     let dists = ["base", "lib32"];
 
     // Create ZFS data sets for jails
-    let j_ds = zfs::DataSet { path: j_ds_path, mount_point: Some(j_mount_point) };
-    let bj_ds = zfs::DataSet { path: bj_ds_path, mount_point: None };
+    let mut j_ds = zfs::DataSet { path: j_ds_path, mount_point: Some(j_mount_point) };
+    let mut bj_ds = zfs::DataSet { path: bj_ds_path, mount_point: None };
     j_ds.create()?;
     bj_ds.create()?;
 
