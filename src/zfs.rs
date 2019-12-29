@@ -11,8 +11,18 @@ pub struct DataSet {
 
 impl DataSet {
 
+    pub fn new(path: String, mount_point: Option<String>) -> Result<Self> {
+        let mut ds = DataSet {
+            path: String::from(path),
+            mount_point: mount_point,
+        };
+
+        ds.create()?;
+        Ok(ds)
+    }
+
     // create the zfs data set if it doesn't exist already
-    pub fn create(&mut self) -> Result<()> {
+    fn create(&mut self) -> Result<()> {
         match self.exists() {
             Ok(true) => {
                 println!("Data set {} already exists, skipping", &self.path);
