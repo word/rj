@@ -95,17 +95,34 @@ impl DataSet {
 mod tests {
     // import names from outer (for mod tests) scope.
     use super::*;
+    use std::panic;
 
-    #[test]
-    fn test_ds_create_destroy() -> Result<()> {
+    fn run_test<T>(test: T) -> Result<()>
+        where T: Fn(DataSet) -> Result<()> + panic::RefUnwindSafe
+    {
         let ds = DataSet::new(
             "zroot/rjtest".to_string(),
             "/rjtest".to_string(),
         )?;
 
-        assert!(ds.exists()?);
-        ds.destroy()?;
-        assert!(!ds.exists()?);
+        let result = panic::catch_unwind(|| {
+            test(ds)
+        });
+
+        // test(ds)?;
+        assert!(result.is_ok());
         Ok(())
+    }
+
+    #[test]
+    fn test_ds_create_destroy() -> Result<()> {
+        run_test(|ds| {
+            assert!(ds.exists()?);
+            Ok(())
+        })
+        // assert!(ds.exists()?);
+        // ds.destroy()?;
+        // assert!(!ds.exists()?);
+        // Ok(())
     }
 }
