@@ -1,8 +1,8 @@
 = Todo
 
 == doing:
-* zfs
-  * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails
+
+* write more tests
 
 == next up:
 
@@ -13,7 +13,6 @@
 == backlog:
 
 * read config from a toml file
-* try testing commands with mockall
 * run
   * in chroot
   * in jail
@@ -32,3 +31,5 @@
 
 * zfs
   * refactor zfs into a struct
+  * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails
+* try testing commands with mockall
