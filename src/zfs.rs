@@ -103,9 +103,9 @@ mod tests {
             "/rjtest".to_string(),
         )?;
 
-        assert_eq!(ds.exists()?, true);
+        assert!(ds.exists()?);
         ds.destroy()?;
-        assert_eq!(ds.exists()?, false);
+        assert!(!ds.exists()?);
         Ok(())
     }
 }
