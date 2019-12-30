@@ -59,7 +59,14 @@ impl DataSet {
         zfs.args(&["get", "-H", "-o", "value"]);
         zfs.arg(property);
         zfs.arg(&self.path);
-        cmd::run(&mut zfs)
+        match cmd::run(&mut zfs) {
+            Ok(out) => {
+                let mut trim = out;
+                trim.pop();
+                Ok(trim)
+            }
+            Err(e) => Err(e),
+        }
     }
 
     #[allow(dead_code)]
@@ -98,7 +105,7 @@ mod tests {
     use std::panic;
 
     fn run_test<T>(test: T) -> Result<()>
-        where T: Fn(DataSet) -> Result<()> + panic::RefUnwindSafe
+        where T: Fn(&DataSet) -> Result<()> + panic::RefUnwindSafe
     {
         let ds = DataSet::new(
             "zroot/rjtest".to_string(),
@@ -106,23 +113,33 @@ mod tests {
         )?;
 
         let result = panic::catch_unwind(|| {
-            test(ds)
+            match test(&ds) {
+                Ok(res) => res,
+                Err(e) => panic!(format!("{}", e))
+            }
         });
 
-        // test(ds)?;
+        // assert!(ds.destroy().is_ok());
+
         assert!(result.is_ok());
         Ok(())
     }
 
     #[test]
-    fn test_ds_create_destroy() -> Result<()> {
+    fn test_ds_create() -> Result<()> {
         run_test(|ds| {
             assert!(ds.exists()?);
             Ok(())
         })
-        // assert!(ds.exists()?);
-        // ds.destroy()?;
-        // assert!(!ds.exists()?);
-        // Ok(())
+        // TODO - check that it was torn down properly
+    }
+
+    #[test]
+    fn test_ds_set() -> Result<()> {
+        run_test(|ds| {
+            ds.set("atime", "off")?;
+            assert_eq!(ds.get("atime")?, "off");
+            Ok(())
+        })
     }
 }
