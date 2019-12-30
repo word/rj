@@ -62,8 +62,17 @@ impl DataSet {
         cmd::run(&mut zfs)
     }
 
+    #[allow(dead_code)]
+    pub fn destroy(&self) -> Result<()> {
+        let mut zfs = Command::new("zfs");
+        zfs.arg("destroy");
+        zfs.arg(&self.path);
+        cmd::run(&mut zfs)?;
+        Ok(())
+    }
+
     // check if data set exists
-    fn exists(&self) -> Result<bool> {
+    pub fn exists(&self) -> Result<bool> {
         let mut zfs = Command::new("zfs");
         zfs.arg("list").arg(&self.path);
 
@@ -80,4 +89,23 @@ impl DataSet {
         }
     }
 
+}
+
+#[cfg(test)]
+mod tests {
+    // import names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_ds_create_destroy() -> Result<()> {
+        let ds = DataSet::new(
+            "zroot/rjtest".to_string(),
+            "/rjtest".to_string(),
+        )?;
+
+        assert_eq!(ds.exists()?, true);
+        ds.destroy()?;
+        assert_eq!(ds.exists()?, false);
+        Ok(())
+    }
 }
