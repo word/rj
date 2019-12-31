@@ -107,11 +107,13 @@ mod tests {
     fn run_test<T>(test: T) -> Result<()>
         where T: Fn(&DataSet) -> Result<()> + panic::RefUnwindSafe
     {
+        // Set up
         let ds = DataSet::new(
             "zroot/rjtest".to_string(),
             "/rjtest".to_string(),
         )?;
 
+        // Run the test closure
         let result = panic::catch_unwind(|| {
             match test(&ds) {
                 Ok(res) => res,
@@ -119,7 +121,8 @@ mod tests {
             }
         });
 
-        // assert!(ds.destroy().is_ok());
+        // Teardown
+        assert!(ds.destroy().is_ok());
 
         assert!(result.is_ok());
         Ok(())
@@ -131,7 +134,15 @@ mod tests {
             assert!(ds.exists()?);
             Ok(())
         })
-        // TODO - check that it was torn down properly
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_ds_double_destroy() -> () {
+        run_test(|ds| {
+            ds.destroy()?;
+            Ok(())
+        }).unwrap()
     }
 
     #[test]
