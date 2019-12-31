@@ -153,4 +153,13 @@ mod tests {
             Ok(())
         }).unwrap()
     }
+
+    #[test]
+    #[should_panic]
+    fn test_ds_invalid_set() -> () {
+        run_test(|ds| {
+            ds.set("noexist", "nope")?;
+            Ok(())
+        }).unwrap()
+    }
 }
