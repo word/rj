@@ -100,7 +100,7 @@ impl DataSet {
 
 #[cfg(test)]
 mod tests {
-    // import names from outer (for mod tests) scope.
+    // import names from outer scope.
     use super::*;
     use std::panic;
 
@@ -115,16 +115,16 @@ mod tests {
 
         // Run the test closure
         let result = panic::catch_unwind(|| {
-            match test(&ds) {
-                Ok(res) => res,
-                Err(e) => panic!(format!("{}", e))
-            }
-        });
+            test(&ds)
+        }).unwrap();
 
         // Teardown
         assert!(ds.destroy().is_ok());
 
-        assert!(result.is_ok());
+        // Check result
+        println!("{:?}", result);
+        assert!(&result.is_ok());
+
         Ok(())
     }
 
