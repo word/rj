@@ -129,11 +129,11 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_create() -> Result<()> {
+    fn test_ds_create() -> () {
         run_test(|ds| {
             assert!(ds.exists()?);
             Ok(())
-        })
+        }).unwrap()
     }
 
     #[test]
@@ -146,11 +146,11 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_set() -> Result<()> {
+    fn test_ds_set() -> () {
         run_test(|ds| {
             ds.set("atime", "off")?;
             assert_eq!(ds.get("atime")?, "off");
             Ok(())
-        })
+        }).unwrap()
     }
 }
