@@ -51,7 +51,7 @@ impl DataSet {
     }
 
     #[allow(dead_code)]
-    pub fn set(&self, property: &str, value: &str) -> Result<()> {
+    pub fn set_prop(&self, property: &str, value: &str) -> Result<()> {
         let mut zfs = Command::new("zfs");
         zfs.arg("set");
         zfs.arg(format!("{}={}", property, value));
@@ -61,7 +61,7 @@ impl DataSet {
     }
 
     #[allow(dead_code)]
-    pub fn get(&self, property: &str) -> Result<String> {
+    pub fn get_prop(&self, property: &str) -> Result<String> {
         // zfs get -H -o value mountpoint zroot/jails
         let mut zfs = Command::new("zfs");
         zfs.args(&["get", "-H", "-o", "value"]);
@@ -151,8 +151,8 @@ mod tests {
     #[test]
     fn test_ds_set() -> Result<()> {
         run_test(|ds| {
-            ds.set("atime", "off")?;
-            assert_eq!(ds.get("atime")?, "off");
+            ds.set_prop("atime", "off")?;
+            assert_eq!(ds.get_prop("atime")?, "off");
             Ok(())
         })
     }
@@ -160,7 +160,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_ds_invalid_set() -> () {
-        run_test(|ds| ds.set("noexist", "nope")).unwrap()
+        run_test(|ds| ds.set_prop("noexist", "nope")).unwrap()
     }
 
     #[test]
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     fn test_mountpoint() -> Result<()> {
         run_test(|ds| {
-            let mountpoint_prop = ds.get("mountpoint")?;
+            let mountpoint_prop = ds.get_prop("mountpoint")?;
             assert_eq!(ds.mountpoint, mountpoint_prop);
             Ok(())
         })
