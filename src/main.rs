@@ -16,21 +16,21 @@ fn make_it_so() -> Result<()> {
         "/jails".to_string(),
     )?;
     let bj_ds = zfs::DataSet::new(
-        format!("{}/basejail", &j_ds.path),
-        format!("{}/basejail", &j_ds.mountpoint),
+        format!("{}/basejail", &j_ds.get_path()),
+        format!("{}/basejail", &j_ds.get_mountpoint()),
     )?;
 
     // process::exit(0);
 
     // Extract FreeBSD base jail
     for dist in &dists {
-        println!("Extracing {} to {}", &dist, &bj_ds.mountpoint);
+        println!("Extracing {} to {}", &dist, &bj_ds.get_mountpoint());
 
         let url = format!(
             "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
             mirror, release, dist
         );
-        lib::fetch_extract(&url, &bj_ds.mountpoint)?;
+        lib::fetch_extract(&url, &bj_ds.get_mountpoint())?;
     }
 
     Ok(())

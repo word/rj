@@ -5,8 +5,8 @@ use anyhow::Result;
 
 #[derive(Debug)]
 pub struct DataSet {
-    pub path: String,
-    pub mountpoint: String,
+    path: String,
+    mountpoint: String,
 }
 
 impl DataSet {
@@ -40,6 +40,14 @@ impl DataSet {
             }
             Err(e) => Err(e),
         }
+    }
+
+    pub fn get_path(&self) -> &String {
+        &self.path
+    }
+
+    pub fn get_mountpoint(&self) -> &String {
+        &self.path
     }
 
     #[allow(dead_code)]
@@ -180,4 +188,5 @@ mod tests {
             Ok(())
         })
     }
+
 }
