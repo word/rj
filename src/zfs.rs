@@ -102,21 +102,22 @@ impl DataSet {
 mod tests {
     // import names from outer scope.
     use super::*;
-    use std::panic;
+    use std::panic::{self, AssertUnwindSafe};
 
     fn run_test<T>(test: T) -> Result<()>
-        where T: Fn(&DataSet) -> Result<()> + panic::RefUnwindSafe
+        where T: Fn(&mut DataSet) -> Result<()>
+        + panic::RefUnwindSafe + panic::UnwindSafe
     {
         // Set up
-        let ds = DataSet::new(
+        let mut ds = DataSet::new(
             "zroot/rjtest".to_string(),
             "/rjtest".to_string(),
         )?;
 
         // Run the test closure
-        let result = panic::catch_unwind(|| {
-            test(&ds)
-        }).unwrap();
+        let result = panic::catch_unwind(AssertUnwindSafe(|| {
+            test(&mut ds)
+        })).unwrap();
 
         // Teardown
         assert!(ds.destroy().is_ok());
@@ -140,8 +141,7 @@ mod tests {
     #[should_panic]
     fn test_ds_double_destroy() -> () {
         run_test(|ds| {
-            ds.destroy()?;
-            Ok(())
+            ds.destroy()
         }).unwrap()
     }
 
@@ -158,7 +158,15 @@ mod tests {
     #[should_panic]
     fn test_ds_invalid_set() -> () {
         run_test(|ds| {
-            ds.set("noexist", "nope")?;
+            ds.set("noexist", "nope")
+        }).unwrap()
+    }
+
+    #[test]
+    fn test_ds_already_exists() -> () {
+        run_test(|ds| {
+            // todo - check the stdout message
+            assert!(ds.create().is_ok());
             Ok(())
         }).unwrap()
     }
