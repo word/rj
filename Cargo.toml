@@ -1,11 +1,21 @@
 [package]
 name = "rj"
 version = "0.1.0"
+description = "FreeBSD jail manager in Rust"
 authors = ["Andrew Wasilczuk <akw@ml1.net>"]
 edition = "2018"
+
+exclude = [
+    ".gitignore",
+    ".rustfmt.toml",
+    "Makefile",
+]
 
 [dependencies]
 anyhow = "1.0"
 xz2 = "0.1"
 tar = "0.4"
 reqwest = "0.9"
+
+[dev-dependencies]
+pretty_assertions = "0.6"

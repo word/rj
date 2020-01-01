@@ -105,12 +105,14 @@ mod tests {
     // import names from outer scope.
     use super::*;
     use std::panic::{self, AssertUnwindSafe};
+    use pretty_assertions::assert_eq;
 
     fn run_test<T, R>(test: T) -> Result<()>
     where
         T: Fn(&mut DataSet) -> Result<R>,
         R: std::fmt::Debug,
     {
+
         // Set up
         let mut ds = DataSet::new("zroot/rjtest".to_string(), "/rjtest".to_string())?;
 
