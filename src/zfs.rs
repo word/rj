@@ -168,4 +168,18 @@ mod tests {
         })
         .unwrap()
     }
+
+    #[test]
+    fn test_ds_invalid_path() -> () {
+        assert!(DataSet::new("noexist/rjtest".to_string(), "/rjtest".to_string()).is_err());
+    }
+
+    #[test]
+    fn test_mountpoint() -> () {
+        run_test(|ds| {
+            let mountpoint_prop = ds.get("mountpoint")?;
+            assert_eq!(ds.mountpoint, mountpoint_prop);
+            Ok(())
+        }).unwrap()
+    }
 }
