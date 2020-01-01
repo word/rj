@@ -21,11 +21,12 @@ impl DataSet {
     }
 
     // create the zfs data set if it doesn't exist already
-    fn create(&mut self) -> Result<()> {
+    // returns false if skipped because it exists already otherwise returns true
+    fn create(&mut self) -> Result<bool> {
         match self.exists() {
             Ok(true) => {
                 println!("Data set {} already exists, skipping", &self.path);
-                Ok(())
+                Ok(false)
             }
             Ok(false) => {
                 println!("Creating zfs data set {}", &self.path);
@@ -35,7 +36,7 @@ impl DataSet {
                 zfs.arg(format!("mountpoint={}", &self.mountpoint));
                 zfs.arg(&self.path);
                 cmd::run(&mut zfs)?;
-                Ok(())
+                Ok(true)
             }
             Err(e) => Err(e),
         }
@@ -105,9 +106,10 @@ mod tests {
     use super::*;
     use std::panic::{self, AssertUnwindSafe};
 
-    fn run_test<T>(test: T) -> Result<()>
+    fn run_test<T, R>(test: T) -> Result<()>
     where
-        T: Fn(&mut DataSet) -> Result<()>,
+        T: Fn(&mut DataSet) -> Result<R>,
+        R: std::fmt::Debug,
     {
         // Set up
         let mut ds = DataSet::new("zroot/rjtest".to_string(), "/rjtest".to_string())?;
@@ -127,11 +129,7 @@ mod tests {
 
     #[test]
     fn test_ds_create() -> () {
-        run_test(|ds| {
-            assert!(ds.exists()?);
-            Ok(())
-        })
-        .unwrap()
+        run_test(|ds| ds.exists()).unwrap()
     }
 
     #[test]
@@ -159,8 +157,11 @@ mod tests {
     #[test]
     fn test_ds_already_exists() -> () {
         run_test(|ds| {
-            // todo - check the stdout message
-            assert!(ds.create().is_ok());
+            let result = ds.create();
+            // should not error
+            assert!(result.is_ok());
+            // should return false if DS already exists
+            assert!(!result.unwrap());
             Ok(())
         })
         .unwrap()
