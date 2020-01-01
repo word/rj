@@ -1,7 +1,7 @@
 use std::process::Command;
 
-use anyhow::Result;
 use crate::cmd;
+use anyhow::Result;
 
 #[derive(Debug)]
 pub struct DataSet {
@@ -10,7 +10,6 @@ pub struct DataSet {
 }
 
 impl DataSet {
-
     pub fn new(path: String, mountpoint: String) -> Result<Self> {
         let mut ds = DataSet {
             path: String::from(path),
@@ -38,7 +37,7 @@ impl DataSet {
                 cmd::run(&mut zfs)?;
                 Ok(())
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -86,7 +85,10 @@ impl DataSet {
         match cmd::run(&mut zfs) {
             Ok(_) => Ok(true),
             Err(e) => {
-                let not_exists = format!("(1) cannot open \'{}\': dataset does not exist\n", &self.path);
+                let not_exists = format!(
+                    "(1) cannot open \'{}\': dataset does not exist\n",
+                    &self.path
+                );
                 if e.to_string() == not_exists {
                     Ok(false)
                 } else {
@@ -95,7 +97,6 @@ impl DataSet {
             }
         }
     }
-
 }
 
 #[cfg(test)]
@@ -105,19 +106,14 @@ mod tests {
     use std::panic::{self, AssertUnwindSafe};
 
     fn run_test<T>(test: T) -> Result<()>
-        where T: Fn(&mut DataSet) -> Result<()>
-        + panic::RefUnwindSafe + panic::UnwindSafe
+    where
+        T: Fn(&mut DataSet) -> Result<()>,
     {
         // Set up
-        let mut ds = DataSet::new(
-            "zroot/rjtest".to_string(),
-            "/rjtest".to_string(),
-        )?;
+        let mut ds = DataSet::new("zroot/rjtest".to_string(), "/rjtest".to_string())?;
 
         // Run the test closure
-        let result = panic::catch_unwind(AssertUnwindSafe(|| {
-            test(&mut ds)
-        })).unwrap();
+        let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds))).unwrap();
 
         // Teardown
         assert!(ds.destroy().is_ok());
@@ -134,15 +130,14 @@ mod tests {
         run_test(|ds| {
             assert!(ds.exists()?);
             Ok(())
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     #[test]
     #[should_panic]
     fn test_ds_double_destroy() -> () {
-        run_test(|ds| {
-            ds.destroy()
-        }).unwrap()
+        run_test(|ds| ds.destroy()).unwrap()
     }
 
     #[test]
@@ -151,15 +146,14 @@ mod tests {
             ds.set("atime", "off")?;
             assert_eq!(ds.get("atime")?, "off");
             Ok(())
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     #[test]
     #[should_panic]
     fn test_ds_invalid_set() -> () {
-        run_test(|ds| {
-            ds.set("noexist", "nope")
-        }).unwrap()
+        run_test(|ds| ds.set("noexist", "nope")).unwrap()
     }
 
     #[test]
@@ -168,6 +162,7 @@ mod tests {
             // todo - check the stdout message
             assert!(ds.create().is_ok());
             Ok(())
-        }).unwrap()
+        })
+        .unwrap()
     }
 }
