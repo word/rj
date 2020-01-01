@@ -130,8 +130,8 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_create() -> () {
-        run_test(|ds| ds.exists()).unwrap()
+    fn test_ds_create() -> Result<()> {
+        run_test(|ds| ds.exists())
     }
 
     #[test]
@@ -141,13 +141,12 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_set() -> () {
+    fn test_ds_set() -> Result<()> {
         run_test(|ds| {
             ds.set("atime", "off")?;
             assert_eq!(ds.get("atime")?, "off");
             Ok(())
         })
-        .unwrap()
     }
 
     #[test]
@@ -157,7 +156,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_already_exists() -> () {
+    fn test_ds_already_exists() -> Result<()> {
         run_test(|ds| {
             let result = ds.create();
             // should not error
@@ -166,7 +165,6 @@ mod tests {
             assert!(!result.unwrap());
             Ok(())
         })
-        .unwrap()
     }
 
     #[test]
@@ -175,11 +173,11 @@ mod tests {
     }
 
     #[test]
-    fn test_mountpoint() -> () {
+    fn test_mountpoint() -> Result<()> {
         run_test(|ds| {
             let mountpoint_prop = ds.get("mountpoint")?;
             assert_eq!(ds.mountpoint, mountpoint_prop);
             Ok(())
-        }).unwrap()
+        })
     }
 }
