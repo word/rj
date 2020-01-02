@@ -21,7 +21,7 @@ impl DataSet {
     }
 
     // create the zfs data set if it doesn't exist already
-    // returns false if skipped because it exists already otherwise returns true
+    // returns false if it already exists otherwise returns true
     fn create(&mut self) -> Result<bool> {
         match self.exists() {
             Ok(true) => {
@@ -78,26 +78,59 @@ impl DataSet {
     }
 
     #[allow(dead_code)]
-    pub fn destroy(&self) -> Result<()> {
+    pub fn destroy(&self) -> Result<String> {
         let mut zfs = Command::new("zfs");
         zfs.arg("destroy");
+        zfs.arg(&self.path);
+        cmd::run(&mut zfs)
+    }
+
+    // destroy recursively
+    #[allow(dead_code)]
+    pub fn destroy_r(&self) -> Result<()> {
+        let mut zfs = Command::new("zfs");
+        zfs.arg("destroy");
+        zfs.arg("-r");
         zfs.arg(&self.path);
         cmd::run(&mut zfs)?;
         Ok(())
     }
 
-    // check if data set exists
+    // Todo - shuld err if it already exists
+    #[allow(dead_code)]
+    pub fn snap(&self, snap_name: &str) -> Result<bool> {
+        let snap_path = format!("{}@{}", &self.path, snap_name);
+        println!("Creating snapshot: {}", &snap_path);
+        if self.snap_exists(&snap_name)? {
+            Ok(false)
+        } else {
+            let mut zfs = Command::new("zfs");
+            zfs.arg("snapshot");
+            zfs.arg(&snap_path);
+            cmd::run(&mut zfs)?;
+            Ok(true)
+        }
+    }
+
     pub fn exists(&self) -> Result<bool> {
+        self.inner_exists(&self.path)
+    }
+
+    #[allow(dead_code)]
+    pub fn snap_exists(&self, snap_name: &str) -> Result<bool> {
+        self.inner_exists(&format!("{}@{}", &self.path, snap_name))
+    }
+
+    // checks if data set exists
+    fn inner_exists(&self, ds_path: &str) -> Result<bool> {
         let mut zfs = Command::new("zfs");
-        zfs.arg("list").arg(&self.path);
+        zfs.arg("list").arg(&ds_path);
 
         match cmd::run(&mut zfs) {
             Ok(_) => Ok(true),
             Err(e) => {
-                let not_exists = format!(
-                    "(1) cannot open \'{}\': dataset does not exist\n",
-                    &self.path
-                );
+                let not_exists =
+                    format!("(1) cannot open \'{}\': dataset does not exist\n", &ds_path);
                 if e.to_string() == not_exists {
                     Ok(false)
                 } else {
@@ -112,15 +145,14 @@ impl DataSet {
 mod tests {
     // import names from outer scope.
     use super::*;
-    use std::panic::{self, AssertUnwindSafe};
     use pretty_assertions::assert_eq;
+    use std::panic::{self, AssertUnwindSafe};
 
     fn run_test<T, R>(test: T) -> Result<()>
     where
         T: Fn(&mut DataSet) -> Result<R>,
         R: std::fmt::Debug,
     {
-
         // Set up
         let mut ds = DataSet::new("zroot/rjtest".to_string(), "/rjtest".to_string())?;
 
@@ -128,11 +160,14 @@ mod tests {
         let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds))).unwrap();
 
         // Teardown
-        assert!(ds.destroy().is_ok());
+        let destroy_result = ds.destroy_r();
+        // Output is displayed in case of panic
+        println!("{:?}", &destroy_result);
+        assert!(destroy_result.is_ok());
 
         // Check result
-        println!("{:?}", result);
-        assert!(&result.is_ok());
+        println!("{:?}", &result);
+        assert!(result.is_ok());
 
         Ok(())
     }
@@ -163,6 +198,8 @@ mod tests {
         run_test(|ds| ds.set_prop("noexist", "nope")).unwrap()
     }
 
+    // Creating a DS that already exists shoudn't fail.  It becomes a representation of of the
+    // existing DS.
     #[test]
     fn test_ds_already_exists() -> Result<()> {
         run_test(|ds| {
@@ -189,4 +226,12 @@ mod tests {
         })
     }
 
+    #[test]
+    fn test_snap() -> Result<()> {
+        run_test(|ds| {
+            assert!(ds.snap("testsnap")?);
+            assert!(ds.snap_exists("testsnap")?);
+            Ok(())
+        })
+    }
 }

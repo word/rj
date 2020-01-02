@@ -2,13 +2,16 @@
 
 == doing:
 
-* write more tests
-
-== next up:
-
 * zfs
   * zfs snapshot method
   * zfs clone method
+
+* tests:
+  * cmd function
+  * fetch extract function
+
+== next up:
+
 
 == backlog:
 
