@@ -6,29 +6,49 @@ mod errors;
 mod lib;
 mod zfs;
 
+struct FbsdRel {
+    release: String,
+    dists: Vec<String>,
+    mirror: String,
+    path: String,
+}
+
+impl FbsdRel {
+    pub fn extract(&self) -> Result<()> {
+        for dist in &self.dists {
+            println!("Extracing {} to {}", &dist, &self.path);
+
+            let url = format!(
+                "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
+                &self.mirror, &self.release, dist
+            );
+            lib::fetch_extract(&url, &self.path)?;
+        }
+        Ok(())
+    }
+}
+
 fn make_it_so() -> Result<()> {
-    let mirror = String::from("ftp.uk.freebsd.org");
-    let release = String::from("12.0-RELEASE");
-    let dists = ["base", "lib32"];
     let jails_mount = "/jails";
 
+    let basejail_rel = FbsdRel {
+        release: String::from("12.0-RELEASE"),
+        mirror: String::from("ftp.uk.freebsd.org"),
+        dists: vec!["base".to_string(), "lib32".to_string()],
+        path: format!("{}/basejail", jails_mount),
+    };
+
+    // Create base data sets
     let jails_ds = zfs::DataSet::new("zroot/jails")?;
     jails_ds.set("mountpoint", &jails_mount)?;
     let basejail_ds = zfs::DataSet::new(&format!("{}/basejail", &jails_ds.get_path()))?;
-    let basejail_mount = basejail_ds.get("mountpoint")?;
+    // let basejail_mount = basejail_ds.get("mountpoint")?;
 
     // process::exit(0);
 
     // Extract FreeBSD base jail
-    for dist in &dists {
-        println!("Extracing {} to {}", &dist, &basejail_mount);
-
-        let url = format!(
-            "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
-            mirror, release, dist
-        );
-        lib::fetch_extract(&url, &basejail_mount)?;
-    }
+    basejail_rel.extract()?;
+    basejail_ds.snap("ready")?;
 
     Ok(())
 }
