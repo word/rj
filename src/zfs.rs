@@ -6,14 +6,12 @@ use anyhow::Result;
 #[derive(Debug)]
 pub struct DataSet {
     path: String,
-    mountpoint: String,
 }
 
 impl DataSet {
-    pub fn new(path: String, mountpoint: String) -> Result<Self> {
+    pub fn new(path: &str) -> Result<Self> {
         let mut ds = DataSet {
-            path: String::from(path),
-            mountpoint: mountpoint,
+            path: path.to_string(),
         };
 
         ds.create()?;
@@ -32,8 +30,6 @@ impl DataSet {
                 println!("Creating zfs data set {}", &self.path);
                 let mut zfs = Command::new("zfs");
                 zfs.arg("create");
-                zfs.arg("-o");
-                zfs.arg(format!("mountpoint={}", &self.mountpoint));
                 zfs.arg(&self.path);
                 cmd::run(&mut zfs)?;
                 Ok(true)
@@ -46,12 +42,8 @@ impl DataSet {
         &self.path
     }
 
-    pub fn get_mountpoint(&self) -> &String {
-        &self.path
-    }
-
     #[allow(dead_code)]
-    pub fn set_prop(&self, property: &str, value: &str) -> Result<()> {
+    pub fn set(&self, property: &str, value: &str) -> Result<()> {
         let mut zfs = Command::new("zfs");
         zfs.arg("set");
         zfs.arg(format!("{}={}", property, value));
@@ -61,7 +53,7 @@ impl DataSet {
     }
 
     #[allow(dead_code)]
-    pub fn get_prop(&self, property: &str) -> Result<String> {
+    pub fn get(&self, property: &str) -> Result<String> {
         // zfs get -H -o value mountpoint zroot/jails
         let mut zfs = Command::new("zfs");
         zfs.args(&["get", "-H", "-o", "value"]);
@@ -110,16 +102,16 @@ impl DataSet {
     }
 
     pub fn exists(&self) -> Result<bool> {
-        self.inner_exists(&self.path)
+        self.ds_exists(&self.path)
     }
 
     #[allow(dead_code)]
     pub fn snap_exists(&self, snap_name: &str) -> Result<bool> {
-        self.inner_exists(&format!("{}@{}", &self.path, snap_name))
+        self.ds_exists(&format!("{}@{}", &self.path, snap_name))
     }
 
     // checks if data set exists
-    fn inner_exists(&self, ds_path: &str) -> Result<bool> {
+    fn ds_exists(&self, ds_path: &str) -> Result<bool> {
         let mut zfs = Command::new("zfs");
         zfs.arg("list").arg(&ds_path);
 
@@ -151,7 +143,7 @@ mod tests {
         R: std::fmt::Debug,
     {
         // Set up
-        let mut ds = DataSet::new("zroot/rjtest".to_string(), "/rjtest".to_string())?;
+        let mut ds = DataSet::new("zroot/rjtest")?;
 
         // Run the test closure but catch the panic so that the teardown section below can run.
         let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds))).unwrap();
@@ -176,7 +168,7 @@ mod tests {
 
     #[test]
     fn test_ds_double_destroy() -> () {
-        let ds = DataSet::new("zroot/rjtest".to_string(), "/rjtest".to_string()).unwrap();
+        let ds = DataSet::new("zroot/rjtest").unwrap();
         assert!(ds.destroy().is_ok());
         assert!(ds.destroy().is_err());
     }
@@ -184,8 +176,8 @@ mod tests {
     #[test]
     fn test_ds_set() -> Result<()> {
         run_test(|ds| {
-            ds.set_prop("atime", "off")?;
-            assert_eq!(ds.get_prop("atime")?, "off");
+            ds.set("atime", "off")?;
+            assert_eq!(ds.get("atime")?, "off");
             Ok(())
         })
     }
@@ -193,7 +185,7 @@ mod tests {
     #[test]
     fn test_ds_invalid_set() -> Result<()> {
         run_test(|ds| {
-            assert!(ds.set_prop("noexist", "nope").is_err());
+            assert!(ds.set("noexist", "nope").is_err());
             Ok(())
         })
     }
@@ -214,16 +206,7 @@ mod tests {
 
     #[test]
     fn test_ds_invalid_path() -> () {
-        assert!(DataSet::new("noexist/rjtest".to_string(), "/rjtest".to_string()).is_err());
-    }
-
-    #[test]
-    fn test_mountpoint() -> Result<()> {
-        run_test(|ds| {
-            let mountpoint_prop = ds.get_prop("mountpoint")?;
-            assert_eq!(ds.mountpoint, mountpoint_prop);
-            Ok(())
-        })
+        assert!(DataSet::new("noexist/rjtest").is_err());
     }
 
     #[test]

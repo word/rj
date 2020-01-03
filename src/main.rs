@@ -10,27 +10,24 @@ fn make_it_so() -> Result<()> {
     let mirror = String::from("ftp.uk.freebsd.org");
     let release = String::from("12.0-RELEASE");
     let dists = ["base", "lib32"];
+    let jails_mount = "/jails";
 
-    let j_ds = zfs::DataSet::new(
-        "zroot/jails".to_string(),
-        "/jails".to_string(),
-    )?;
-    let bj_ds = zfs::DataSet::new(
-        format!("{}/basejail", &j_ds.get_path()),
-        format!("{}/basejail", &j_ds.get_mountpoint()),
-    )?;
+    let jails_ds = zfs::DataSet::new("zroot/jails")?;
+    jails_ds.set("mountpoint", &jails_mount)?;
+    let basejail_ds = zfs::DataSet::new(&format!("{}/basejail", &jails_ds.get_path()))?;
+    let basejail_mount = basejail_ds.get("mountpoint")?;
 
     // process::exit(0);
 
     // Extract FreeBSD base jail
     for dist in &dists {
-        println!("Extracing {} to {}", &dist, &bj_ds.get_mountpoint());
+        println!("Extracing {} to {}", &dist, &basejail_mount);
 
         let url = format!(
             "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
             mirror, release, dist
         );
-        lib::fetch_extract(&url, &bj_ds.get_mountpoint())?;
+        lib::fetch_extract(&url, &basejail_mount)?;
     }
 
     Ok(())
