@@ -21,12 +21,12 @@ impl DataSet {
     // create the zfs data set if it doesn't exist already
     // returns false if it already exists otherwise returns true
     fn create(&mut self) -> Result<bool> {
-        match self.exists() {
-            Ok(true) => {
+        match self.exists()? {
+            true => {
                 println!("Data set {} already exists, skipping", &self.path);
                 Ok(false)
             }
-            Ok(false) => {
+            false => {
                 println!("Creating zfs data set {}", &self.path);
                 let mut zfs = Command::new("zfs");
                 zfs.arg("create");
@@ -34,7 +34,6 @@ impl DataSet {
                 cmd::run(&mut zfs)?;
                 Ok(true)
             }
-            Err(e) => Err(e),
         }
     }
 
