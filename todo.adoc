@@ -2,14 +2,11 @@
 
 == doing:
 
-* zfs
-  * zfs clone method
-
-* tests:
-  * cmd function
-  * fetch extract function
+* cli args
 
 == next up:
+
+* logger
 
 
 == backlog:
@@ -27,7 +24,10 @@
   * maintain jail.conf
   * start
   * stop
-* propper logger
+
+== missing tests:
+  * cmd function
+  * fetch extract function
 
 == Done:
 
@@ -35,4 +35,5 @@
   * refactor zfs into a struct
   * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails
   * zfs snapshot method
+  * zfs clone method
 * try testing commands with mockall

@@ -19,7 +19,6 @@ impl DataSet {
     }
 
     // create the zfs data set if it doesn't exist already
-    // returns false if it already exists otherwise returns true
     fn create(&mut self) -> Result<bool> {
         match self.exists()? {
             true => {
@@ -41,7 +40,6 @@ impl DataSet {
         &self.path
     }
 
-    #[allow(dead_code)]
     pub fn set(&self, property: &str, value: &str) -> Result<()> {
         let mut zfs = Command::new("zfs");
         zfs.arg("set");
@@ -51,7 +49,6 @@ impl DataSet {
         Ok(())
     }
 
-    #[allow(dead_code)]
     pub fn get(&self, property: &str) -> Result<String> {
         // zfs get -H -o value mountpoint zroot/jails
         let mut zfs = Command::new("zfs");
@@ -88,16 +85,26 @@ impl DataSet {
         Ok(())
     }
 
-    // Todo - shuld err if it already exists
     #[allow(dead_code)]
     pub fn snap(&self, snap_name: &str) -> Result<()> {
-        let snap_path = format!("{}@{}", &self.path, snap_name);
+        let snap_path = format!("{}@{}", &self.path, &snap_name);
         println!("Creating snapshot: {}", &snap_path);
         let mut zfs = Command::new("zfs");
         zfs.arg("snapshot");
         zfs.arg(&snap_path);
         cmd::run(&mut zfs)?;
         Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn clone(&self, snap: &str, dest: &str) -> Result<(DataSet)> {
+        println!("Cloning {} to {}", &self.path, &dest);
+        let mut zfs = Command::new("zfs");
+        zfs.arg("clone");
+        zfs.arg(format!("{}@{}", &self.path, snap));
+        zfs.arg(&dest);
+        cmd::run(&mut zfs)?;
+        Ok(DataSet::new(dest)?)
     }
 
     pub fn exists(&self) -> Result<bool> {
@@ -230,6 +237,26 @@ mod tests {
     fn test_snap_invalid_name() -> Result<()> {
         run_test(|ds| {
             assert!(ds.snap("test&snap").is_err());
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_clone() -> Result<()> {
+        run_test(|ds| {
+            ds.snap("test")?;
+            let cloned = ds.clone("test", "zroot/test")?;
+            let result = panic::catch_unwind(|| assert!(cloned.exists().unwrap()));
+            cloned.destroy()?;
+            assert!(result.is_ok());
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_invalid_clone() -> Result<()> {
+        run_test(|ds| {
+            assert!(ds.clone("noexist", "zroot/test").is_err());
             Ok(())
         })
     }
