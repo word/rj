@@ -78,11 +78,12 @@ impl DataSet {
     }
 
     #[allow(dead_code)]
-    pub fn destroy(&self) -> Result<String> {
+    pub fn destroy(&self) -> Result<()> {
         let mut zfs = Command::new("zfs");
         zfs.arg("destroy");
         zfs.arg(&self.path);
-        cmd::run(&mut zfs)
+        cmd::run(&mut zfs)?;
+        Ok(())
     }
 
     // destroy recursively
@@ -98,18 +99,14 @@ impl DataSet {
 
     // Todo - shuld err if it already exists
     #[allow(dead_code)]
-    pub fn snap(&self, snap_name: &str) -> Result<bool> {
+    pub fn snap(&self, snap_name: &str) -> Result<()> {
         let snap_path = format!("{}@{}", &self.path, snap_name);
         println!("Creating snapshot: {}", &snap_path);
-        if self.snap_exists(&snap_name)? {
-            Ok(false)
-        } else {
-            let mut zfs = Command::new("zfs");
-            zfs.arg("snapshot");
-            zfs.arg(&snap_path);
-            cmd::run(&mut zfs)?;
-            Ok(true)
-        }
+        let mut zfs = Command::new("zfs");
+        zfs.arg("snapshot");
+        zfs.arg(&snap_path);
+        cmd::run(&mut zfs)?;
+        Ok(())
     }
 
     pub fn exists(&self) -> Result<bool> {
@@ -156,7 +153,7 @@ mod tests {
         // Set up
         let mut ds = DataSet::new("zroot/rjtest".to_string(), "/rjtest".to_string())?;
 
-        // Run the test closure
+        // Run the test closure but catch the panic so that the teardown section below can run.
         let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds))).unwrap();
 
         // Teardown
@@ -178,9 +175,10 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_ds_double_destroy() -> () {
-        run_test(|ds| ds.destroy()).unwrap()
+        let ds = DataSet::new("zroot/rjtest".to_string(), "/rjtest".to_string()).unwrap();
+        assert!(ds.destroy().is_ok());
+        assert!(ds.destroy().is_err());
     }
 
     #[test]
@@ -193,12 +191,14 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_ds_invalid_set() -> () {
-        run_test(|ds| ds.set_prop("noexist", "nope")).unwrap()
+    fn test_ds_invalid_set() -> Result<()> {
+        run_test(|ds| {
+            assert!(ds.set_prop("noexist", "nope").is_err());
+            Ok(())
+        })
     }
 
-    // Creating a DS that already exists shoudn't fail.  It becomes a representation of of the
+    // Creating a DS that already exists shoudn't fail.  It becomes a representation of the
     // existing DS.
     #[test]
     fn test_ds_already_exists() -> Result<()> {
@@ -229,8 +229,25 @@ mod tests {
     #[test]
     fn test_snap() -> Result<()> {
         run_test(|ds| {
-            assert!(ds.snap("testsnap")?);
+            assert!(ds.snap("testsnap").is_ok());
             assert!(ds.snap_exists("testsnap")?);
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_snap_already_exists() -> Result<()> {
+        run_test(|ds| {
+            ds.snap("testsnap")?;
+            assert!(ds.snap("testsnap").is_err());
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_snap_invalid_name() -> Result<()> {
+        run_test(|ds| {
+            assert!(ds.snap("test&snap").is_err());
             Ok(())
         })
     }

@@ -3,7 +3,6 @@
 == doing:
 
 * zfs
-  * zfs snapshot method
   * zfs clone method
 
 * tests:
@@ -35,4 +34,5 @@
 * zfs
   * refactor zfs into a struct
   * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails
+  * zfs snapshot method
 * try testing commands with mockall
