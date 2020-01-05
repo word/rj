@@ -4,6 +4,64 @@ use std::path::Path;
 use tar::Archive;
 use xz2::read::XzDecoder;
 
+#[allow(dead_code)]
+pub struct Jail {
+    path: String,
+}
+
+#[allow(dead_code)]
+impl Jail {
+    pub fn create() {}
+    pub fn destroy() {}
+    pub fn update() {}
+    pub fn snapshot() {}
+    pub fn start() {}
+    pub fn stop() {}
+    pub fn enable() {}
+    pub fn provision() {}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    fn test_jail_create_basejail() -> Result<()> {
+        let jail = jail::new("/jails/basejail");
+        jail.create();
+    }
+}
+
+pub enum Release {
+    FreeBSDFull(FreeBSDFullRel),
+    ZfsTemplate(ZfsTemplateRel),
+}
+
+pub struct ZfsTemplateRel {
+    path: String,
+}
+
+pub struct FreeBSDFullRel {
+    pub release: String,
+    pub dists: Vec<String>,
+    pub mirror: String,
+}
+
+impl FreeBSDFullRel {
+    pub fn extract(&self, dest: &str) -> Result<()> {
+        for dist in &self.dists {
+            println!("Extracing {} to {}", &dist, &dest);
+
+            let url = format!(
+                "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
+                &self.mirror, &self.release, dist
+            );
+            fetch_extract(&url, &dest)?;
+        }
+        Ok(())
+    }
+}
+
 // fetch an xz archive using http and extract it to a destination directory
 pub fn fetch_extract(url: &str, dest: &str) -> Result<()> {
     let response = reqwest::get(url)?;

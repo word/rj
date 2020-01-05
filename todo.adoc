@@ -37,3 +37,14 @@
   * zfs snapshot method
   * zfs clone method
 * try testing commands with mockall
+
+== What makes a jail?
+
+* zfs data set
+* jails.conf config entry
+* provisioned config (configuration puppet or whatever)
+* processes
+* network socket
+* rc service
+
+* think about config versioning!

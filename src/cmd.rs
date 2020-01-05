@@ -1,8 +1,8 @@
+use crate::errors::RunError;
 use anyhow::Result;
 use std::process::Command;
-use crate::errors::RunError;
 
-pub fn run(command:&mut Command) -> Result<(String)> {
+pub fn run(command: &mut Command) -> Result<String> {
     // execute the command
     let output = command.output()?;
 

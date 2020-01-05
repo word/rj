@@ -49,6 +49,7 @@ impl DataSet {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, property: &str) -> Result<String> {
         // zfs get -H -o value mountpoint zroot/jails
         let mut zfs = Command::new("zfs");
@@ -97,7 +98,7 @@ impl DataSet {
     }
 
     #[allow(dead_code)]
-    pub fn clone(&self, snap: &str, dest: &str) -> Result<(DataSet)> {
+    pub fn clone(&self, snap: &str, dest: &str) -> Result<DataSet> {
         println!("Cloning {} to {}", &self.path, &dest);
         let mut zfs = Command::new("zfs");
         zfs.arg("clone");
