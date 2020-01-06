@@ -1,15 +1,14 @@
+#![allow(dead_code)]
 use anyhow::Result;
 use std::fs;
 use std::path::Path;
 use tar::Archive;
 use xz2::read::XzDecoder;
 
-#[allow(dead_code)]
 pub struct Jail {
     path: String,
 }
 
-#[allow(dead_code)]
 impl Jail {
     pub fn create() {}
     pub fn destroy() {}
@@ -21,16 +20,22 @@ impl Jail {
     pub fn provision() {}
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use pretty_assertions::assert_eq;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use pretty_assertions::assert_eq;
 
-    fn test_jail_create_basejail() -> Result<()> {
-        let jail = jail::new("/jails/basejail");
-        jail.create();
-    }
-}
+//     fn test_jail_create_basejail() -> Result<()> {
+//         let release = Release::FreeBSDFull {
+//             release: "12.0-RELEASE",
+//             mirror: "ftp.uk.freebsd.org",
+//             dists: vec!["base".to_string(), "lib32".to_string()],
+//         };
+//         let jail = Jail::new("/jails/basejail", release);
+
+//         jail.create();
+//     }
+// }
 
 pub enum Release {
     FreeBSDFull(FreeBSDFullRel),

@@ -21,9 +21,11 @@ fn make_it_so() -> Result<()> {
     };
 
     // Create base data sets
-    let jails_ds = zfs::DataSet::new("zroot/jails")?;
-    let basejail_ds = zfs::DataSet::new(&format!("{}/basejail", &jails_ds.get_path()))?;
+    let jails_ds = zfs::DataSet::new("zroot/jails");
+    let basejail_ds = zfs::DataSet::new(&format!("{}/basejail", &jails_ds.get_path()));
+    jails_ds.create()?;
     jails_ds.set("mountpoint", &jails_mount)?;
+    basejail_ds.create()?;
 
     if !(basejail_ds.snap_exists("ready")?) {
         // Extract FreeBSD base jail

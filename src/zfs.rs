@@ -9,17 +9,14 @@ pub struct DataSet {
 }
 
 impl DataSet {
-    pub fn new(path: &str) -> Result<Self> {
-        let mut ds = DataSet {
+    pub fn new(path: &str) -> DataSet {
+        DataSet {
             path: path.to_string(),
-        };
-
-        ds.create()?;
-        Ok(ds)
+        }
     }
 
     // create the zfs data set if it doesn't exist already
-    fn create(&mut self) -> Result<bool> {
+    pub fn create(&self) -> Result<bool> {
         match self.exists()? {
             true => {
                 println!("Data set {} already exists, skipping", &self.path);
@@ -105,7 +102,7 @@ impl DataSet {
         zfs.arg(format!("{}@{}", &self.path, snap));
         zfs.arg(&dest);
         cmd::run(&mut zfs)?;
-        Ok(DataSet::new(dest)?)
+        Ok(DataSet::new(dest))
     }
 
     pub fn exists(&self) -> Result<bool> {
@@ -150,7 +147,8 @@ mod tests {
         R: std::fmt::Debug,
     {
         // Set up
-        let mut ds = DataSet::new("zroot/rjtest")?;
+        let mut ds = DataSet::new("zroot/rjtest");
+        assert!(ds.create().is_ok());
 
         // Run the test closure but catch the panic so that the teardown section below can run.
         let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds))).unwrap();
@@ -169,13 +167,14 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_create() -> Result<()> {
+    fn test_ds_exists() -> Result<()> {
         run_test(|ds| ds.exists())
     }
 
     #[test]
     fn test_ds_double_destroy() -> () {
-        let ds = DataSet::new("zroot/rjtest").unwrap();
+        let ds = DataSet::new("zroot/rjtest");
+        assert!(ds.create().is_ok());
         assert!(ds.destroy().is_ok());
         assert!(ds.destroy().is_err());
     }
@@ -213,7 +212,8 @@ mod tests {
 
     #[test]
     fn test_ds_invalid_path() -> () {
-        assert!(DataSet::new("noexist/rjtest").is_err());
+        let inv_ds = DataSet::new("noexist/rjtest");
+        assert!(inv_ds.create().is_err());
     }
 
     #[test]
