@@ -3,10 +3,8 @@ use std::process;
 
 mod cmd;
 mod errors;
-mod lib;
 mod zfs;
-
-use lib::FreeBSDFullRel;
+use rj::FreeBSDFullRel;
 
 fn make_it_so() -> Result<()> {
     let jails_mount = "/jails";

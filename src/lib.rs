@@ -5,12 +5,27 @@ use std::path::Path;
 use tar::Archive;
 use xz2::read::XzDecoder;
 
+mod cmd;
+mod errors;
+mod zfs;
+
 pub struct Jail {
     path: String,
+    release: Release,
+    zfs_ds: zfs::DataSet,
 }
 
 impl Jail {
-    pub fn create() {}
+    pub fn new(path: &str, release: Release) -> Jail {
+        Jail {
+            path: path.to_string(),
+            release: release,
+            zfs_ds: zfs::DataSet::new(path),
+        }
+    }
+    pub fn create(&self) -> Result<()> {
+        Ok(())
+    }
     pub fn destroy() {}
     pub fn update() {}
     pub fn snapshot() {}
@@ -20,30 +35,26 @@ impl Jail {
     pub fn provision() {}
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use pretty_assertions::assert_eq;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
 
-//     fn test_jail_create_basejail() -> Result<()> {
-//         let release = Release::FreeBSDFull {
-//             release: "12.0-RELEASE",
-//             mirror: "ftp.uk.freebsd.org",
-//             dists: vec!["base".to_string(), "lib32".to_string()],
-//         };
-//         let jail = Jail::new("/jails/basejail", release);
+    fn test_jail_create_basejail() -> Result<()> {
+        let release = Release::FreeBSDFull(FreeBSDFullRel {
+            release: "12.0-RELEASE".to_string(),
+            mirror: "ftp.uk.freebsd.org".to_string(),
+            dists: vec!["base".to_string(), "lib32".to_string()],
+        });
+        let jail = Jail::new("/jails/basejail", release);
 
-//         jail.create();
-//     }
-// }
+        jail.create()
+    }
+}
 
 pub enum Release {
     FreeBSDFull(FreeBSDFullRel),
-    ZfsTemplate(ZfsTemplateRel),
-}
-
-pub struct ZfsTemplateRel {
-    path: String,
+    ZfsTemplate { path: String },
 }
 
 pub struct FreeBSDFullRel {

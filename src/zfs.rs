@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use crate::cmd;
+use super::cmd;
 use anyhow::Result;
 
 #[derive(Debug)]
