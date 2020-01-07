@@ -10,22 +10,39 @@ mod errors;
 mod zfs;
 
 pub struct Jail {
-    path: String,
+    mountpoint: String,
     release: Release,
     zfs_ds: zfs::DataSet,
 }
 
 impl Jail {
     pub fn new(path: &str, release: Release) -> Jail {
+        let mut components: Vec<&str> = path.split("/").collect();
+        components.remove(0); // remove the zfs pool name
+
         Jail {
-            path: path.to_string(),
+            mountpoint: format!("/{}", components.join("/")),
             release: release,
             zfs_ds: zfs::DataSet::new(path),
         }
     }
+
     pub fn create(&self) -> Result<()> {
+        self.zfs_ds.create()?;
+        match &self.release {
+            Release::FreeBSDFull(r) => {
+                if !(&self.zfs_ds.snap_exists("ready")?) {
+                    r.extract(&self.mountpoint)?;
+                    &self.zfs_ds.snap("ready")?;
+                };
+            }
+            Release::ZfsTemplate { path } => {
+                // clone it
+            }
+        };
         Ok(())
     }
+
     pub fn destroy() {}
     pub fn update() {}
     pub fn snapshot() {}
@@ -33,20 +50,28 @@ impl Jail {
     pub fn stop() {}
     pub fn enable() {}
     pub fn provision() {}
+    pub fn exists() {}
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pretty_assertions::assert_eq;
+    // use pretty_assertions::assert_eq;
 
+    #[test]
     fn test_jail_create_basejail() -> Result<()> {
+        // Prepare the jails root data set
+        let jails_ds = zfs::DataSet::new("zroot/jails");
+        jails_ds.create()?;
+        jails_ds.set("mountpoint", "/jails")?;
+
         let release = Release::FreeBSDFull(FreeBSDFullRel {
             release: "12.0-RELEASE".to_string(),
             mirror: "ftp.uk.freebsd.org".to_string(),
             dists: vec!["base".to_string(), "lib32".to_string()],
         });
-        let jail = Jail::new("/jails/basejail", release);
+        let jail = Jail::new(&"zroot/jails/basejail", release);
+        assert_eq!(jail.mountpoint, "/jails/basejail");
 
         jail.create()
     }
