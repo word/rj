@@ -28,29 +28,36 @@ impl Jail {
     }
 
     pub fn create(&self) -> Result<()> {
-        self.zfs_ds.create()?;
+        // TODO - error if it already exists
         match &self.release {
             Release::FreeBSDFull(r) => {
+                self.zfs_ds.create()?;
                 if !(&self.zfs_ds.snap_exists("base")?) {
                     r.extract(&self.mountpoint)?;
                     &self.zfs_ds.snap("base")?;
                 };
             }
-            Release::ZfsTemplate { path } => {
-                // clone it
+            Release::ZfsTemplate(src_dataset) => {
+                src_dataset.clone(&"ready", self.zfs_ds.get_path())?;
             }
         };
-        Ok(())
+
+        // TODO - should be moved to provisioner maybe perhaps
+        self.zfs_ds.snap("ready")
     }
 
-    pub fn destroy() {}
+    pub fn destroy(&self) -> Result<()> {
+        self.zfs_ds.destroy()
+    }
     pub fn update() {}
     pub fn snapshot() {}
     pub fn start() {}
     pub fn stop() {}
     pub fn enable() {}
     pub fn provision() {}
-    pub fn exists() {}
+    pub fn exists(&self) -> Result<bool> {
+        self.zfs_ds.exists()
+    }
 }
 
 #[cfg(test)]
@@ -67,9 +74,12 @@ mod tests {
     }
 
     #[test]
-    fn jail_two() {
-        setup_once();
-        println!("twice!");
+    fn test_jail_thin_create_destroy() -> Result<()> {
+        let basejail = setup_once();
+        let release = Release::ZfsTemplate(basejail.zfs_ds);
+        let jail = Jail::new("zroot/jails/thinjail", release);
+        jail.create()?;
+        jail.destroy()
     }
 
     static INIT: Once = Once::new();
@@ -90,7 +100,9 @@ mod tests {
             // jails_ds.destroy_r().unwrap();
             jails_ds.create().unwrap();
             jails_ds.set("mountpoint", "/jails").unwrap();
-            basejail.create().unwrap();
+            if !(basejail.exists().unwrap()) {
+                basejail.create().unwrap();
+            }
         });
 
         basejail
@@ -99,7 +111,7 @@ mod tests {
 
 pub enum Release {
     FreeBSDFull(FreeBSDFullRel),
-    ZfsTemplate { path: String },
+    ZfsTemplate(zfs::DataSet),
 }
 
 pub struct FreeBSDFullRel {
