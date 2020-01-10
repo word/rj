@@ -31,9 +31,9 @@ impl Jail {
         self.zfs_ds.create()?;
         match &self.release {
             Release::FreeBSDFull(r) => {
-                if !(&self.zfs_ds.snap_exists("ready")?) {
+                if !(&self.zfs_ds.snap_exists("base")?) {
                     r.extract(&self.mountpoint)?;
-                    &self.zfs_ds.snap("ready")?;
+                    &self.zfs_ds.snap("base")?;
                 };
             }
             Release::ZfsTemplate { path } => {
@@ -55,25 +55,45 @@ impl Jail {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
-    // use pretty_assertions::assert_eq;
+    use pretty_assertions::assert_eq;
+    use std::sync::Once;
 
     #[test]
-    fn test_jail_create_basejail() -> Result<()> {
-        // Prepare the jails root data set
-        let jails_ds = zfs::DataSet::new("zroot/jails");
-        jails_ds.create()?;
-        jails_ds.set("mountpoint", "/jails")?;
+    fn test_jail_mountpoint() {
+        setup_once();
+        println!("once!");
+    }
 
-        let release = Release::FreeBSDFull(FreeBSDFullRel {
-            release: "12.0-RELEASE".to_string(),
-            mirror: "ftp.uk.freebsd.org".to_string(),
-            dists: vec!["base".to_string(), "lib32".to_string()],
+    #[test]
+    fn jail_two() {
+        setup_once();
+        println!("twice!");
+    }
+
+    static INIT: Once = Once::new();
+
+    pub fn setup_once() -> () {
+        INIT.call_once(|| {
+            // Prepare the jails root data set
+            let jails_ds = zfs::DataSet::new("zroot/jails");
+            // cleanup before all
+            // jails_ds.destroy_r().unwrap();
+            jails_ds.create().unwrap();
+            jails_ds.set("mountpoint", "/jails").unwrap();
+
+            // Setup the basejail
+            let release = Release::FreeBSDFull(FreeBSDFullRel {
+                release: "12.0-RELEASE".to_string(),
+                mirror: "ftp.uk.freebsd.org".to_string(),
+                dists: vec!["base".to_string(), "lib32".to_string()],
+                // dists: vec![], // extracts quicker...
+            });
+            basejail = Jail::new(&"zroot/jails/basejail", release);
+            assert_eq!(basejail.mountpoint, "/jails/basejail");
+            basejail.create().unwrap();
         });
-        let jail = Jail::new(&"zroot/jails/basejail", release);
-        assert_eq!(jail.mountpoint, "/jails/basejail");
-
-        jail.create()
     }
 }
 

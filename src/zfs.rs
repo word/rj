@@ -19,11 +19,11 @@ impl DataSet {
     pub fn create(&self) -> Result<bool> {
         match self.exists()? {
             true => {
-                println!("Data set {} already exists, skipping", &self.path);
+                println!("Dataset {} already exists, skipping", &self.path);
                 Ok(false)
             }
             false => {
-                println!("Creating zfs data set {}", &self.path);
+                println!("Creating zfs dataset {}", &self.path);
                 let mut zfs = Command::new("zfs");
                 zfs.arg("create");
                 zfs.arg(&self.path);
@@ -65,6 +65,7 @@ impl DataSet {
 
     #[allow(dead_code)]
     pub fn destroy(&self) -> Result<()> {
+        println!("Destroying zfs dataset: {}", &self.path);
         let mut zfs = Command::new("zfs");
         zfs.arg("destroy");
         zfs.arg(&self.path);
