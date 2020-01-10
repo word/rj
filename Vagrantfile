@@ -20,6 +20,8 @@ Vagrant.configure("2") do |config|
     vb.gui = false
     # Customize the amount of memory on the VM:
     vb.memory = "3048"
+    # CPUs
+    vb.cpus = 2
     # Disable audio
     vb.customize ["modifyvm", :id, "--audio", "none"]
     # Disable USB
