@@ -62,8 +62,8 @@ mod tests {
 
     #[test]
     fn test_jail_mountpoint() {
-        setup_once();
-        println!("once!");
+        let basejail = setup_once();
+        assert_eq!(basejail.mountpoint, "/jails/basejail");
     }
 
     #[test]
@@ -90,7 +90,6 @@ mod tests {
             // jails_ds.destroy_r().unwrap();
             jails_ds.create().unwrap();
             jails_ds.set("mountpoint", "/jails").unwrap();
-            assert_eq!(basejail.mountpoint, "/jails/basejail");
             basejail.create().unwrap();
         });
 
