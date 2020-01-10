@@ -74,26 +74,27 @@ mod tests {
 
     static INIT: Once = Once::new();
 
-    pub fn setup_once() -> () {
+    pub fn setup_once() -> Jail {
+        // Setup the basejail
+        let release = Release::FreeBSDFull(FreeBSDFullRel {
+            release: "12.0-RELEASE".to_string(),
+            mirror: "ftp.uk.freebsd.org".to_string(),
+            dists: vec!["base".to_string(), "lib32".to_string()],
+            // dists: vec![], // extracts quicker...
+        });
+        let basejail = Jail::new(&"zroot/jails/basejail", release);
+        let jails_ds = zfs::DataSet::new("zroot/jails");
+
         INIT.call_once(|| {
-            // Prepare the jails root data set
-            let jails_ds = zfs::DataSet::new("zroot/jails");
             // cleanup before all
             // jails_ds.destroy_r().unwrap();
             jails_ds.create().unwrap();
             jails_ds.set("mountpoint", "/jails").unwrap();
-
-            // Setup the basejail
-            let release = Release::FreeBSDFull(FreeBSDFullRel {
-                release: "12.0-RELEASE".to_string(),
-                mirror: "ftp.uk.freebsd.org".to_string(),
-                dists: vec!["base".to_string(), "lib32".to_string()],
-                // dists: vec![], // extracts quicker...
-            });
-            basejail = Jail::new(&"zroot/jails/basejail", release);
             assert_eq!(basejail.mountpoint, "/jails/basejail");
             basejail.create().unwrap();
         });
+
+        basejail
     }
 }
 
