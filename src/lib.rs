@@ -9,9 +9,12 @@ mod cmd;
 mod errors;
 mod zfs;
 
+use crate::errors::JailError;
+
 pub struct Jail {
     mountpoint: String,
     release: Release,
+    zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
 }
 
@@ -23,12 +26,19 @@ impl Jail {
         Jail {
             mountpoint: format!("/{}", components.join("/")),
             release: release,
+            zfs_ds_path: path.to_string(),
             zfs_ds: zfs::DataSet::new(path),
         }
     }
 
     pub fn create(&self) -> Result<()> {
-        // TODO - error if it already exists
+        if self.exists()? {
+            let err = JailError(format!(
+                "Can\'t create jail: {}, already exists",
+                &self.zfs_ds_path
+            ));
+            return Err(anyhow::Error::new(err));
+        };
         match &self.release {
             Release::FreeBSDFull(r) => {
                 self.zfs_ds.create()?;
@@ -41,7 +51,6 @@ impl Jail {
                 src_dataset.clone(&"ready", self.zfs_ds.get_path())?;
             }
         };
-
         // TODO - should be moved to provisioner maybe perhaps
         self.zfs_ds.snap("ready")
     }
@@ -89,6 +98,22 @@ mod tests {
         jail.destroy()?;
         assert!(!jail.exists()?);
         Ok(())
+    }
+
+    #[test]
+    fn test_jail_create_existing() {
+        let basejail = setup_once();
+        let result = basejail.create();
+        assert!(result.is_err(), "{:?}", result);
+
+        // let error = result.unwrap_err();
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            format!(
+                "Can't create jail: {}, already exists",
+                basejail.zfs_ds_path
+            )
+        )
     }
 
     static INIT: Once = Once::new();
