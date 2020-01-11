@@ -116,6 +116,7 @@ impl DataSet {
         self.ds_exists(&format!("{}@{}", &self.path, snap_name))
     }
 
+    #[allow(dead_code)]
     pub fn list_snaps(&self) -> Result<Vec<String>> {
         let mut zfs = Command::new("zfs");
         zfs.arg("list")

@@ -4,7 +4,7 @@ use std::process;
 mod cmd;
 mod errors;
 mod zfs;
-use rj::FreeBSDFullRel;
+use rj::{FreeBSDFullRel, Jail, Release};
 
 fn make_it_so() -> Result<()> {
     let jails_mount = "/jails";
@@ -12,23 +12,27 @@ fn make_it_so() -> Result<()> {
     let basejail_release = "12.0-RELEASE";
     let freebsd_mirror = "ftp.uk.freebsd.org";
 
-    let basejail_rel = FreeBSDFullRel {
+    let basejail_rel = Release::FreeBSDFull(FreeBSDFullRel {
         release: basejail_release.to_string(),
         mirror: freebsd_mirror.to_string(),
         dists: vec!["base".to_string(), "lib32".to_string()],
-    };
+    });
 
-    // Create base data sets
+    // Create jail data set
     let jails_ds = zfs::DataSet::new("zroot/jails");
-    let basejail_ds = zfs::DataSet::new(&format!("{}/basejail", &jails_ds.get_path()));
     jails_ds.create()?;
     jails_ds.set("mountpoint", &jails_mount)?;
-    basejail_ds.create()?;
 
-    if !(basejail_ds.snap_exists("ready")?) {
-        // Extract FreeBSD base jail
-        basejail_rel.extract(&format!("{}/{}", jails_mount, basejail_name))?;
-        basejail_ds.snap("ready")?;
+    // Create basejail
+    let basejail = Jail::new(
+        &format!("{}/{}", &jails_ds.get_path(), basejail_name),
+        basejail_rel,
+    );
+    match basejail.exists()? {
+        true => println!("Basejail '{}', already exists, skipping", &basejail.name()),
+        false => {
+            basejail.create()?;
+        }
     };
 
     Ok(())

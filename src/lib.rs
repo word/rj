@@ -20,6 +20,14 @@ pub struct Jail {
 }
 
 impl Jail {
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn mountpoint(&self) -> &String {
+        &self.mountpoint
+    }
+
     pub fn new(path: &str, release: Release) -> Jail {
         let mut components: Vec<&str> = path.split("/").collect();
         components.remove(0); // remove the zfs pool name
