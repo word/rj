@@ -135,10 +135,7 @@ impl DataSet {
 
     #[allow(dead_code)]
     pub fn snap_destroy(&self, snap_name: &str) -> Result<()> {
-        println!(
-            "Destroying snapshot {} in dataset: {}",
-            snap_name, &self.path
-        );
+        println!("Destroying snapshot {}@{}", &self.path, snap_name);
         let mut zfs = Command::new("zfs");
         zfs.arg("destroy")
             .arg(&format!("{}@{}", self.path, snap_name));

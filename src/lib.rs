@@ -48,7 +48,11 @@ impl Jail {
 
     pub fn destroy(&self) -> Result<()> {
         let snaps = self.zfs_ds.list_snaps()?;
-        if !(snaps.is_empty()) {}
+        if !(snaps.is_empty()) {
+            for snap in snaps {
+                self.zfs_ds.snap_destroy(&snap)?;
+            }
+        }
         self.zfs_ds.destroy()
     }
     pub fn update() {}
@@ -81,7 +85,10 @@ mod tests {
         let release = Release::ZfsTemplate(basejail.zfs_ds);
         let jail = Jail::new("zroot/jails/thinjail", release);
         jail.create()?;
-        jail.destroy()
+        assert!(jail.exists()?);
+        jail.destroy()?;
+        assert!(!jail.exists()?);
+        Ok(())
     }
 
     static INIT: Once = Once::new();
