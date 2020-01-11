@@ -37,7 +37,7 @@ impl Jail {
         if self.exists()? {
             let err = JailError(format!(
                 "Can\'t create jail: {}, already exists",
-                &self.zfs_ds_path
+                &self.name
             ));
             return Err(anyhow::Error::new(err));
         };
@@ -67,7 +67,6 @@ impl Jail {
         self.zfs_ds.destroy()
     }
     pub fn update() {}
-    pub fn snapshot() {}
     pub fn start() {}
     pub fn stop() {}
     pub fn enable() {}
@@ -117,10 +116,7 @@ mod tests {
         // let error = result.unwrap_err();
         assert_eq!(
             result.unwrap_err().to_string(),
-            format!(
-                "Can't create jail: {}, already exists",
-                basejail.zfs_ds_path
-            )
+            format!("Can't create jail: {}, already exists", basejail.name)
         )
     }
 
