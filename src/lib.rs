@@ -47,6 +47,8 @@ impl Jail {
     }
 
     pub fn destroy(&self) -> Result<()> {
+        let snaps = self.zfs_ds.list_snaps()?;
+        if !(snaps.is_empty()) {}
         self.zfs_ds.destroy()
     }
     pub fn update() {}

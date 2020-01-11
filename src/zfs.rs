@@ -125,12 +125,25 @@ impl DataSet {
             .arg("-t")
             .arg("snap");
         let output = cmd::run(&mut zfs)?;
-        let mut snaps = output
+        let snaps = output
             .lines()
-            .map(|s| s.to_string())
+            .filter(|s| s.starts_with(&self.path))
+            .map(|s| s.split("@").last().unwrap().to_string())
             .collect::<Vec<String>>();
-        snaps.retain(|s| s.starts_with(&self.path));
         Ok(snaps)
+    }
+
+    #[allow(dead_code)]
+    pub fn snap_destroy(&self, snap_name: &str) -> Result<()> {
+        println!(
+            "Destroying snapshot {} in dataset: {}",
+            snap_name, &self.path
+        );
+        let mut zfs = Command::new("zfs");
+        zfs.arg("destroy")
+            .arg(&format!("{}@{}", self.path, snap_name));
+        cmd::run(&mut zfs)?;
+        Ok(())
     }
 
     // checks if data set exists
@@ -291,8 +304,20 @@ mod tests {
             ds.snap("test2")?;
             let snaps = ds.list_snaps()?;
             assert_eq!(snaps.len(), 2);
-            assert_eq!(snaps[0], format!("{}@test1", ds.get_path()));
-            assert_eq!(snaps[1], format!("{}@test2", ds.get_path()));
+            assert_eq!(snaps[0], "test1");
+            assert_eq!(snaps[1], "test2");
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_ds_snap_destroy() -> Result<()> {
+        run_test(|ds| {
+            ds.snap("test1")?;
+            ds.snap("test2")?;
+            ds.snap_destroy("test1")?;
+            ds.snap_destroy("test2")?;
+            assert!(ds.list_snaps()?.is_empty());
             Ok(())
         })
     }
