@@ -12,6 +12,7 @@ mod zfs;
 use crate::errors::JailError;
 
 pub struct Jail {
+    name: String,
     mountpoint: String,
     release: Release,
     zfs_ds_path: String,
@@ -24,6 +25,7 @@ impl Jail {
         components.remove(0); // remove the zfs pool name
 
         Jail {
+            name: components.last().unwrap().to_string(),
             mountpoint: format!("/{}", components.join("/")),
             release: release,
             zfs_ds_path: path.to_string(),
@@ -89,6 +91,12 @@ mod tests {
     }
 
     #[test]
+    fn test_jail_name() {
+        let basejail = setup_once();
+        assert_eq!(basejail.name, "basejail");
+    }
+
+    #[test]
     fn test_jail_thin_create_destroy() -> Result<()> {
         let basejail = setup_once();
         let release = Release::ZfsTemplate(basejail.zfs_ds);
@@ -126,7 +134,7 @@ mod tests {
             dists: vec!["base".to_string(), "lib32".to_string()],
             // dists: vec![], // extracts quicker...
         });
-        let basejail = Jail::new(&"zroot/jails/basejail", release);
+        let basejail = Jail::new("zroot/jails/basejail", release);
         let jails_ds = zfs::DataSet::new("zroot/jails");
 
         INIT.call_once(|| {
