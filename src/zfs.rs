@@ -1,4 +1,5 @@
 use std::process::Command;
+use std::vec::IntoIter;
 
 use super::cmd;
 use anyhow::Result;
@@ -76,6 +77,7 @@ impl DataSet {
     // destroy recursively
     #[allow(dead_code)]
     pub fn destroy_r(&self) -> Result<()> {
+        println!("Destroying zfs dataset recursively: {}", &self.path);
         let mut zfs = Command::new("zfs");
         zfs.arg("destroy");
         zfs.arg("-r");
@@ -115,6 +117,22 @@ impl DataSet {
         self.ds_exists(&format!("{}@{}", &self.path, snap_name))
     }
 
+    pub fn list_snaps(&self) -> Result<Vec<String>> {
+        let mut zfs = Command::new("zfs");
+        zfs.arg("list")
+            .arg("-H")
+            .arg("-o")
+            .arg("name")
+            .arg("-t")
+            .arg("snap");
+        let output = cmd::run(&mut zfs)?;
+        let snaps = output.lines();
+
+        println!("{:?}", snaps);
+        Ok(vec!["ok".to_string()])
+        // Ok(snaps.into_iter())
+    }
+
     // checks if data set exists
     fn ds_exists(&self, ds_path: &str) -> Result<bool> {
         let mut zfs = Command::new("zfs");
@@ -140,6 +158,8 @@ mod tests {
     // import names from outer scope.
     use super::*;
     use pretty_assertions::assert_eq;
+    use rand::distributions::Alphanumeric;
+    use rand::{thread_rng, Rng};
     use std::panic::{self, AssertUnwindSafe};
 
     fn run_test<T, R>(test: T) -> Result<()>
@@ -148,11 +168,12 @@ mod tests {
         R: std::fmt::Debug,
     {
         // Set up
-        let mut ds = DataSet::new("zroot/rjtest");
+        let rand_string: String = thread_rng().sample_iter(&Alphanumeric).take(5).collect();
+        let mut ds = DataSet::new(&format!("zroot/rjtest-{}", rand_string));
         assert!(ds.create().is_ok());
 
         // Run the test closure but catch the panic so that the teardown section below can run.
-        let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds))).unwrap();
+        let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds)));
 
         // Teardown
         let destroy_result = ds.destroy_r();
@@ -218,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn test_snap() -> Result<()> {
+    fn test_ds_snap() -> Result<()> {
         run_test(|ds| {
             assert!(ds.snap("testsnap").is_ok());
             assert!(ds.snap_exists("testsnap")?);
@@ -227,7 +248,7 @@ mod tests {
     }
 
     #[test]
-    fn test_snap_already_exists() -> Result<()> {
+    fn test_ds_snap_already_exists() -> Result<()> {
         run_test(|ds| {
             ds.snap("testsnap")?;
             assert!(ds.snap("testsnap").is_err());
@@ -236,7 +257,7 @@ mod tests {
     }
 
     #[test]
-    fn test_snap_invalid_name() -> Result<()> {
+    fn test_ds_snap_invalid_name() -> Result<()> {
         run_test(|ds| {
             assert!(ds.snap("test&snap").is_err());
             Ok(())
@@ -244,7 +265,7 @@ mod tests {
     }
 
     #[test]
-    fn test_clone() -> Result<()> {
+    fn test_ds_clone() -> Result<()> {
         run_test(|ds| {
             ds.snap("test")?;
             let cloned = ds.clone("test", "zroot/test")?;
@@ -256,9 +277,20 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_clone() -> Result<()> {
+    fn test_ds_invalid_clone() -> Result<()> {
         run_test(|ds| {
             assert!(ds.clone("noexist", "zroot/test").is_err());
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_ds_list_snaps() -> Result<()> {
+        run_test(|ds| {
+            ds.snap("test1")?;
+            ds.snap("test2")?;
+            let snaps = ds.list_snaps()?;
+            assert_eq!(snaps.len(), 2);
             Ok(())
         })
     }
