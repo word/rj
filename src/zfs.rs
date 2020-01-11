@@ -126,11 +126,12 @@ impl DataSet {
             .arg("-t")
             .arg("snap");
         let output = cmd::run(&mut zfs)?;
-        let snaps = output.lines();
-
-        println!("{:?}", snaps);
-        Ok(vec!["ok".to_string()])
-        // Ok(snaps.into_iter())
+        let mut snaps = output
+            .lines()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+        snaps.retain(|s| s.starts_with(&self.path));
+        Ok(snaps)
     }
 
     // checks if data set exists
