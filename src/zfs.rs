@@ -1,5 +1,4 @@
 use std::process::Command;
-use std::vec::IntoIter;
 
 use super::cmd;
 use anyhow::Result;
@@ -292,6 +291,8 @@ mod tests {
             ds.snap("test2")?;
             let snaps = ds.list_snaps()?;
             assert_eq!(snaps.len(), 2);
+            assert_eq!(snaps[0], format!("{}@test1", ds.get_path()));
+            assert_eq!(snaps[1], format!("{}@test2", ds.get_path()));
             Ok(())
         })
     }
