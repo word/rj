@@ -3,6 +3,7 @@ use std::process;
 
 mod cmd;
 mod errors;
+mod settings;
 mod zfs;
 use rj::{FreeBSDFullRel, Jail, Release};
 
@@ -29,7 +30,7 @@ fn make_it_so() -> Result<()> {
         basejail_rel,
     );
     match basejail.exists()? {
-        true => println!("Basejail '{}', already exists, skipping", &basejail.name()),
+        true => println!("Basejail '{}' already exists, skipping", &basejail.name()),
         false => {
             basejail.create()?;
         }

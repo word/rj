@@ -1,0 +1,16 @@
+debug = false
+jails_dataset = "zroot/jails"
+jails_mountpoint = "/jails"
+
+[release.12]
+release = "12.0-RELEASE"
+mirror = "ftp.uk.freebsd.org"
+dists = [ "base", "lib32" ]
+
+[jail.base]
+kind = "full"
+release = "12"
+
+[jail.example]
+kind = "clone"
+basejail = "base"
