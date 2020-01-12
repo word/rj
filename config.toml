@@ -4,10 +4,15 @@ jails_mountpoint = "/jails"
 
 # Releases
 
-[release.12]
+[source.freebsd12]
+type = "freebsd"
 release = "12.0-RELEASE"
 mirror = "ftp.uk.freebsd.org"
 dists = [ "base", "lib32" ]
+
+[source.basejail]
+type = "clone"
+path = "zroot/jails/base"
 
 # Provisioners
 
@@ -22,11 +27,9 @@ dists = [ "base", "lib32" ]
 # Jails
 
 [jail.base]
-kind = "full"
-release = "12"
+source = "freebsd12"
 # provisioners = [ "base" ]
 
 [jail.example]
-kind = "clone"
-basejail = "base"
+source = "basejail"
 # provisioners = [ "puppet" ]

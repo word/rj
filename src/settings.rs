@@ -5,17 +5,21 @@ use std::collections::HashMap;
 // use std::env;
 
 #[derive(Debug, Deserialize)]
-pub struct Release {
-    pub release: String,
-    pub mirror: String,
-    pub dists: Vec<String>,
+#[serde(tag = "type")]
+pub enum Source {
+    #[serde(alias = "freebsd")]
+    FreeBSD {
+        release: String,
+        mirror: String,
+        dists: Vec<String>,
+    },
+    #[serde(rename = "clone")]
+    Cloned { path: String },
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Jail {
-    pub kind: String,
-    pub release: Option<String>,
-    pub basejail: Option<String>,
+    pub source: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -24,7 +28,7 @@ pub struct Settings {
     pub jails_dataset: String,
     pub jails_mountpoint: String,
     pub jail: HashMap<String, Jail>,
-    pub release: HashMap<String, Release>,
+    pub source: HashMap<String, Source>,
 }
 
 #[allow(dead_code)]
@@ -71,14 +75,30 @@ mod tests {
         let s = Settings::new("config.toml").unwrap();
         println!("{:?}", s);
         assert_eq!(s.debug, false);
-        assert_eq!(s.release["12"].release, "12.0-RELEASE");
-        assert_eq!(s.release["12"].mirror, "ftp.uk.freebsd.org");
-        assert_eq!(s.release["12"].dists, vec!["base", "lib32"]);
-        assert_eq!(s.jail["base"].kind, "full");
-        assert_eq!(s.jail["base"].release, Some("12".to_string()));
-        assert_eq!(s.jail["base"].basejail, None);
-        assert_eq!(s.jail["example"].kind, "clone");
-        assert_eq!(s.jail["example"].basejail, Some("base".to_string()));
-        assert_eq!(s.jail["example"].release, None);
+        assert_eq!(s.jail["base"].source, "freebsd12");
+        assert_eq!(s.jail["example"].source, "basejail");
+
+        match &s.source["freebsd12"] {
+            Source::FreeBSD {
+                release,
+                mirror,
+                dists,
+            } => {
+                assert_eq!(release, "12.0-RELEASE");
+                assert_eq!(mirror, "ftp.uk.freebsd.org");
+                assert_eq!(dists, &vec!["base".to_string(), "lib32".to_string()]);
+            }
+            _ => {}
+        }
+
+        match &s.source["basejail"] {
+            Source::Cloned { path } => {
+                assert_eq!(path, "zroot/jails/base");
+            }
+            _ => {}
+        }
+        // assert_eq!(s.source["freebsd12"].unwrap().release, "12.0-RELEASE");
+        // assert_eq!(s.release["12"].mirror, "ftp.uk.freebsd.org");
+        // assert_eq!(s.release["12"].dists, vec!["base", "lib32"]);
     }
 }
