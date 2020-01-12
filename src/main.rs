@@ -5,7 +5,7 @@ mod cmd;
 mod errors;
 mod settings;
 mod zfs;
-use rj::{FreeBSDFullRel, Jail, Release};
+use rj::{Jail, Source};
 use settings::Settings;
 
 fn make_it_so() -> Result<()> {

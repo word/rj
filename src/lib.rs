@@ -15,7 +15,7 @@ use crate::errors::JailError;
 pub struct Jail {
     name: String,
     mountpoint: String,
-    release: Release,
+    source: Source,
     zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
 }
@@ -29,14 +29,14 @@ impl Jail {
         &self.mountpoint
     }
 
-    pub fn new(path: &str, release: Release) -> Jail {
+    pub fn new(path: &str, source: Source) -> Jail {
         let mut components: Vec<&str> = path.split("/").collect();
         components.remove(0); // remove the zfs pool name
 
         Jail {
             name: components.last().unwrap().to_string(),
             mountpoint: format!("/{}", components.join("/")),
-            release: release,
+            source: source,
             zfs_ds_path: path.to_string(),
             zfs_ds: zfs::DataSet::new(path),
         }
@@ -50,18 +50,22 @@ impl Jail {
             ));
             return Err(anyhow::Error::new(err));
         };
-        match &self.release {
-            Release::FreeBSDFull(r) => {
-                self.zfs_ds.create()?;
-                if !(&self.zfs_ds.snap_exists("base")?) {
-                    r.extract(&self.mountpoint)?;
-                    &self.zfs_ds.snap("base")?;
-                };
-            }
-            Release::ZfsClone(src_dataset) => {
-                src_dataset.clone(&"ready", self.zfs_ds.get_path())?;
-            }
-        };
+
+        self.source.install(&self.mountpoint, &self.zfs_ds)?;
+
+        // match &self.source {
+        //     Source::FreeBSD(r) => {
+        //         self.zfs_ds.create()?;
+        //         if !(&self.zfs_ds.snap_exists("base")?) {
+        //             r.extract(&self.mountpoint)?;
+        //             &self.zfs_ds.snap("base")?;
+        //         };
+        //     }
+        //     Release::ZfsClone(src_dataset) => {
+        //         src_dataset.clone(&"ready", self.zfs_ds.get_path())?;
+        //     }
+        // };
+
         // TODO - should be moved to provisioner maybe perhaps
         self.zfs_ds.snap("ready")
     }
@@ -107,8 +111,10 @@ mod tests {
     #[test]
     fn test_jail_thin_create_destroy() -> Result<()> {
         let basejail = setup_once();
-        let release = Release::ZfsClone(basejail.zfs_ds);
-        let jail = Jail::new("zroot/jails/thinjail", release);
+        let source = Source::Cloned {
+            path: basejail.zfs_ds.get_path().to_string(),
+        };
+        let jail = Jail::new("zroot/jails/thinjail", source);
         jail.create()?;
         assert!(jail.exists()?);
         jail.destroy()?;
@@ -133,13 +139,13 @@ mod tests {
 
     pub fn setup_once() -> Jail {
         // Setup the basejail
-        let release = Release::FreeBSDFull(FreeBSDFullRel {
+        let source = Source::FreeBSD {
             release: "12.0-RELEASE".to_string(),
             mirror: "ftp.uk.freebsd.org".to_string(),
             dists: vec!["base".to_string(), "lib32".to_string()],
             // dists: vec![], // extracts quicker...
-        });
-        let basejail = Jail::new("zroot/jails/basejail", release);
+        };
+        let basejail = Jail::new("zroot/jails/basejail", source);
         let jails_ds = zfs::DataSet::new("zroot/jails");
 
         INIT.call_once(|| {
@@ -156,36 +162,59 @@ mod tests {
     }
 }
 
-pub enum Release {
-    FreeBSDFull(FreeBSDFullRel),
-    ZfsClone(zfs::DataSet),
+pub enum Source {
+    FreeBSD {
+        release: String,
+        mirror: String,
+        dists: Vec<String>,
+    },
+    Cloned {
+        path: String,
+    },
 }
 
-pub struct FreeBSDFullRel {
-    pub release: String,
-    pub dists: Vec<String>,
-    pub mirror: String,
-}
+impl Source {
+    pub fn install(&self, dest_path: &str, dest_dataset: &zfs::DataSet) -> Result<()> {
+        match &self {
+            Source::FreeBSD {
+                release,
+                mirror,
+                dists,
+            } => {
+                dest_dataset.create()?;
+                if !(&dest_dataset.snap_exists("base")?) {
+                    self.install_freebsd(release, mirror, dists, dest_path)?;
+                    &dest_dataset.snap("base")?;
+                };
+            }
+            Source::Cloned { path } => self.install_clone(path, dest_dataset)?,
+        }
 
-impl FreeBSDFullRel {
-    // pub fn new(config: settings::Release) -> Self {
-    //     FreeBSDFullRel {
-    //         release: config.release,
-    //         dists: config.dists,
-    //         mirror: config.mirror,
-    //     }
-    // }
+        Ok(())
+    }
 
-    pub fn extract(&self, dest: &str) -> Result<()> {
-        for dist in &self.dists {
+    fn install_freebsd(
+        &self,
+        release: &str,
+        mirror: &str,
+        dists: &Vec<String>,
+        dest: &str,
+    ) -> Result<()> {
+        for dist in dists {
             println!("Extracing {} to {}", &dist, &dest);
 
             let url = format!(
                 "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
-                &self.mirror, &self.release, dist
+                mirror, release, dist
             );
             fetch_extract(&url, &dest)?;
         }
+        Ok(())
+    }
+
+    fn install_clone(&self, path: &str, dest_dataset: &zfs::DataSet) -> Result<()> {
+        let src_dataset = zfs::DataSet::new(path);
+        src_dataset.clone(&"ready", dest_dataset.get_path())?;
         Ok(())
     }
 }
