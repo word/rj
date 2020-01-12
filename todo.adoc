@@ -48,3 +48,55 @@
 * rc service
 
 * think about config versioning!
+
+== Config layout
+
+/usr/local/etc/rj.conf
+/usr/local/etc/rj.conf.d/
+
+== CLI interface
+
+set up base and pre-reqisites:
+
+----
+rj init
+----
+
+bring up new jails
+config updates trigger restart
+
+remove old jails
+ * issue: tracking state? (avoid)
+ * warn about orphaned jails
+ * have a purge flag
+
+----
+rj apply <jailname>
+----
+
+preview changes
+ * show config diff
+ * show if jail would be restarted
+
+----
+rj plan <jailname>
+----
+
+upgrade jail
+ * stop jail
+ * freebsd-update
+ * start jail
+ * optional release flag
+
+----
+rj upgrade <jailname> -r <release>
+----
+
+show outdated jails
+ * compare to the release in config file
+ * lookup the latest patch release
+   * or just run freebsd-update to see if anything is outstanding
+
+----
+rj outdated
+----

@@ -5,26 +5,26 @@ use std::collections::HashMap;
 // use std::env;
 
 #[derive(Debug, Deserialize)]
-struct Release {
-    release: String,
-    mirror: String,
-    dists: Vec<String>,
+pub struct Release {
+    pub release: String,
+    pub mirror: String,
+    pub dists: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
-struct Jail {
-    kind: String,
-    release: Option<String>,
-    basejail: Option<String>,
+pub struct Jail {
+    pub kind: String,
+    pub release: Option<String>,
+    pub basejail: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
-    debug: bool,
-    jails_dataset: String,
-    jails_mountpoint: String,
-    jail: HashMap<String, Jail>,
-    release: HashMap<String, Release>,
+    pub debug: bool,
+    pub jails_dataset: String,
+    pub jails_mountpoint: String,
+    pub jail: HashMap<String, Jail>,
+    pub release: HashMap<String, Release>,
 }
 
 #[allow(dead_code)]
@@ -68,17 +68,17 @@ mod tests {
 
     #[test]
     fn test_settings() -> () {
-        let settings = Settings::new("config.toml").unwrap();
-        println!("{:?}", settings);
-        assert_eq!(settings.debug, false);
-        assert_eq!(settings.release["12"].release, "12.0-RELEASE");
-        assert_eq!(settings.release["12"].mirror, "ftp.uk.freebsd.org");
-        assert_eq!(settings.release["12"].dists, vec!["base", "lib32"]);
-        assert_eq!(settings.jail["base"].kind, "full");
-        assert_eq!(settings.jail["base"].release, Some("12".to_string()));
-        assert_eq!(settings.jail["base"].basejail, None);
-        assert_eq!(settings.jail["example"].kind, "clone");
-        assert_eq!(settings.jail["example"].basejail, Some("base".to_string()));
-        assert_eq!(settings.jail["example"].release, None);
+        let s = Settings::new("config.toml").unwrap();
+        println!("{:?}", s);
+        assert_eq!(s.debug, false);
+        assert_eq!(s.release["12"].release, "12.0-RELEASE");
+        assert_eq!(s.release["12"].mirror, "ftp.uk.freebsd.org");
+        assert_eq!(s.release["12"].dists, vec!["base", "lib32"]);
+        assert_eq!(s.jail["base"].kind, "full");
+        assert_eq!(s.jail["base"].release, Some("12".to_string()));
+        assert_eq!(s.jail["base"].basejail, None);
+        assert_eq!(s.jail["example"].kind, "clone");
+        assert_eq!(s.jail["example"].basejail, Some("base".to_string()));
+        assert_eq!(s.jail["example"].release, None);
     }
 }

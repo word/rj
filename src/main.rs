@@ -6,35 +6,29 @@ mod errors;
 mod settings;
 mod zfs;
 use rj::{FreeBSDFullRel, Jail, Release};
+use settings::Settings;
 
 fn make_it_so() -> Result<()> {
-    let jails_mount = "/jails";
-    let basejail_name = "basejail";
-    let basejail_release = "12.0-RELEASE";
-    let freebsd_mirror = "ftp.uk.freebsd.org";
-
-    let basejail_rel = Release::FreeBSDFull(FreeBSDFullRel {
-        release: basejail_release.to_string(),
-        mirror: freebsd_mirror.to_string(),
-        dists: vec!["base".to_string(), "lib32".to_string()],
-    });
+    let settings = settings::Settings::new("config.toml")?;
 
     // Create jail data set
-    let jails_ds = zfs::DataSet::new("zroot/jails");
+    let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
-    jails_ds.set("mountpoint", &jails_mount)?;
+    jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
 
     // Create basejail
-    let basejail = Jail::new(
-        &format!("{}/{}", &jails_ds.get_path(), basejail_name),
-        basejail_rel,
-    );
-    match basejail.exists()? {
-        true => println!("Basejail '{}' already exists, skipping", &basejail.name()),
-        false => {
-            basejail.create()?;
-        }
-    };
+    // let basejail_rel = Release::FreeBSDFull(FreeBSDFullRel::new(settings.release["12"]));
+
+    // let basejail = Jail::new(
+    //     &format!("{}/{}", &settings.jails_mountpoint, "base"),
+    //     basejail_rel,
+    // );
+    // match basejail.exists()? {
+    //     true => println!("Basejail '{}' already exists, skipping", &basejail.name()),
+    //     false => {
+    //         basejail.create()?;
+    //     }
+    // };
 
     Ok(())
 }

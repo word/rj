@@ -2,15 +2,31 @@ debug = false
 jails_dataset = "zroot/jails"
 jails_mountpoint = "/jails"
 
+# Releases
+
 [release.12]
 release = "12.0-RELEASE"
 mirror = "ftp.uk.freebsd.org"
 dists = [ "base", "lib32" ]
 
+# Provisioners
+
+# [provisioner.puppet]
+# kind="puppet"
+# path="manifest/"
+
+# [provisioner.base]
+# kind="shell"
+# path="script.sh"
+
+# Jails
+
 [jail.base]
 kind = "full"
 release = "12"
+# provisioners = [ "base" ]
 
 [jail.example]
 kind = "clone"
 basejail = "base"
+# provisioners = [ "puppet" ]
