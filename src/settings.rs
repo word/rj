@@ -1,8 +1,9 @@
 use anyhow::Result;
 use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
-use std::collections::HashMap;
-// use std::env;
+// use std::collections::HashMap;
+use indexmap::IndexMap; // like HashMap but preserves insertion order
+                        // use std::env;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
@@ -20,6 +21,7 @@ pub enum Source {
 #[derive(Debug, Deserialize)]
 pub struct Jail {
     pub source: String,
+    pub order: i16,
 }
 
 #[derive(Debug, Deserialize)]
@@ -27,8 +29,8 @@ pub struct Settings {
     pub debug: bool,
     pub jails_dataset: String,
     pub jails_mountpoint: String,
-    pub jail: HashMap<String, Jail>,
-    pub source: HashMap<String, Source>,
+    pub jail: IndexMap<String, Jail>,
+    pub source: IndexMap<String, Source>,
 }
 
 #[allow(dead_code)]
@@ -76,7 +78,9 @@ mod tests {
         println!("{:?}", s);
         assert_eq!(s.debug, false);
         assert_eq!(s.jail["base"].source, "freebsd12");
-        assert_eq!(s.jail["example"].source, "basejail");
+        assert_eq!(s.jail["base"].order, 10);
+        assert_eq!(s.jail["example"].source, "base");
+        assert_eq!(s.jail["example"].order, 20);
 
         match &s.source["freebsd12"] {
             Source::FreeBSD {
@@ -91,14 +95,11 @@ mod tests {
             _ => {}
         }
 
-        match &s.source["basejail"] {
+        match &s.source["base"] {
             Source::Cloned { path } => {
                 assert_eq!(path, "zroot/jails/base");
             }
             _ => {}
         }
-        // assert_eq!(s.source["freebsd12"].unwrap().release, "12.0-RELEASE");
-        // assert_eq!(s.release["12"].mirror, "ftp.uk.freebsd.org");
-        // assert_eq!(s.release["12"].dists, vec!["base", "lib32"]);
     }
 }

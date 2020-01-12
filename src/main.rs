@@ -11,10 +11,14 @@ use settings::Settings;
 fn make_it_so() -> Result<()> {
     let settings = settings::Settings::new("config.toml")?;
 
-    // Create jail data set
+    // Create jails root dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
     jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
+
+    for (key, val) in settings.jail.iter() {
+        println!("key: {} val: {:?}", key, val);
+    }
 
     // Create basejail
     // let basejail_rel = Release::FreeBSDFull(FreeBSDFullRel::new(settings.release["12"]));

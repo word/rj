@@ -10,26 +10,29 @@ release = "12.0-RELEASE"
 mirror = "ftp.uk.freebsd.org"
 dists = [ "base", "lib32" ]
 
-[source.basejail]
+[source.base]
 type = "clone"
 path = "zroot/jails/base"
 
 # Provisioners
 
 # [provisioner.puppet]
-# kind="puppet"
+# type="puppet"
 # path="manifest/"
 
-# [provisioner.base]
-# kind="shell"
+# [provisioner.shell]
+# type="shell"
 # path="script.sh"
 
 # Jails
 
 [jail.base]
+order = 10
 source = "freebsd12"
-# provisioners = [ "base" ]
+# run = false
+# provisioners = [ "shell" ]
 
 [jail.example]
-source = "basejail"
+order = 20
+source = "base"
 # provisioners = [ "puppet" ]
