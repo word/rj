@@ -29,11 +29,11 @@ pub struct Settings {
 
 #[allow(dead_code)]
 impl Settings {
-    pub fn new() -> Result<Self, ConfigError> {
+    pub fn new(config_file: &str) -> Result<Self, ConfigError> {
         let mut s = Config::new();
 
         // Start off by merging in the "default" configuration file
-        s.merge(File::with_name("config.toml"))?;
+        s.merge(File::with_name(config_file))?;
 
         // Add in the current environment file
         // Default to 'development' env
@@ -68,7 +68,17 @@ mod tests {
 
     #[test]
     fn test_settings() -> () {
-        let settings = Settings::new();
+        let settings = Settings::new("config.toml").unwrap();
         println!("{:?}", settings);
+        assert_eq!(settings.debug, false);
+        assert_eq!(settings.release["12"].release, "12.0-RELEASE");
+        assert_eq!(settings.release["12"].mirror, "ftp.uk.freebsd.org");
+        assert_eq!(settings.release["12"].dists, vec!["base", "lib32"]);
+        assert_eq!(settings.jail["base"].kind, "full");
+        assert_eq!(settings.jail["base"].release, Some("12".to_string()));
+        assert_eq!(settings.jail["base"].basejail, None);
+        assert_eq!(settings.jail["example"].kind, "clone");
+        assert_eq!(settings.jail["example"].basejail, Some("base".to_string()));
+        assert_eq!(settings.jail["example"].release, None);
     }
 }
