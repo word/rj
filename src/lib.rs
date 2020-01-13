@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use anyhow::Result;
+use serde::Deserialize;
 use std::fs;
 use std::path::Path;
 use tar::Archive;
@@ -12,15 +13,15 @@ mod zfs;
 
 use crate::errors::JailError;
 
-pub struct Jail {
+pub struct Jail<'a> {
     name: String,
     mountpoint: String,
-    source: Source,
+    source: &'a Source,
     zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
 }
 
-impl Jail {
+impl Jail<'_> {
     pub fn name(&self) -> &String {
         &self.name
     }
@@ -29,16 +30,16 @@ impl Jail {
         &self.mountpoint
     }
 
-    pub fn new(path: &str, source: Source) -> Jail {
-        let mut components: Vec<&str> = path.split("/").collect();
+    pub fn new<'a>(ds_path: &str, source: &'a Source) -> Jail<'a> {
+        let mut components: Vec<&str> = ds_path.split("/").collect();
         components.remove(0); // remove the zfs pool name
 
         Jail {
             name: components.last().unwrap().to_string(),
             mountpoint: format!("/{}", components.join("/")),
             source: source,
-            zfs_ds_path: path.to_string(),
-            zfs_ds: zfs::DataSet::new(path),
+            zfs_ds_path: ds_path.to_string(),
+            zfs_ds: zfs::DataSet::new(ds_path),
         }
     }
 
@@ -51,20 +52,8 @@ impl Jail {
             return Err(anyhow::Error::new(err));
         };
 
+        // install the jail using whatever source
         self.source.install(&self.mountpoint, &self.zfs_ds)?;
-
-        // match &self.source {
-        //     Source::FreeBSD(r) => {
-        //         self.zfs_ds.create()?;
-        //         if !(&self.zfs_ds.snap_exists("base")?) {
-        //             r.extract(&self.mountpoint)?;
-        //             &self.zfs_ds.snap("base")?;
-        //         };
-        //     }
-        //     Release::ZfsClone(src_dataset) => {
-        //         src_dataset.clone(&"ready", self.zfs_ds.get_path())?;
-        //     }
-        // };
 
         // TODO - should be moved to provisioner maybe perhaps
         self.zfs_ds.snap("ready")
@@ -162,15 +151,17 @@ mod tests {
     }
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type")]
 pub enum Source {
+    #[serde(alias = "freebsd")]
     FreeBSD {
         release: String,
         mirror: String,
         dists: Vec<String>,
     },
-    Cloned {
-        path: String,
-    },
+    #[serde(rename = "clone")]
+    Cloned { path: String },
 }
 
 impl Source {

@@ -9,30 +9,26 @@ use rj::{Jail, Source};
 use settings::Settings;
 
 fn make_it_so() -> Result<()> {
-    let settings = settings::Settings::new("config.toml")?;
+    let mut settings = Settings::new("config.toml")?;
+
+    // Sort jails by 'order' field
+    settings
+        .jail
+        .sort_by(|_, av, _, bv| av.order.cmp(&bv.order));
 
     // Create jails root dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
     jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
 
-    for (key, val) in settings.jail.iter() {
-        println!("key: {} val: {:?}", key, val);
+    // Create jails
+    for (jname, jconf) in settings.jail.iter() {
+        let jail = Jail::new(
+            &format!("{}/{}", settings.jails_dataset, jname),
+            &settings.source[&jconf.source],
+        );
+        jail.create()?;
     }
-
-    // Create basejail
-    // let basejail_rel = Release::FreeBSDFull(FreeBSDFullRel::new(settings.release["12"]));
-
-    // let basejail = Jail::new(
-    //     &format!("{}/{}", &settings.jails_mountpoint, "base"),
-    //     basejail_rel,
-    // );
-    // match basejail.exists()? {
-    //     true => println!("Basejail '{}' already exists, skipping", &basejail.name()),
-    //     false => {
-    //         basejail.create()?;
-    //     }
-    // };
 
     Ok(())
 }

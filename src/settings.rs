@@ -3,23 +3,11 @@ use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
 // use std::collections::HashMap;
 use indexmap::IndexMap; // like HashMap but preserves insertion order
-                        // use std::env;
+
+use super::Source;
 
 #[derive(Debug, Deserialize)]
-#[serde(tag = "type")]
-pub enum Source {
-    #[serde(alias = "freebsd")]
-    FreeBSD {
-        release: String,
-        mirror: String,
-        dists: Vec<String>,
-    },
-    #[serde(rename = "clone")]
-    Cloned { path: String },
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Jail {
+pub struct JailSettings {
     pub source: String,
     pub order: i16,
 }
@@ -29,7 +17,7 @@ pub struct Settings {
     pub debug: bool,
     pub jails_dataset: String,
     pub jails_mountpoint: String,
-    pub jail: IndexMap<String, Jail>,
+    pub jail: IndexMap<String, JailSettings>,
     pub source: IndexMap<String, Source>,
 }
 
