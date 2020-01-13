@@ -27,7 +27,12 @@ fn make_it_so() -> Result<()> {
             &format!("{}/{}", settings.jails_dataset, jname),
             settings.source[&jconf.source].clone(),
         );
-        jail.create()?;
+        if jail.exists()? {
+            println!("jail '{}' exists already, skipping", jail.name());
+        } else {
+            println!("Creating jail '{}'", jail.name());
+            jail.create()?;
+        }
     }
 
     Ok(())
