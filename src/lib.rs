@@ -13,15 +13,15 @@ mod zfs;
 
 use crate::errors::JailError;
 
-pub struct Jail<'a> {
+pub struct Jail {
     name: String,
     mountpoint: String,
-    source: &'a Source,
+    source: Source,
     zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
 }
 
-impl Jail<'_> {
+impl Jail {
     pub fn name(&self) -> &String {
         &self.name
     }
@@ -30,7 +30,7 @@ impl Jail<'_> {
         &self.mountpoint
     }
 
-    pub fn new<'a>(ds_path: &str, source: &'a Source) -> Jail<'a> {
+    pub fn new(ds_path: &str, source: Source) -> Jail {
         let mut components: Vec<&str> = ds_path.split("/").collect();
         components.remove(0); // remove the zfs pool name
 
@@ -151,7 +151,7 @@ mod tests {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum Source {
     #[serde(alias = "freebsd")]

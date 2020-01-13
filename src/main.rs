@@ -25,7 +25,7 @@ fn make_it_so() -> Result<()> {
     for (jname, jconf) in settings.jail.iter() {
         let jail = Jail::new(
             &format!("{}/{}", settings.jails_dataset, jname),
-            &settings.source[&jconf.source],
+            settings.source[&jconf.source].clone(),
         );
         jail.create()?;
     }
