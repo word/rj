@@ -6,8 +6,36 @@ mod cmd;
 mod errors;
 mod settings;
 mod zfs;
+use clap::ArgMatches;
 use rj::{Jail, Source};
 use settings::Settings;
+
+// Creates all jails
+fn create_all(settings: Settings) -> Result<()> {
+    for (jname, jconf) in settings.jail.iter() {
+        let jail = Jail::new(
+            &format!("{}/{}", settings.jails_dataset, jname),
+            settings.source[&jconf.source].clone(),
+        );
+
+        if jail.exists()? {
+            println!("jail '{}' exists already, skipping", jail.name());
+        } else {
+            println!("Creating jail '{}'", jail.name());
+            jail.create()?;
+        }
+    }
+
+    Ok(())
+}
+
+// Create subcommand
+fn create(matches: &ArgMatches, settings: Settings) -> Result<()> {
+    if matches.is_present("all") {
+        return create_all(settings);
+    }
+    Ok(())
+}
 
 fn make_it_so() -> Result<()> {
     let matches = cli::parse_args();
@@ -25,19 +53,12 @@ fn make_it_so() -> Result<()> {
     jails_ds.create()?;
     jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
 
-    // Create jails
-    for (jname, jconf) in settings.jail.iter() {
-        let jail = Jail::new(
-            &format!("{}/{}", settings.jails_dataset, jname),
-            settings.source[&jconf.source].clone(),
-        );
-
-        if jail.exists()? {
-            println!("jail '{}' exists already, skipping", jail.name());
-        } else {
-            println!("Creating jail '{}'", jail.name());
-            jail.create()?;
+    // Process subcommands
+    match matches.subcommand() {
+        ("create", Some(create_matches)) => {
+            create(create_matches, settings)?;
         }
+        _ => println!("fuckall"),
     }
 
     Ok(())
