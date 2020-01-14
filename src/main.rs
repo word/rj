@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::process;
 
+mod cli;
 mod cmd;
 mod errors;
 mod settings;
@@ -9,6 +10,9 @@ use rj::{Jail, Source};
 use settings::Settings;
 
 fn make_it_so() -> Result<()> {
+    let matches = cli::parse_args();
+
+    // FIXME - sort this durig load earlier so it can be immutable
     let mut settings = Settings::new("config.toml")?;
 
     // Sort jails by 'order' field
@@ -27,6 +31,7 @@ fn make_it_so() -> Result<()> {
             &format!("{}/{}", settings.jails_dataset, jname),
             settings.source[&jconf.source].clone(),
         );
+
         if jail.exists()? {
             println!("jail '{}' exists already, skipping", jail.name());
         } else {

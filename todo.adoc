@@ -56,30 +56,10 @@
 
 == CLI interface
 
-set up base and pre-reqisites:
-
-----
-rj init
-----
-
 bring up new jails
-config updates trigger restart
-
-remove old jails
- * issue: tracking state? (avoid)
- * warn about orphaned jails
- * have a purge flag
 
 ----
-rj apply <jailname>
-----
-
-preview changes
- * show config diff
- * show if jail would be restarted
-
-----
-rj plan <jailname>
+rj create <jailname>
 ----
 
 upgrade jail
@@ -99,4 +79,14 @@ show outdated jails
 
 ----
 rj outdated
+----
+
+----
+rj rm <jailname>
+----
+
+reserved for bundled config?
+
+----
+rj apply
 ----
