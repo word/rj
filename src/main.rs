@@ -12,20 +12,17 @@ mod zfs;
 use rj::{Jail, Source};
 use settings::Settings;
 
-// Creates all jails
-fn create_all(settings: Settings) -> Result<()> {
-    for (jname, jconf) in settings.jail.iter() {
-        let jail = Jail::new(
-            &format!("{}/{}", settings.jails_dataset, jname),
-            settings.source[&jconf.source].clone(),
-        );
+fn create_jail(name: &str, settings: &Settings) -> Result<()> {
+    let jail = Jail::new(
+        &format!("{}/{}", settings.jails_dataset, name),
+        settings.source[&settings.jail[name].source].clone(),
+    );
 
-        if jail.exists()? {
-            info!("jail '{}' exists already, skipping", jail.name());
-        } else {
-            info!("Creating jail '{}'", jail.name());
-            jail.create()?;
-        }
+    if jail.exists()? {
+        info!("jail '{}' exists already, skipping", jail.name());
+    } else {
+        info!("Creating jail '{}'", jail.name());
+        jail.create()?;
     }
 
     Ok(())
@@ -34,8 +31,14 @@ fn create_all(settings: Settings) -> Result<()> {
 // Create subcommand
 fn create(matches: &ArgMatches, settings: Settings) -> Result<()> {
     if matches.is_present("all") {
-        return create_all(settings);
+        for (jname, _) in settings.jail.iter() {
+            create_jail(jname, &settings)?
+        }
     }
+    Ok(())
+}
+
+fn destroy(matches: &ArgMatches, settings: Settings) -> Result<()> {
     Ok(())
 }
 
@@ -50,10 +53,13 @@ fn make_it_so() -> Result<()> {
 
     // Process subcommands
     match matches.subcommand() {
-        ("create", Some(create_matches)) => {
-            create(create_matches, settings)?;
+        ("create", Some(sub_matches)) => {
+            create(sub_matches, settings)?;
         }
-        _ => println!("fuckall"),
+        ("destroy", Some(sub_matches)) => {
+            destroy(sub_matches, settings)?;
+        }
+        _ => (), // handled by clap
     }
 
     Ok(())
