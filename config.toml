@@ -36,3 +36,7 @@ source = "freebsd12"
 order = 20
 source = "base"
 # provisioners = [ "puppet" ]
+
+[jail.anotherone]
+order = 19
+source = "base"

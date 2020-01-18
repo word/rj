@@ -41,14 +41,9 @@ fn create(matches: &ArgMatches, settings: Settings) -> Result<()> {
 
 fn make_it_so() -> Result<()> {
     let matches = cli::parse_args();
-
-    // FIXME - sort this durig load earlier so it can be immutable
-    let mut settings = Settings::new("config.toml")?;
-
-    // Sort jails by 'order' field
-    settings
-        .jail
-        .sort_by(|_, av, _, bv| av.order.cmp(&bv.order));
+    //TODO - set default config to /usr/local/etc/rj.toml
+    //       and allow changing via a cli flag
+    let settings = Settings::new("config.toml")?;
 
     // Create jails root dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);

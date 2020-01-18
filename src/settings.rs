@@ -49,8 +49,19 @@ impl Settings {
         // println!("debug: {:?}", s.get_bool("debug"));
         // println!("database: {:?}", s.get::<String>("database.url"));
 
+        let mut settings: Self;
+
         // You can deserialize (and thus freeze) the entire configuration as
-        s.try_into()
+        match s.try_into() {
+            Ok(s) => settings = s,
+            Err(e) => return Err(e),
+        }
+
+        // Sort jails by 'order' field
+        settings
+            .jail
+            .sort_by(|_, av, _, bv| av.order.cmp(&bv.order));
+        Ok(settings)
     }
 }
 

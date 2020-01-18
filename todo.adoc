@@ -2,7 +2,6 @@
 
 == doing:
 
-* logger
 
 == next up:
 
@@ -20,6 +19,7 @@
   * create jail.conf
   * start
   * stop
+* config includes or conf.d style include
 
 == missing tests:
   * cmd function
@@ -27,6 +27,7 @@
 
 == Done:
 
+* logger
 * cli args
 * read config from a toml file
 * zfs
