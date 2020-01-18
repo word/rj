@@ -35,3 +35,18 @@ impl std::error::Error for JailError {
         &self.0
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct ArgError(pub String);
+
+impl fmt::Display for ArgError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for ArgError {
+    fn description(&self) -> &str {
+        &self.0
+    }
+}

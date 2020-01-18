@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::ArgMatches;
-use log::{error, info};
+use log::{debug, error, info};
 use simplelog::*;
 use std::process;
 
@@ -34,16 +34,27 @@ fn create(matches: &ArgMatches, settings: Settings) -> Result<()> {
         for (jname, _) in settings.jail.iter() {
             create_jail(jname, &settings)?
         }
+        return Ok(());
     }
-    Ok(())
+
+    let jname = matches.value_of("jail_name").unwrap();
+    debug!("jail name: {}", jname);
+
+    if settings.jail.contains_key(jname) {
+        create_jail(jname, &settings)
+    } else {
+        Err(anyhow::Error::new(errors::ArgError(format!(
+            "Jail '{}' is not defined",
+            jname
+        ))))
+    }
 }
 
 fn destroy(matches: &ArgMatches, settings: Settings) -> Result<()> {
     Ok(())
 }
 
-fn make_it_so() -> Result<()> {
-    let matches = cli::parse_args();
+fn make_it_so(matches: ArgMatches) -> Result<()> {
     let settings = Settings::new(matches.value_of("config").unwrap())?;
 
     // Create jails root dataset
@@ -66,10 +77,17 @@ fn make_it_so() -> Result<()> {
 }
 
 fn main() {
-    TermLogger::init(LevelFilter::Info, Config::default(), TerminalMode::Mixed)
-        .expect("No interactive terminal");
+    let matches = cli::parse_args();
 
-    make_it_so().unwrap_or_else(|err| {
+    if matches.is_present("debug") {
+        TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed)
+            .expect("No interactive terminal");
+    } else {
+        TermLogger::init(LevelFilter::Info, Config::default(), TerminalMode::Mixed)
+            .expect("No interactive terminal");
+    }
+
+    make_it_so(matches).unwrap_or_else(|err| {
         error!("{}", err);
         process::exit(1);
     })

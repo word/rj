@@ -17,6 +17,12 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .takes_value(true)
                 .default_value("/usr/local/etc/rj.conf"),
         )
+        .arg(
+            Arg::with_name("debug")
+                .short("d")
+                .long("debug")
+                .help("Show debug messages"),
+        )
         .subcommand(
             SubCommand::with_name("create")
                 .about("Creates jails")
