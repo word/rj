@@ -50,7 +50,7 @@ fn create(matches: &ArgMatches, settings: Settings) -> Result<()> {
     }
 }
 
-fn destroy(matches: &ArgMatches, settings: Settings) -> Result<()> {
+fn destroy(_matches: &ArgMatches, _settings: Settings) -> Result<()> {
     Ok(())
 }
 

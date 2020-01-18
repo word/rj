@@ -32,13 +32,13 @@ impl Jail {
     }
 
     pub fn new(ds_path: &str, source: Source) -> Jail {
-        let mut components: Vec<&str> = ds_path.split("/").collect();
+        let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
 
         Jail {
             name: components.last().unwrap().to_string(),
             mountpoint: format!("/{}", components.join("/")),
-            source: source,
+            source,
             zfs_ds_path: ds_path.to_string(),
             zfs_ds: zfs::DataSet::new(ds_path),
         }
@@ -176,7 +176,7 @@ impl Source {
                 dest_dataset.create()?;
                 if !(&dest_dataset.snap_exists("base")?) {
                     self.install_freebsd(release, mirror, dists, dest_path)?;
-                    &dest_dataset.snap("base")?;
+                    dest_dataset.snap("base")?;
                 };
             }
             Source::Cloned { path } => self.install_clone(path, dest_dataset)?,
@@ -189,7 +189,7 @@ impl Source {
         &self,
         release: &str,
         mirror: &str,
-        dists: &Vec<String>,
+        dists: &[String],
         dest: &str,
     ) -> Result<()> {
         for dist in dists {

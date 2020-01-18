@@ -71,7 +71,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_settings() -> () {
+    fn test_settings() {
         let s = Settings::new("config.toml").unwrap();
         println!("{:?}", s);
         assert_eq!(s.debug, false);
@@ -80,24 +80,19 @@ mod tests {
         assert_eq!(s.jail["example"].source, "base");
         assert_eq!(s.jail["example"].order, 20);
 
-        match &s.source["freebsd12"] {
-            Source::FreeBSD {
-                release,
-                mirror,
-                dists,
-            } => {
-                assert_eq!(release, "12.0-RELEASE");
-                assert_eq!(mirror, "ftp.uk.freebsd.org");
-                assert_eq!(dists, &vec!["base".to_string(), "lib32".to_string()]);
-            }
-            _ => {}
+        if let Source::FreeBSD {
+            release,
+            mirror,
+            dists,
+        } = &s.source["freebsd12"]
+        {
+            assert_eq!(release, "12.0-RELEASE");
+            assert_eq!(mirror, "ftp.uk.freebsd.org");
+            assert_eq!(dists, &vec!["base".to_string(), "lib32".to_string()]);
         }
 
-        match &s.source["base"] {
-            Source::Cloned { path } => {
-                assert_eq!(path, "zroot/jails/base");
-            }
-            _ => {}
+        if let Source::Cloned { path } = &s.source["base"] {
+            assert_eq!(path, "zroot/jails/base");
         }
     }
 }

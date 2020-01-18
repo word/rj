@@ -18,19 +18,16 @@ impl DataSet {
 
     // create the zfs data set if it doesn't exist already
     pub fn create(&self) -> Result<bool> {
-        match self.exists()? {
-            true => {
-                info!("Dataset {} already exists, skipping", &self.path);
-                Ok(false)
-            }
-            false => {
-                info!("Creating zfs dataset {}", &self.path);
-                let mut zfs = Command::new("zfs");
-                zfs.arg("create");
-                zfs.arg(&self.path);
-                cmd::run(&mut zfs)?;
-                Ok(true)
-            }
+        if self.exists()? {
+            info!("Dataset {} already exists, skipping", &self.path);
+            Ok(false)
+        } else {
+            info!("Creating zfs dataset {}", &self.path);
+            let mut zfs = Command::new("zfs");
+            zfs.arg("create");
+            zfs.arg(&self.path);
+            cmd::run(&mut zfs)?;
+            Ok(true)
         }
     }
 
@@ -131,7 +128,7 @@ impl DataSet {
         let snaps = output
             .lines()
             .filter(|s| s.starts_with(&self.path))
-            .map(|s| s.split("@").last().unwrap().to_string())
+            .map(|s| s.split('@').last().unwrap().to_string())
             .collect::<Vec<String>>();
         Ok(snaps)
     }
@@ -207,7 +204,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_double_destroy() -> () {
+    fn test_ds_double_destroy() {
         let ds = DataSet::new("zroot/rjtest");
         assert!(ds.create().is_ok());
         assert!(ds.destroy().is_ok());
@@ -246,7 +243,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_invalid_path() -> () {
+    fn test_ds_invalid_path() {
         let inv_ds = DataSet::new("noexist/rjtest");
         assert!(inv_ds.create().is_err());
     }
