@@ -1,8 +1,7 @@
 use anyhow::Result;
 use config::{Config, ConfigError, Environment, File};
-use serde::Deserialize;
-// use std::collections::HashMap;
-use indexmap::IndexMap; // like HashMap but preserves insertion order
+use indexmap::IndexMap;
+use serde::Deserialize; // like HashMap but preserves order
 
 use super::Source;
 

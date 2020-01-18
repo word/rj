@@ -1,4 +1,7 @@
 use anyhow::Result;
+use clap::ArgMatches;
+use log::{error, info};
+use simplelog::*;
 use std::process;
 
 mod cli;
@@ -6,7 +9,6 @@ mod cmd;
 mod errors;
 mod settings;
 mod zfs;
-use clap::ArgMatches;
 use rj::{Jail, Source};
 use settings::Settings;
 
@@ -19,9 +21,9 @@ fn create_all(settings: Settings) -> Result<()> {
         );
 
         if jail.exists()? {
-            println!("jail '{}' exists already, skipping", jail.name());
+            info!("jail '{}' exists already, skipping", jail.name());
         } else {
-            println!("Creating jail '{}'", jail.name());
+            info!("Creating jail '{}'", jail.name());
             jail.create()?;
         }
     }
@@ -65,8 +67,11 @@ fn make_it_so() -> Result<()> {
 }
 
 fn main() {
+    TermLogger::init(LevelFilter::Info, Config::default(), TerminalMode::Mixed)
+        .expect("No interactive terminal");
+
     make_it_so().unwrap_or_else(|err| {
-        eprintln!("ERROR: {}", err);
+        error!("ERROR: {}", err);
         process::exit(1);
     })
 }

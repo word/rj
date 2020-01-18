@@ -2,16 +2,13 @@
 
 == doing:
 
-* cli args
+* logger
 
 == next up:
-
-* logger
 
 
 == backlog:
 
-* read config from a toml file
 * run
   * in chroot
   * in jail
@@ -20,8 +17,7 @@
   * shell script
   * puppet
 * jail
-  * create
-  * maintain jail.conf
+  * create jail.conf
   * start
   * stop
 
@@ -31,6 +27,8 @@
 
 == Done:
 
+* cli args
+* read config from a toml file
 * zfs
   * refactor zfs into a struct
   * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails

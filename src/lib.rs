@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use anyhow::Result;
+use log::info;
 use serde::Deserialize;
 use std::fs;
 use std::path::Path;
@@ -192,7 +193,7 @@ impl Source {
         dest: &str,
     ) -> Result<()> {
         for dist in dists {
-            println!("Extracing {} to {}", &dist, &dest);
+            info!("Extracing {} to {}", &dist, &dest);
 
             let url = format!(
                 "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
