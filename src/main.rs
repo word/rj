@@ -41,9 +41,7 @@ fn create(matches: &ArgMatches, settings: Settings) -> Result<()> {
 
 fn make_it_so() -> Result<()> {
     let matches = cli::parse_args();
-    //TODO - set default config to /usr/local/etc/rj.toml
-    //       and allow changing via a cli flag
-    let settings = Settings::new("config.toml")?;
+    let settings = Settings::new(matches.value_of("config").unwrap())?;
 
     // Create jails root dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
@@ -66,7 +64,7 @@ fn main() {
         .expect("No interactive terminal");
 
     make_it_so().unwrap_or_else(|err| {
-        error!("ERROR: {}", err);
+        error!("{}", err);
         process::exit(1);
     })
 }
