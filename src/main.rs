@@ -18,12 +18,7 @@ fn create_jail(name: &str, settings: &Settings) -> Result<()> {
         settings.source[&settings.jail[name].source].clone(),
     );
 
-    if jail.exists()? {
-        info!("jail '{}' exists already, skipping", jail.name());
-    } else {
-        info!("Creating jail '{}'", jail.name());
-        jail.create()?;
-    }
+    jail.create()?;
 
     Ok(())
 }
@@ -70,7 +65,7 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
         ("destroy", Some(sub_matches)) => {
             destroy(sub_matches, settings)?;
         }
-        _ => (), // handled by clap
+        _ => {} // handled by clap
     }
 
     Ok(())

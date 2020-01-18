@@ -13,7 +13,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .short("c")
                 .long("config")
                 .value_name("FILE")
-                .help("Path to a custom config file")
+                .help("Config file path")
                 .takes_value(true)
                 .default_value("/usr/local/etc/rj.conf"),
         )

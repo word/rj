@@ -12,8 +12,6 @@ mod errors;
 mod settings;
 mod zfs;
 
-use crate::errors::JailError;
-
 pub struct Jail {
     name: String,
     mountpoint: String,
@@ -44,20 +42,20 @@ impl Jail {
         }
     }
 
-    pub fn create(&self) -> Result<()> {
+    pub fn create(&self) -> Result<bool> {
+        info!("Creating jail '{}'", self.name());
+
         if self.exists()? {
-            let err = JailError(format!(
-                "Can\'t create jail: {}, already exists",
-                &self.name
-            ));
-            return Err(anyhow::Error::new(err));
+            info!("jail '{}' exists already, skipping", self.name());
+            return Ok(false);
         };
 
         // install the jail using whatever source
         self.source.install(&self.mountpoint, &self.zfs_ds)?;
 
         // TODO - should be moved to provisioner maybe perhaps
-        self.zfs_ds.snap("ready")
+        self.zfs_ds.snap("ready")?;
+        Ok(true)
     }
 
     pub fn destroy(&self) -> Result<()> {
@@ -116,13 +114,7 @@ mod tests {
     fn test_jail_create_existing() {
         let basejail = setup_once();
         let result = basejail.create();
-        assert!(result.is_err(), "{:?}", result);
-
-        // let error = result.unwrap_err();
-        assert_eq!(
-            result.unwrap_err().to_string(),
-            format!("Can't create jail: {}, already exists", basejail.name)
-        )
+        assert!(!result.unwrap());
     }
 
     static INIT: Once = Once::new();
