@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::ArgMatches;
 use indexmap::IndexMap;
-use log::{debug, error, info};
+use log::{debug, error};
 use simplelog::*;
 use std::process;
 
@@ -22,7 +22,7 @@ fn jail_action(action: &str, jail: &Jail) -> Result<()> {
 }
 
 // proces the subcommand
-fn run_subcommand(
+fn subcommand(
     sub_name: &str,
     sub_matches: &ArgMatches,
     jails: IndexMap<String, Jail>,
@@ -67,7 +67,7 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
 
     // Execute the subcommand
     if let (sub_name, Some(sub_matches)) = matches.subcommand() {
-        run_subcommand(sub_name, sub_matches, jails)?;
+        subcommand(sub_name, sub_matches, jails)?;
     }
 
     Ok(())
@@ -76,6 +76,7 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
 fn main() {
     let matches = cli::parse_args();
 
+    // TODO: set log level using env
     if matches.is_present("debug") {
         TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed)
             .expect("No interactive terminal");
