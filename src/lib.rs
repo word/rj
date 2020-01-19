@@ -88,73 +88,6 @@ impl Jail {
     }
 }
 
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-    use pretty_assertions::assert_eq;
-    use std::sync::Once;
-
-    #[test]
-    fn test_jail_mountpoint() {
-        let basejail = setup_once();
-        assert_eq!(basejail.mountpoint, "/jails/basejail");
-    }
-
-    #[test]
-    fn test_jail_name() {
-        let basejail = setup_once();
-        assert_eq!(basejail.name, "basejail");
-    }
-
-    #[test]
-    fn test_jail_thin_create_destroy() -> Result<()> {
-        let basejail = setup_once();
-        let source = Source::Cloned {
-            path: basejail.zfs_ds.get_path().to_string(),
-        };
-        let jail = Jail::new("zroot/jails/thinjail", source, 0);
-        jail.create()?;
-        assert!(jail.exists()?);
-        jail.destroy()?;
-        assert!(!jail.exists()?);
-        Ok(())
-    }
-
-    #[test]
-    fn test_jail_create_existing() {
-        let basejail = setup_once();
-        let result = basejail.create();
-        assert!(result.is_ok());
-    }
-
-    static INIT: Once = Once::new();
-
-    pub fn setup_once() -> Jail {
-        // Setup the basejail
-        let source = Source::FreeBSD {
-            release: "12.0-RELEASE".to_string(),
-            mirror: "ftp.uk.freebsd.org".to_string(),
-            dists: vec!["base".to_string(), "lib32".to_string()],
-            // dists: vec![], // extracts quicker...
-        };
-        let basejail = Jail::new("zroot/jails/basejail", source, 0);
-        let jails_ds = zfs::DataSet::new("zroot/jails");
-
-        INIT.call_once(|| {
-            // cleanup before all
-            // jails_ds.destroy_r().unwrap();
-            jails_ds.create().unwrap();
-            jails_ds.set("mountpoint", "/jails").unwrap();
-            if !(basejail.exists().unwrap()) {
-                basejail.create().unwrap();
-            }
-        });
-
-        basejail
-    }
-}
-
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum Source {
@@ -242,4 +175,71 @@ pub fn fetch_extract(url: &str, dest: &str) -> Result<()> {
         file.unpack_in(dest)?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use std::sync::Once;
+
+    static INIT: Once = Once::new();
+
+    pub fn setup_once() -> Jail {
+        // Setup the basejail
+        let source = Source::FreeBSD {
+            release: "12.0-RELEASE".to_string(),
+            mirror: "ftp.uk.freebsd.org".to_string(),
+            dists: vec!["base".to_string(), "lib32".to_string()],
+            // dists: vec![], // extracts quicker...
+        };
+        let basejail = Jail::new("zroot/jails/basejail", source, 0);
+        let jails_ds = zfs::DataSet::new("zroot/jails");
+
+        INIT.call_once(|| {
+            // cleanup before all
+            // jails_ds.destroy_r().unwrap();
+            jails_ds.create().unwrap();
+            jails_ds.set("mountpoint", "/jails").unwrap();
+            if !(basejail.exists().unwrap()) {
+                basejail.create().unwrap();
+            }
+        });
+
+        basejail
+    }
+
+    #[test]
+    fn test_jail_mountpoint() {
+        let basejail = setup_once();
+        assert_eq!(basejail.mountpoint, "/jails/basejail");
+    }
+
+    #[test]
+    fn test_jail_name() {
+        let basejail = setup_once();
+        assert_eq!(basejail.name, "basejail");
+    }
+
+    #[test]
+    fn test_jail_thin_create_destroy() -> Result<()> {
+        let basejail = setup_once();
+        let source = Source::Cloned {
+            path: basejail.zfs_ds.get_path().to_string(),
+        };
+        let jail = Jail::new("zroot/jails/thinjail", source, 0);
+        jail.create()?;
+        assert!(jail.exists()?);
+        jail.destroy()?;
+        assert!(!jail.exists()?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_jail_create_existing() {
+        let basejail = setup_once();
+        let result = basejail.create();
+        assert!(result.is_ok());
+    }
 }
