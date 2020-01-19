@@ -5,12 +5,21 @@ use serde::Deserialize; // like HashMap but preserves order
 
 use super::Source;
 
+#[derive(Debug, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum JailConfValue {
+    String(String),
+    Bool(bool),
+    Vec(Vec<String>),
+    Int(i32),
+}
+
 #[derive(Debug, Deserialize)]
 pub struct JailSettings {
     pub source: String,
     pub order: i16,
     #[serde(default)]
-    pub conf: Vec<String>,
+    pub conf: IndexMap<String, JailConfValue>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -18,7 +27,7 @@ pub struct Settings {
     pub jails_dataset: String,
     pub jails_mountpoint: String,
     #[serde(default)]
-    pub jails_defaults: Vec<String>,
+    pub jail_conf_defaults: IndexMap<String, JailConfValue>,
     pub jail: IndexMap<String, JailSettings>,
     pub source: IndexMap<String, Source>,
 }
@@ -79,13 +88,33 @@ mod tests {
         println!("{:?}", s);
         assert_eq!(s.jails_dataset, "zroot/jails");
         assert_eq!(s.jails_mountpoint, "/jails");
-        assert_eq!(s.jails_defaults.len(), 4);
+        assert_eq!(
+            s.jail_conf_defaults["exec_start"],
+            JailConfValue::String("/bin/sh /etc/rc".to_string())
+        );
         assert_eq!(s.jail["base"].source, "freebsd12");
         assert_eq!(s.jail["base"].order, 10);
-        assert_eq!(s.jail["base"].conf, Vec::<String>::new());
         assert_eq!(s.jail["example"].source, "base");
         assert_eq!(s.jail["example"].order, 20);
-        assert_eq!(s.jail["test"].conf.len(), 4);
+        assert_eq!(
+            s.jail["test"].conf["host_hostname"],
+            JailConfValue::String("test.jail".to_string())
+        );
+        assert_eq!(
+            s.jail["test"].conf["allow_mount"],
+            JailConfValue::Bool(true)
+        );
+        assert_eq!(
+            s.jail["test"].conf["allow_raw_sockets"],
+            JailConfValue::Int(1)
+        );
+        assert_eq!(
+            s.jail["test"].conf["ip4_addr"],
+            JailConfValue::Vec(vec![
+                "lo0|10.11.11.2/32".to_string(),
+                "10.23.23.2/32".to_string()
+            ])
+        );
 
         if let Source::FreeBSD {
             release,

@@ -1,13 +1,11 @@
-# Global
-
 jails_dataset = "zroot/jails"
 jails_mountpoint = "/jails"
-jails_defaults = [
-    "exec.start = /bin/sh /etc/rc",
-    "exec.stop = /bin/sh /etc/rc.shutdown",
-    "exec.clean",
-    "mount.devfs",
-]
+
+[jail_conf_defaults]
+exec_start = "/bin/sh /etc/rc"
+exec_stop = "/bin/sh /etc/rc.shutdown"
+exec_clean = true
+mount_devfs = true
 
 # Releases
 
@@ -20,16 +18,6 @@ dists = [ "base", "lib32" ]
 [source.base]
 type = "clone"
 path = "zroot/jails/base"
-
-# Provisioners
-
-# [provisioner.puppet]
-# type="puppet"
-# path="manifest/"
-
-# [provisioner.shell]
-# type="shell"
-# path="script.sh"
 
 # Jails
 
@@ -47,9 +35,9 @@ source = "base"
 [jail.test]
 order = 20
 source = "base"
-conf = [
-    "host.hostname = test.example.com",
-    "allow.set_hostname = 1",
-    "allow.raw_sockets = 1",
-    "ip4.addr = lo0|10.23.23.1",
-]
+[jail.test.conf]
+host_hostname = "test.jail"
+allow_set_hostname = 1
+allow_raw_sockets = 1
+ip4_addr = [ "lo0|10.11.11.2/32", "10.23.23.2/32" ]
+allow_mount = true

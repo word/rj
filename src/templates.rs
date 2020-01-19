@@ -27,6 +27,7 @@ fn render_jail_conf(name: &str, defaults: &[String], conf: &[String]) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -41,7 +42,7 @@ mod tests {
             "ip4.addr = lo0|10.23.23.1".to_string(),
         ];
         let rendered = render_jail_conf(&name, &defaults, &conf)?;
-        let ok = "Hello, Bob!";
+        let ok = indoc!("Hello, Bob!");
         assert_eq!(rendered, ok);
         Ok(())
     }
