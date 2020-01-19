@@ -25,9 +25,14 @@ fn jail_action(action: &str, jail: &Jail) -> Result<()> {
 fn subcommand(
     sub_name: &str,
     sub_matches: &ArgMatches,
-    jails: IndexMap<String, Jail>,
+    mut jails: IndexMap<String, Jail>,
 ) -> Result<()> {
     if sub_matches.is_present("all") {
+        // destroy jails in reverse order
+        if sub_name == "destroy" {
+            jails.sort_by(|_, av, _, bv| bv.order().cmp(&av.order()));
+        }
+
         for (_, jail) in jails.iter() {
             jail_action(&sub_name, &jail)?
         }
@@ -56,6 +61,7 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
         let jail = Jail::new(
             &format!("{}/{}", settings.jails_dataset, jname),
             settings.source[&jsettings.source].clone(),
+            jsettings.order,
         );
         jails.insert(jname.to_string(), jail);
     }

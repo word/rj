@@ -39,6 +39,22 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                         .help("Create all jails"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("destroy")
+                .about("Destroys jails")
+                .arg(
+                    Arg::with_name("jail_name")
+                        .help("Name of the jail to destroy")
+                        .index(1)
+                        .required_unless("all"),
+                )
+                .arg(
+                    Arg::with_name("all")
+                        .short("a")
+                        .long("all")
+                        .help("Destroy all jails"),
+                ),
+        )
 }
 
 // Parses the command line arguments and returns the matches.

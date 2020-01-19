@@ -18,6 +18,7 @@ pub struct Jail {
     source: Source,
     zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
+    order: i16,
 }
 
 impl Jail {
@@ -29,7 +30,11 @@ impl Jail {
         &self.mountpoint
     }
 
-    pub fn new(ds_path: &str, source: Source) -> Jail {
+    pub fn order(&self) -> &i16 {
+        &self.order
+    }
+
+    pub fn new(ds_path: &str, source: Source, order: i16) -> Jail {
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
 
@@ -39,6 +44,7 @@ impl Jail {
             source,
             zfs_ds_path: ds_path.to_string(),
             zfs_ds: zfs::DataSet::new(ds_path),
+            order,
         }
     }
 
@@ -57,6 +63,13 @@ impl Jail {
     }
 
     pub fn destroy(&self) -> Result<()> {
+        if self.exists()? {
+            info!("Destroying jail '{}'", &self.name);
+        } else {
+            info!("Jail '{}' doesn't exist, skipping", &self.name);
+            return Ok(());
+        }
+
         let snaps = self.zfs_ds.list_snaps()?;
         if !(snaps.is_empty()) {
             for snap in snaps {
@@ -100,7 +113,7 @@ mod tests {
         let source = Source::Cloned {
             path: basejail.zfs_ds.get_path().to_string(),
         };
-        let jail = Jail::new("zroot/jails/thinjail", source);
+        let jail = Jail::new("zroot/jails/thinjail", source, 0);
         jail.create()?;
         assert!(jail.exists()?);
         jail.destroy()?;
@@ -125,7 +138,7 @@ mod tests {
             dists: vec!["base".to_string(), "lib32".to_string()],
             // dists: vec![], // extracts quicker...
         };
-        let basejail = Jail::new("zroot/jails/basejail", source);
+        let basejail = Jail::new("zroot/jails/basejail", source, 0);
         let jails_ds = zfs::DataSet::new("zroot/jails");
 
         INIT.call_once(|| {
