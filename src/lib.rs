@@ -57,9 +57,7 @@ impl Jail {
         info!("Creating jail '{}'", self.name());
         // install the jail using whatever source
         self.source.install(&self.mountpoint, &self.zfs_ds)?;
-        // TODO - should be moved to provisioner maybe perhaps
-        self.zfs_ds.snap("ready")?;
-        Ok(())
+        self.provision()
     }
 
     pub fn destroy(&self) -> Result<()> {
@@ -82,7 +80,9 @@ impl Jail {
     pub fn start() {}
     pub fn stop() {}
     pub fn enable() {}
-    pub fn provision() {}
+    pub fn provision(&self) -> Result<()> {
+        self.zfs_ds.snap("ready")
+    }
     pub fn exists(&self) -> Result<bool> {
         self.zfs_ds.exists()
     }
