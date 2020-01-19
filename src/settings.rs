@@ -13,7 +13,6 @@ pub struct JailSettings {
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
-    pub debug: bool,
     pub jails_dataset: String,
     pub jails_mountpoint: String,
     pub jail: IndexMap<String, JailSettings>,
@@ -74,7 +73,6 @@ mod tests {
     fn test_settings() {
         let s = Settings::new("config.toml").unwrap();
         println!("{:?}", s);
-        assert_eq!(s.debug, false);
         assert_eq!(s.jail["base"].source, "freebsd12");
         assert_eq!(s.jail["base"].order, 10);
         assert_eq!(s.jail["example"].source, "base");
