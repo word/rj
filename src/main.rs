@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::ArgMatches;
+use indexmap::IndexMap;
 use log::{debug, error, info};
 use simplelog::*;
 use std::process;
@@ -12,31 +13,32 @@ mod zfs;
 use rj::{Jail, Source};
 use settings::Settings;
 
-fn create_jail(name: &str, settings: &Settings) -> Result<()> {
-    let jail = Jail::new(
-        &format!("{}/{}", settings.jails_dataset, name),
-        settings.source[&settings.jail[name].source].clone(),
-    );
-
-    jail.create()?;
-
-    Ok(())
+fn jail_action(action: &str, jail: &Jail) -> Result<()> {
+    match action {
+        "create" => jail.create(),
+        "destroy" => jail.destroy(),
+        _ => panic!("unknown action {}", action),
+    }
 }
 
-// Create subcommand
-fn create(matches: &ArgMatches, settings: Settings) -> Result<()> {
-    if matches.is_present("all") {
-        for (jname, _) in settings.jail.iter() {
-            create_jail(jname, &settings)?
+// proces the subcommand
+fn run_subcommand(
+    sub_name: &str,
+    sub_matches: &ArgMatches,
+    jails: IndexMap<String, Jail>,
+) -> Result<()> {
+    if sub_matches.is_present("all") {
+        for (_, jail) in jails.iter() {
+            jail_action(&sub_name, &jail)?
         }
         return Ok(());
     }
 
-    let jname = matches.value_of("jail_name").unwrap();
+    let jname = sub_matches.value_of("jail_name").unwrap();
     debug!("jail name: {}", jname);
 
-    if settings.jail.contains_key(jname) {
-        create_jail(jname, &settings)
+    if jails.contains_key(jname) {
+        jail_action(&sub_name, &jails[jname])
     } else {
         Err(anyhow::Error::new(errors::ArgError(format!(
             "Jail '{}' is not defined",
@@ -45,27 +47,27 @@ fn create(matches: &ArgMatches, settings: Settings) -> Result<()> {
     }
 }
 
-fn destroy(_matches: &ArgMatches, _settings: Settings) -> Result<()> {
-    Ok(())
-}
-
 fn make_it_so(matches: ArgMatches) -> Result<()> {
     let settings = Settings::new(matches.value_of("config").unwrap())?;
 
-    // Create jails root dataset
+    // Create an IndexMap of jails from settings
+    let mut jails = IndexMap::new();
+    for (jname, jsettings) in settings.jail.iter() {
+        let jail = Jail::new(
+            &format!("{}/{}", settings.jails_dataset, jname),
+            settings.source[&jsettings.source].clone(),
+        );
+        jails.insert(jname.to_string(), jail);
+    }
+
+    // Create jails root ZFS dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
     jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
 
-    // Process subcommands
-    match matches.subcommand() {
-        ("create", Some(sub_matches)) => {
-            create(sub_matches, settings)?;
-        }
-        ("destroy", Some(sub_matches)) => {
-            destroy(sub_matches, settings)?;
-        }
-        _ => {} // handled by clap
+    // Execute the subcommand
+    if let (sub_name, Some(sub_matches)) = matches.subcommand() {
+        run_subcommand(sub_name, sub_matches, jails)?;
     }
 
     Ok(())

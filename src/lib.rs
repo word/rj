@@ -42,12 +42,12 @@ impl Jail {
         }
     }
 
-    pub fn create(&self) -> Result<bool> {
+    pub fn create(&self) -> Result<()> {
         info!("Creating jail '{}'", self.name());
 
         if self.exists()? {
             info!("jail '{}' exists already, skipping", self.name());
-            return Ok(false);
+            return Ok(());
         };
 
         // install the jail using whatever source
@@ -55,7 +55,7 @@ impl Jail {
 
         // TODO - should be moved to provisioner maybe perhaps
         self.zfs_ds.snap("ready")?;
-        Ok(true)
+        Ok(())
     }
 
     pub fn destroy(&self) -> Result<()> {
@@ -114,7 +114,7 @@ mod tests {
     fn test_jail_create_existing() {
         let basejail = setup_once();
         let result = basejail.create();
-        assert!(!result.unwrap());
+        assert!(result.is_ok());
     }
 
     static INIT: Once = Once::new();
