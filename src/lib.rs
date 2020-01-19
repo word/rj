@@ -10,6 +10,7 @@ use xz2::read::XzDecoder;
 mod cmd;
 mod errors;
 mod settings;
+mod templates;
 mod zfs;
 
 pub struct Jail {

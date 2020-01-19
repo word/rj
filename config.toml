@@ -1,6 +1,13 @@
-debug = false
+# Global
+
 jails_dataset = "zroot/jails"
 jails_mountpoint = "/jails"
+jails_defaults = [
+    "exec.start = /bin/sh /etc/rc",
+    "exec.stop = /bin/sh /etc/rc.shutdown",
+    "exec.clean",
+    "mount.devfs",
+]
 
 # Releases
 
@@ -37,6 +44,12 @@ order = 20
 source = "base"
 # provisioners = [ "puppet" ]
 
-[jail.anotherone]
-order = 19
+[jail.test]
+order = 20
 source = "base"
+conf = [
+    "host.hostname = test.example.com",
+    "allow.set_hostname = 1",
+    "allow.raw_sockets = 1",
+    "ip4.addr = lo0|10.23.23.1",
+]

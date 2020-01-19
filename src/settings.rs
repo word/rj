@@ -9,12 +9,16 @@ use super::Source;
 pub struct JailSettings {
     pub source: String,
     pub order: i16,
+    #[serde(default)]
+    pub conf: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub jails_dataset: String,
     pub jails_mountpoint: String,
+    #[serde(default)]
+    pub jails_defaults: Vec<String>,
     pub jail: IndexMap<String, JailSettings>,
     pub source: IndexMap<String, Source>,
 }
@@ -73,10 +77,15 @@ mod tests {
     fn test_settings() {
         let s = Settings::new("config.toml").unwrap();
         println!("{:?}", s);
+        assert_eq!(s.jails_dataset, "zroot/jails");
+        assert_eq!(s.jails_mountpoint, "/jails");
+        assert_eq!(s.jails_defaults.len(), 4);
         assert_eq!(s.jail["base"].source, "freebsd12");
         assert_eq!(s.jail["base"].order, 10);
+        assert_eq!(s.jail["base"].conf, Vec::<String>::new());
         assert_eq!(s.jail["example"].source, "base");
         assert_eq!(s.jail["example"].order, 20);
+        assert_eq!(s.jail["test"].conf.len(), 4);
 
         if let Source::FreeBSD {
             release,
