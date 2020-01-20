@@ -9,7 +9,9 @@ mod cli;
 mod cmd;
 mod errors;
 mod settings;
+mod templates;
 mod zfs;
+
 use rj::{Jail, Source};
 use settings::Settings;
 
@@ -21,7 +23,7 @@ fn jail_action(action: &str, jail: &Jail) -> Result<()> {
     }
 }
 
-// proces the subcommand
+// process the subcommand
 fn subcommand(
     sub_name: &str,
     sub_matches: &ArgMatches,
