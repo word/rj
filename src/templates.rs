@@ -17,22 +17,24 @@ struct JailTemplate<'a> {
 fn prepare_lines(map: &IndexMap<&str, JailConfValue>) -> Result<Vec<String>> {
     let mut lines = vec![];
     for (k, v) in map {
+        let key = k.replacen("_", ".", 1);
+
         match v {
             JailConfValue::String(v) => {
-                lines.push(format!("{} = \"{}\";", k, v));
+                lines.push(format!("{} = \"{}\";", key, v));
             }
             JailConfValue::Bool(v) => {
-                lines.push(format!("{} = {};", k, v));
+                lines.push(format!("{} = {};", key, v));
             }
             JailConfValue::Int(v) => {
-                lines.push(format!("{} = {};", k, v));
+                lines.push(format!("{} = {};", key, v));
             }
             JailConfValue::Vec(v) => {
                 for item in v.iter().enumerate() {
                     if item.0 == 0 {
-                        lines.push(format!("{} = \"{}\";", k, item.1));
+                        lines.push(format!("{} = \"{}\";", key, item.1));
                     } else {
-                        lines.push(format!("{} += \"{}\";", k, item.1));
+                        lines.push(format!("{} += \"{}\";", key, item.1));
                     }
                 }
             }
