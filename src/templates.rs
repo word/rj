@@ -95,8 +95,7 @@ mod tests {
 
             prison {
                 host.hostname = "prison.example";
-            }
-        "#
+            }"#
         );
         println!("{:?}", ok);
         assert_eq!(rendered, ok);
