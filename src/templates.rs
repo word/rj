@@ -14,6 +14,33 @@ struct JailTemplate<'a> {
     conf: &'a Vec<String>,
 }
 
+fn prepare_lines(map: &IndexMap<&str, JailConfValue>) -> Result<Vec<String>> {
+    let mut lines = vec![];
+    for (k, v) in map {
+        match v {
+            JailConfValue::String(v) => {
+                lines.push(format!("{} = \"{}\";", k, v));
+            }
+            JailConfValue::Bool(v) => {
+                lines.push(format!("{} = {};", k, v));
+            }
+            JailConfValue::Int(v) => {
+                lines.push(format!("{} = {};", k, v));
+            }
+            JailConfValue::Vec(v) => {
+                for item in v.iter().enumerate() {
+                    if item.0 == 0 {
+                        lines.push(format!("{} = \"{}\";", k, item.1));
+                    } else {
+                        lines.push(format!("{} += \"{}\";", k, item.1));
+                    }
+                }
+            }
+        }
+    }
+    Ok(lines)
+}
+
 fn render_jail_conf(
     name: &str,
     defaults_map: &IndexMap<&str, JailConfValue>,
@@ -21,31 +48,8 @@ fn render_jail_conf(
 ) -> Result<String> {
     debug!("Rendering jail template");
 
-    let mut defaults = vec![];
-    let mut conf = vec![];
-
-    for (k, v) in defaults_map {
-        match v {
-            JailConfValue::String(v) => {
-                defaults.push(format!("{} = \"{}\";", k, v));
-            }
-            JailConfValue::Bool(v) => {
-                defaults.push(format!("{} = {};", k, v));
-            }
-            JailConfValue::Int(v) => {
-                defaults.push(format!("{} = {};", k, v));
-            }
-            JailConfValue::Vec(v) => {
-                for item in v.iter().enumerate() {
-                    if item.0 == 0 {
-                        defaults.push(format!("{} = \"{}\";", k, item.1));
-                    } else {
-                        defaults.push(format!("{} += \"{}\";", k, item.1));
-                    }
-                }
-            }
-        }
-    }
+    let defaults = prepare_lines(&defaults_map)?;
+    let conf = prepare_lines(&conf_map)?;
 
     let jail_template = JailTemplate {
         name,
