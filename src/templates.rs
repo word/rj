@@ -87,6 +87,7 @@ mod tests {
             "host_hostname",
             JailConfValue::String("prison.example".to_string()),
         );
+        conf.insert("allow_set_hostname", JailConfValue::Int(1));
         conf.insert(
             "ip4_addr",
             JailConfValue::Vec(vec![
@@ -102,6 +103,7 @@ mod tests {
 
             prison {
                 host.hostname = "prison.example";
+                allow.set_hostname = 1;
                 ip4.addr = "lo0|10.11.11.2/32";
                 ip4.addr += "lo0|10.23.23.2/32";
             }"#
