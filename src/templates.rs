@@ -87,6 +87,13 @@ mod tests {
             "host_hostname",
             JailConfValue::String("prison.example".to_string()),
         );
+        conf.insert(
+            "ip4_addr",
+            JailConfValue::Vec(vec![
+                "lo0|10.11.11.2/32".to_string(),
+                "lo0|10.23.23.2/32".to_string(),
+            ]),
+        );
         let rendered = render_jail_conf(&name, &defaults, &conf).unwrap();
         let ok = indoc!(
             r#"
@@ -95,6 +102,8 @@ mod tests {
 
             prison {
                 host.hostname = "prison.example";
+                ip4.addr = "lo0|10.11.11.2/32";
+                ip4.addr += "lo0|10.23.23.2/32";
             }"#
         );
         println!("{:?}", ok);
