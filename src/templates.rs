@@ -35,7 +35,15 @@ fn render_jail_conf(
             JailConfValue::Int(v) => {
                 defaults.push(format!("{} = {};", k, v));
             }
-            JailConfValue::Vec(v) => if v.len() > 1 {},
+            JailConfValue::Vec(v) => {
+                for item in v.iter().enumerate() {
+                    if item.0 == 0 {
+                        defaults.push(format!("{} = \"{}\";", k, item.1));
+                    } else {
+                        defaults.push(format!("{} += \"{}\";", k, item.1));
+                    }
+                }
+            }
         }
     }
 
