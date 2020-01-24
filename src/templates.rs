@@ -14,6 +14,8 @@ struct JailTemplate<'a> {
     conf: &'a Vec<String>,
 }
 
+// Converts the jail config IndexMap into vector of strings.
+// The format depends on what type JailConfValue is.
 fn prepare_lines(map: &IndexMap<&str, JailConfValue>) -> Result<Vec<String>> {
     let mut lines = vec![];
     for (k, v) in map {

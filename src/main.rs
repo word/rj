@@ -8,11 +8,12 @@ use std::process;
 mod cli;
 mod cmd;
 mod errors;
+mod jail;
 mod settings;
 mod templates;
 mod zfs;
 
-use rj::{Jail, Source};
+use jail::{Jail, Source};
 use settings::Settings;
 
 fn jail_action(action: &str, jail: &Jail) -> Result<()> {
@@ -61,9 +62,12 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
     let mut jails = IndexMap::new();
     for (jname, jsettings) in settings.jail.iter() {
         let jail = Jail::new(
+            // data set path
             &format!("{}/{}", settings.jails_dataset, jname),
+            // source
             settings.source[&jsettings.source].clone(),
-            jsettings.order,
+            // settings
+            settings.clone(),
         );
         jails.insert(jname.to_string(), jail);
     }

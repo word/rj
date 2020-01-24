@@ -7,11 +7,10 @@ use std::path::Path;
 use tar::Archive;
 use xz2::read::XzDecoder;
 
-mod cmd;
-mod errors;
-mod settings;
-mod templates;
-mod zfs;
+use crate::settings;
+use crate::zfs;
+
+use settings::Settings;
 
 pub struct Jail {
     name: String,
@@ -19,10 +18,11 @@ pub struct Jail {
     source: Source,
     zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
-    order: i16,
+    settings: Settings,
 }
 
 impl Jail {
+    // read only aliases for attributes
     pub fn name(&self) -> &String {
         &self.name
     }
@@ -32,10 +32,10 @@ impl Jail {
     }
 
     pub fn order(&self) -> &i16 {
-        &self.order
+        &self.settings.jail[&self.name].order
     }
 
-    pub fn new(ds_path: &str, source: Source, order: i16) -> Jail {
+    pub fn new(ds_path: &str, source: Source, settings: Settings) -> Jail {
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
 
@@ -45,7 +45,7 @@ impl Jail {
             source,
             zfs_ds_path: ds_path.to_string(),
             zfs_ds: zfs::DataSet::new(ds_path),
-            order,
+            settings,
         }
     }
 
@@ -195,7 +195,8 @@ mod tests {
             dists: vec!["base".to_string(), "lib32".to_string()],
             // dists: vec![], // extracts quicker...
         };
-        let basejail = Jail::new("zroot/jails/basejail", source, 0);
+        let s = Settings::new("config.toml").unwrap();
+        let basejail = Jail::new("zroot/jails/basejail", source, s);
         let jails_ds = zfs::DataSet::new("zroot/jails");
 
         INIT.call_once(|| {
@@ -229,7 +230,8 @@ mod tests {
         let source = Source::Cloned {
             path: basejail.zfs_ds.get_path().to_string(),
         };
-        let jail = Jail::new("zroot/jails/thinjail", source, 0);
+        let s = Settings::new("config.toml").unwrap();
+        let jail = Jail::new("zroot/jails/thinjail", source, s);
         jail.create()?;
         assert!(jail.exists()?);
         jail.destroy()?;

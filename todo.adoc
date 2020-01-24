@@ -2,6 +2,7 @@
 
 == doing:
 
+* create jail.conf
 
 == next up:
 
@@ -16,7 +17,6 @@
   * shell script
   * puppet
 * jail
-  * create jail.conf
   * start
   * stop
 * config includes or conf.d style include

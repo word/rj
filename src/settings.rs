@@ -5,7 +5,8 @@ use serde::Deserialize; // like HashMap but preserves order
 
 use super::Source;
 
-#[derive(Debug, Deserialize, PartialEq)]
+// Represents the different types of values a jail.conf option can have.
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum JailConfValue {
     String(String),
@@ -14,7 +15,7 @@ pub enum JailConfValue {
     Int(i32),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct JailSettings {
     pub source: String,
     pub order: i16,
@@ -22,7 +23,7 @@ pub struct JailSettings {
     pub conf: IndexMap<String, JailConfValue>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Settings {
     pub jails_dataset: String,
     pub jails_mountpoint: String,
