@@ -63,11 +63,11 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
     for (jname, jsettings) in settings.jail.iter() {
         let jail = Jail::new(
             // data set path
-            &format!("{}/{}", settings.jails_dataset, jname),
+            &format!("{}/{}", &settings.jails_dataset, &jname),
             // jail source
             &settings.source[&jsettings.source],
             // jail conf
-            jsettings,
+            &jsettings,
         );
         jails.insert(jname.to_string(), jail);
     }
