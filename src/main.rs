@@ -64,10 +64,10 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
         let jail = Jail::new(
             // data set path
             &format!("{}/{}", settings.jails_dataset, jname),
-            // source
+            // jail source
             settings.source[&jsettings.source].clone(),
-            // settings
-            settings.clone(),
+            // jail conf
+            jsettings,
         );
         jails.insert(jname.to_string(), jail);
     }

@@ -10,18 +10,18 @@ use xz2::read::XzDecoder;
 use crate::settings;
 use crate::zfs;
 
-use settings::Settings;
+use settings::JailSettings;
 
-pub struct Jail {
+pub struct Jail<'a> {
     name: String,
     mountpoint: String,
     source: Source,
     zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
-    settings: Settings,
+    settings: &'a JailSettings,
 }
 
-impl Jail {
+impl Jail<'_> {
     // read only aliases for attributes
     pub fn name(&self) -> &String {
         &self.name
@@ -32,10 +32,10 @@ impl Jail {
     }
 
     pub fn order(&self) -> &i16 {
-        &self.settings.jail[&self.name].order
+        &self.settings.order
     }
 
-    pub fn new(ds_path: &str, source: Source, settings: Settings) -> Jail {
+    pub fn new<'a>(ds_path: &str, source: Source, settings: &'a JailSettings) -> Jail<'a> {
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
 
@@ -182,12 +182,17 @@ pub fn fetch_extract(url: &str, dest: &str) -> Result<()> {
 mod tests {
 
     use super::*;
+    use lazy_static::lazy_static;
     use pretty_assertions::assert_eq;
+    use settings::Settings;
     use std::sync::Once;
 
     static INIT: Once = Once::new();
+    lazy_static! {
+        static ref S: Settings = Settings::new("config.toml").unwrap();
+    }
 
-    pub fn setup_once() -> Jail {
+    pub fn setup_once<'a>() -> Jail<'a> {
         // Setup the basejail
         let source = Source::FreeBSD {
             release: "12.0-RELEASE".to_string(),
@@ -195,8 +200,7 @@ mod tests {
             dists: vec!["base".to_string(), "lib32".to_string()],
             // dists: vec![], // extracts quicker...
         };
-        let s = Settings::new("config.toml").unwrap();
-        let basejail = Jail::new("zroot/jails/basejail", source, s);
+        let basejail = Jail::new("zroot/jails/basejail", source, &S.jail["base"]);
         let jails_ds = zfs::DataSet::new("zroot/jails");
 
         INIT.call_once(|| {
@@ -230,8 +234,7 @@ mod tests {
         let source = Source::Cloned {
             path: basejail.zfs_ds.get_path().to_string(),
         };
-        let s = Settings::new("config.toml").unwrap();
-        let jail = Jail::new("zroot/jails/thinjail", source, s);
+        let jail = Jail::new("zroot/jails/thinjail", source, &S.jail["test"]);
         jail.create()?;
         assert!(jail.exists()?);
         jail.destroy()?;
