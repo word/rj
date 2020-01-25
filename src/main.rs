@@ -10,11 +10,14 @@ mod cmd;
 mod errors;
 mod jail;
 mod settings;
+mod source;
 mod templates;
+mod util;
 mod zfs;
 
-use jail::{Jail, Source};
+use jail::Jail;
 use settings::Settings;
+use source::Source;
 
 fn jail_action(action: &str, jail: &Jail) -> Result<()> {
     match action {

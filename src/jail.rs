@@ -2,14 +2,13 @@
 use anyhow::Result;
 use indexmap::IndexMap;
 use log::info;
-use serde::Deserialize;
 use std::fs;
-// use std::fs::File;
 use std::path::Path;
 use tar::Archive;
 use xz2::read::XzDecoder;
 
 use crate::settings;
+use crate::source::Source;
 use crate::templates;
 use crate::zfs;
 
@@ -107,65 +106,6 @@ impl Jail<'_> {
     }
     pub fn exists(&self) -> Result<bool> {
         self.zfs_ds.exists()
-    }
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(tag = "type")]
-pub enum Source {
-    #[serde(alias = "freebsd")]
-    FreeBSD {
-        release: String,
-        mirror: String,
-        dists: Vec<String>,
-    },
-    #[serde(rename = "clone")]
-    Cloned { path: String },
-}
-
-impl Source {
-    pub fn install(&self, dest_path: &str, dest_dataset: &zfs::DataSet) -> Result<()> {
-        match &self {
-            Source::FreeBSD {
-                release,
-                mirror,
-                dists,
-            } => {
-                dest_dataset.create()?;
-                if !(&dest_dataset.snap_exists("base")?) {
-                    self.install_freebsd(release, mirror, dists, dest_path)?;
-                    dest_dataset.snap("base")?;
-                };
-            }
-            Source::Cloned { path } => self.install_clone(path, dest_dataset)?,
-        }
-
-        Ok(())
-    }
-
-    fn install_freebsd(
-        &self,
-        release: &str,
-        mirror: &str,
-        dists: &[String],
-        dest: &str,
-    ) -> Result<()> {
-        for dist in dists {
-            info!("Extracing {} to {}", &dist, &dest);
-
-            let url = format!(
-                "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
-                mirror, release, dist
-            );
-            fetch_extract(&url, &dest)?;
-        }
-        Ok(())
-    }
-
-    fn install_clone(&self, path: &str, dest_dataset: &zfs::DataSet) -> Result<()> {
-        let src_dataset = zfs::DataSet::new(path);
-        src_dataset.clone(&"ready", dest_dataset.get_path())?;
-        Ok(())
     }
 }
 
