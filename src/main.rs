@@ -65,7 +65,7 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
             // data set path
             &format!("{}/{}", settings.jails_dataset, jname),
             // jail source
-            settings.source[&jsettings.source].clone(),
+            &settings.source[&jsettings.source],
             // jail conf
             jsettings,
         );

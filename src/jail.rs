@@ -15,7 +15,7 @@ use settings::JailSettings;
 pub struct Jail<'a> {
     name: String,
     mountpoint: String,
-    source: Source,
+    source: &'a Source,
     zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
     settings: &'a JailSettings,
@@ -35,7 +35,7 @@ impl Jail<'_> {
         &self.settings.order
     }
 
-    pub fn new<'a>(ds_path: &str, source: Source, settings: &'a JailSettings) -> Jail<'a> {
+    pub fn new<'a>(ds_path: &str, source: &'a Source, settings: &'a JailSettings) -> Jail<'a> {
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
 
@@ -194,14 +194,12 @@ mod tests {
 
     pub fn setup_once<'a>() -> Jail<'a> {
         // Setup the basejail
-        let source = Source::FreeBSD {
-            release: "12.0-RELEASE".to_string(),
-            mirror: "ftp.uk.freebsd.org".to_string(),
-            dists: vec!["base".to_string(), "lib32".to_string()],
-            // dists: vec![], // extracts quicker...
-        };
-        let basejail = Jail::new("zroot/jails/basejail", source, &S.jail["base"]);
         let jails_ds = zfs::DataSet::new("zroot/jails");
+        let basejail = Jail::new(
+            "zroot/jails/basejail",
+            &S.source["freebsd12"],
+            &S.jail["base"],
+        );
 
         INIT.call_once(|| {
             // cleanup before all
@@ -230,11 +228,8 @@ mod tests {
 
     #[test]
     fn test_jail_thin_create_destroy() -> Result<()> {
-        let basejail = setup_once();
-        let source = Source::Cloned {
-            path: basejail.zfs_ds.get_path().to_string(),
-        };
-        let jail = Jail::new("zroot/jails/thinjail", source, &S.jail["test"]);
+        setup_once();
+        let jail = Jail::new("zroot/jails/thinjail", &S.source["base"], &S.jail["test"]);
         jail.create()?;
         assert!(jail.exists()?);
         jail.destroy()?;
