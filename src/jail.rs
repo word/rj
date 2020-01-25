@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use anyhow::Result;
+use indexmap::IndexMap;
 use log::info;
 use serde::Deserialize;
 use std::fs;
@@ -10,7 +11,7 @@ use xz2::read::XzDecoder;
 use crate::settings;
 use crate::zfs;
 
-use settings::JailSettings;
+use settings::{JailConfValue, JailSettings};
 
 pub struct Jail<'a> {
     name: String,
@@ -19,6 +20,7 @@ pub struct Jail<'a> {
     zfs_ds_path: String,
     zfs_ds: zfs::DataSet,
     settings: &'a JailSettings,
+    conf_defaults: &'a IndexMap<String, JailConfValue>,
 }
 
 impl Jail<'_> {
@@ -35,7 +37,12 @@ impl Jail<'_> {
         &self.settings.order
     }
 
-    pub fn new<'a>(ds_path: &str, source: &'a Source, settings: &'a JailSettings) -> Jail<'a> {
+    pub fn new<'a>(
+        ds_path: &str,
+        source: &'a Source,
+        settings: &'a JailSettings,
+        conf_defaults: &'a IndexMap<String, JailConfValue>,
+    ) -> Jail<'a> {
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
 
@@ -46,6 +53,7 @@ impl Jail<'_> {
             zfs_ds_path: ds_path.to_string(),
             zfs_ds: zfs::DataSet::new(ds_path),
             settings,
+            conf_defaults,
         }
     }
 
@@ -199,6 +207,7 @@ mod tests {
             "zroot/jails/basejail",
             &S.source["freebsd12"],
             &S.jail["base"],
+            &S.jail_conf_defaults,
         );
 
         INIT.call_once(|| {
@@ -229,7 +238,12 @@ mod tests {
     #[test]
     fn test_jail_thin_create_destroy() -> Result<()> {
         setup_once();
-        let jail = Jail::new("zroot/jails/thinjail", &S.source["base"], &S.jail["test"]);
+        let jail = Jail::new(
+            "zroot/jails/thinjail",
+            &S.source["base"],
+            &S.jail["test"],
+            &S.jail_conf_defaults,
+        );
         jail.create()?;
         assert!(jail.exists()?);
         jail.destroy()?;

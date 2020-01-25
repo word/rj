@@ -68,6 +68,7 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
             &settings.source[&jsettings.source],
             // jail conf
             &jsettings,
+            &settings.jail_conf_defaults,
         );
         jails.insert(jname.to_string(), jail);
     }
