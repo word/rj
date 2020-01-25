@@ -294,10 +294,10 @@ mod tests {
             test2 {
                 host.hostname = "test2.jail";
                 allow.set_hostname = 1;
-                allow_raw_sockets = 1
+                allow.raw_sockets = 1;
                 ip4.addr = "lo0|10.11.11.2/32";
                 ip4.addr += "lo0|10.23.23.2/32";
-                allow_mount = true;
+                allow.mount = true;
             }"#
         );
         let jail_conf_path = "/etc/jail.test2.conf";

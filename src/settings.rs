@@ -1,7 +1,8 @@
 use anyhow::Result;
-use config::{Config, ConfigError, Environment, File};
-use indexmap::IndexMap;
-use serde::Deserialize; // like HashMap but preserves order
+use indexmap::IndexMap; // like HashMap but preserves insertion order
+use serde::Deserialize;
+use std::fs;
+use toml;
 
 use super::Source;
 
@@ -35,45 +36,14 @@ pub struct Settings {
 
 #[allow(dead_code)]
 impl Settings {
-    pub fn new(config_file: &str) -> Result<Self, ConfigError> {
-        let mut s = Config::new();
-
-        // Start off by merging in the "default" configuration file
-        s.merge(File::with_name(config_file))?;
-
-        // Add in the current environment file
-        // Default to 'development' env
-        // Note that this file is _optional_
-        // let env = env::var("RUN_MODE").unwrap_or("development".into());
-        // s.merge(File::with_name(&format!("config/{}", env)).required(false))?;
-
-        // Add in a local configuration file
-        // This file shouldn't be checked in to git
-        // s.merge(File::with_name("config/local").required(false))?;
-
-        // Add in settings from the environment (with a prefix of APP)
-        // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
-        s.merge(Environment::with_prefix("rj"))?;
-
-        // You may also programmatically change settings
-        // s.set("database.url", "postgres://")?;
-
-        // Now that we're done, let's access our configuration
-        // println!("debug: {:?}", s.get_bool("debug"));
-        // println!("database: {:?}", s.get::<String>("database.url"));
-
-        let mut settings: Self;
-
-        // You can deserialize (and thus freeze) the entire configuration as
-        match s.try_into() {
-            Ok(s) => settings = s,
-            Err(e) => return Err(e),
-        }
+    pub fn new(config_file: &str) -> Result<Self> {
+        let settings: Settings = toml::from_str(&fs::read_to_string(config_file)?)?;
 
         // Sort jails by 'order' field
-        settings
-            .jail
-            .sort_by(|_, av, _, bv| av.order.cmp(&bv.order));
+        // settings
+        //     .jail
+        //     .sort_by(|_, av, _, bv| av.order.cmp(&bv.order));
+
         Ok(settings)
     }
 }
@@ -95,25 +65,25 @@ mod tests {
         );
         assert_eq!(s.jail["base"].source, "freebsd12");
         assert_eq!(s.jail["base"].order, 10);
-        assert_eq!(s.jail["example"].source, "base");
-        assert_eq!(s.jail["example"].order, 20);
+        assert_eq!(s.jail["test1"].source, "base");
+        assert_eq!(s.jail["test1"].order, 20);
         assert_eq!(
-            s.jail["test"].conf["host_hostname"],
-            JailConfValue::String("test.jail".to_string())
+            s.jail["test2"].conf["host_hostname"],
+            JailConfValue::String("test2.jail".to_string())
         );
         assert_eq!(
-            s.jail["test"].conf["allow_mount"],
+            s.jail["test2"].conf["allow_mount"],
             JailConfValue::Bool(true)
         );
         assert_eq!(
-            s.jail["test"].conf["allow_raw_sockets"],
+            s.jail["test2"].conf["allow_raw_sockets"],
             JailConfValue::Int(1)
         );
         assert_eq!(
-            s.jail["test"].conf["ip4_addr"],
+            s.jail["test2"].conf["ip4_addr"],
             JailConfValue::Vec(vec![
                 "lo0|10.11.11.2/32".to_string(),
-                "10.23.23.2/32".to_string()
+                "lo0|10.23.23.2/32".to_string()
             ])
         );
 
