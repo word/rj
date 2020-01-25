@@ -4,11 +4,13 @@ use indexmap::IndexMap;
 use log::info;
 use serde::Deserialize;
 use std::fs;
+// use std::fs::File;
 use std::path::Path;
 use tar::Archive;
 use xz2::read::XzDecoder;
 
 use crate::settings;
+use crate::templates;
 use crate::zfs;
 
 use settings::{JailConfValue, JailSettings};
@@ -85,6 +87,17 @@ impl Jail<'_> {
         }
         self.zfs_ds.destroy()
     }
+
+    pub fn configure(&self) -> Result<()> {
+        let conf =
+            templates::render_jail_conf(&self.name, &self.conf_defaults, &self.settings.conf)?;
+        let conf_path = format!("/etc/jail.{}.conf", &self.name);
+
+        fs::write(conf_path, conf)?;
+
+        Ok(())
+    }
+
     pub fn update() {}
     pub fn start() {}
     pub fn stop() {}
@@ -190,6 +203,7 @@ pub fn fetch_extract(url: &str, dest: &str) -> Result<()> {
 mod tests {
 
     use super::*;
+    use indoc::indoc;
     use lazy_static::lazy_static;
     use pretty_assertions::assert_eq;
     use settings::Settings;
@@ -239,9 +253,9 @@ mod tests {
     fn test_jail_thin_create_destroy() -> Result<()> {
         setup_once();
         let jail = Jail::new(
-            "zroot/jails/thinjail",
+            "zroot/jails/thin",
             &S.source["base"],
-            &S.jail["test"],
+            &S.jail["test1"],
             &S.jail_conf_defaults,
         );
         jail.create()?;
@@ -256,5 +270,42 @@ mod tests {
         let basejail = setup_once();
         let result = basejail.create();
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_jail_configure() -> Result<()> {
+        setup_once();
+        let jail = Jail::new(
+            "zroot/jails/test2",
+            &S.source["base"],
+            &S.jail["test2"],
+            &S.jail_conf_defaults,
+        );
+        jail.create()?;
+        jail.configure()?;
+
+        let ok_jail_conf = indoc!(
+            r#"
+            exec.start = "/bin/sh /etc/rc";
+            exec.stop = "/bin/sh /etc/rc.shutdown";
+            exec.clean = true;
+            mount.devfs = true;
+
+            test2 {
+                host.hostname = "test2.jail";
+                allow.set_hostname = 1;
+                allow_raw_sockets = 1
+                ip4.addr = "lo0|10.11.11.2/32";
+                ip4.addr += "lo0|10.23.23.2/32";
+                allow_mount = true;
+            }"#
+        );
+        let jail_conf_path = "/etc/jail.test2.conf";
+
+        assert!(Path::new(jail_conf_path).is_file());
+        assert_eq!(ok_jail_conf, fs::read_to_string(jail_conf_path)?);
+
+        jail.destroy()?;
+        Ok(())
     }
 }

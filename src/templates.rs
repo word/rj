@@ -16,7 +16,7 @@ struct JailTemplate<'a> {
 
 // Converts the jail config IndexMap into vector of strings.
 // The format depends on what type JailConfValue is.
-fn prepare_lines(map: &IndexMap<&str, JailConfValue>) -> Result<Vec<String>> {
+fn prepare_lines(map: &IndexMap<String, JailConfValue>) -> Result<Vec<String>> {
     let mut lines = vec![];
     for (k, v) in map {
         let key = k.replacen("_", ".", 1);
@@ -45,10 +45,10 @@ fn prepare_lines(map: &IndexMap<&str, JailConfValue>) -> Result<Vec<String>> {
     Ok(lines)
 }
 
-fn render_jail_conf(
+pub fn render_jail_conf(
     name: &str,
-    defaults_map: &IndexMap<&str, JailConfValue>,
-    conf_map: &IndexMap<&str, JailConfValue>,
+    defaults_map: &IndexMap<String, JailConfValue>,
+    conf_map: &IndexMap<String, JailConfValue>,
 ) -> Result<String> {
     debug!("Rendering jail template");
 
@@ -77,21 +77,21 @@ mod tests {
         let name = "prison";
         let mut defaults = IndexMap::new();
         defaults.insert(
-            "exec_start",
+            "exec_start".to_string(),
             JailConfValue::String("/bin/sh /etc/rc".to_string()),
         );
         defaults.insert(
-            "exec_stop",
+            "exec_stop".to_string(),
             JailConfValue::String("/bin/sh /etc/rc.shutdown".to_string()),
         );
         let mut conf = IndexMap::new();
         conf.insert(
-            "host_hostname",
+            "host_hostname".to_string(),
             JailConfValue::String("prison.example".to_string()),
         );
-        conf.insert("allow_set_hostname", JailConfValue::Int(1));
+        conf.insert("allow_set_hostname".to_string(), JailConfValue::Int(1));
         conf.insert(
-            "ip4_addr",
+            "ip4_addr".to_string(),
             JailConfValue::Vec(vec![
                 "lo0|10.11.11.2/32".to_string(),
                 "lo0|10.23.23.2/32".to_string(),
