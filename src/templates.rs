@@ -48,15 +48,15 @@ fn prepare_lines(map: &IndexMap<String, JailConfValue>) -> Result<Vec<String>> {
 
 pub fn render_jail_conf(
     name: &str,
-    defaults_map: &IndexMap<String, JailConfValue>,
-    conf_map: &IndexMap<String, JailConfValue>,
-    extra_conf_map: &IndexMap<String, JailConfValue>,
+    defaults: &IndexMap<String, JailConfValue>,
+    conf: &IndexMap<String, JailConfValue>,
+    extra_conf: &IndexMap<String, JailConfValue>,
 ) -> Result<String> {
     debug!("Rendering jail template");
 
-    let defaults = prepare_lines(&defaults_map)?;
-    let conf = prepare_lines(&conf_map)?;
-    let extra_conf = prepare_lines(&extra_conf_map)?;
+    let defaults = prepare_lines(&defaults)?;
+    let conf = prepare_lines(&conf)?;
+    let extra_conf = prepare_lines(&extra_conf)?;
 
     let jail_template = JailTemplate {
         name,
