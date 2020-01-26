@@ -19,7 +19,6 @@ pub enum JailConfValue {
 #[derive(Clone, Debug, Deserialize)]
 pub struct JailSettings {
     pub source: String,
-    pub order: i16,
     #[serde(default)]
     pub conf: IndexMap<String, JailConfValue>,
 }
@@ -64,9 +63,7 @@ mod tests {
             JailConfValue::String("/bin/sh /etc/rc".to_string())
         );
         assert_eq!(s.jail["base"].source, "freebsd12");
-        assert_eq!(s.jail["base"].order, 10);
         assert_eq!(s.jail["test1"].source, "base");
-        assert_eq!(s.jail["test1"].order, 20);
         assert_eq!(
             s.jail["test2"].conf["host_hostname"],
             JailConfValue::String("test2.jail".to_string())

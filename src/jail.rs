@@ -31,10 +31,6 @@ impl Jail<'_> {
         &self.mountpoint
     }
 
-    pub fn order(&self) -> &i16 {
-        &self.settings.order
-    }
-
     pub fn new<'a>(
         ds_path: &str,
         source: &'a Source,

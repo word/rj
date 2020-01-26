@@ -31,16 +31,18 @@ fn jail_action(action: &str, jail: &Jail) -> Result<()> {
 fn subcommand(
     sub_name: &str,
     sub_matches: &ArgMatches,
-    mut jails: IndexMap<String, Jail>,
+    jails: IndexMap<String, Jail>,
 ) -> Result<()> {
     if sub_matches.is_present("all") {
-        // destroy jails in reverse order
         if sub_name == "destroy" {
-            jails.sort_by(|_, av, _, bv| bv.order().cmp(&av.order()));
-        }
-
-        for (_, jail) in jails.iter() {
-            jail_action(&sub_name, &jail)?
+            // destroy jails in reverse order
+            for (_, jail) in jails.iter().rev() {
+                jail_action(&sub_name, &jail)?
+            }
+        } else {
+            for (_, jail) in jails.iter() {
+                jail_action(&sub_name, &jail)?
+            }
         }
         return Ok(());
     }

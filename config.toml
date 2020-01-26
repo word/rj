@@ -22,18 +22,15 @@ path = "zroot/jails/base"
 # Jails
 
 [jail.base]
-order = 10
 source = "freebsd12"
 # run = false
 # provisioners = [ "shell" ]
 
 [jail.test1]
-order = 20
 source = "base"
 # provisioners = [ "puppet" ]
 
 [jail.test2]
-order = 20
 source = "base"
 [jail.test2.conf]
 host_hostname = "test2.jail"
