@@ -12,6 +12,7 @@ struct JailTemplate<'a> {
     name: &'a str,
     defaults: &'a Vec<String>,
     conf: &'a Vec<String>,
+    extra_conf: &'a Vec<String>,
 }
 
 // Converts the jail config IndexMap into vector of strings.
@@ -49,16 +50,19 @@ pub fn render_jail_conf(
     name: &str,
     defaults_map: &IndexMap<String, JailConfValue>,
     conf_map: &IndexMap<String, JailConfValue>,
+    extra_conf_map: &IndexMap<String, JailConfValue>,
 ) -> Result<String> {
     debug!("Rendering jail template");
 
     let defaults = prepare_lines(&defaults_map)?;
     let conf = prepare_lines(&conf_map)?;
+    let extra_conf = prepare_lines(&extra_conf_map)?;
 
     let jail_template = JailTemplate {
         name,
         defaults: &defaults,
         conf: &conf,
+        extra_conf: &extra_conf,
     };
 
     let mut rendered = jail_template.render()?;
@@ -69,6 +73,7 @@ pub fn render_jail_conf(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indexmap::indexmap;
     use indoc::indoc;
     use pretty_assertions::assert_eq;
 
@@ -97,13 +102,18 @@ mod tests {
                 "lo0|10.23.23.2/32".to_string(),
             ]),
         );
-        let rendered = render_jail_conf(&name, &defaults, &conf).unwrap();
+        let extra_conf = indexmap! {
+            "path".to_string() => JailConfValue::String("/jails/prison".to_string()),
+        };
+
+        let rendered = render_jail_conf(&name, &defaults, &conf, &extra_conf).unwrap();
         let ok = indoc!(
             r#"
             exec.start = "/bin/sh /etc/rc";
             exec.stop = "/bin/sh /etc/rc.shutdown";
 
             prison {
+                path = "/jails/prison";
                 host.hostname = "prison.example";
                 allow.set_hostname = 1;
                 ip4.addr = "lo0|10.11.11.2/32";

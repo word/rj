@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use anyhow::Result;
-use indexmap::IndexMap;
+use indexmap::{indexmap, IndexMap};
 use log::{debug, info};
 use std::fs;
 use std::path::Path;
@@ -96,9 +96,20 @@ impl Jail<'_> {
 
     pub fn configure(&self) -> Result<()> {
         info!("Writing config to: {}", &self.conf_path);
+
+        // add "path" jail parameter
+        let extra_conf = indexmap! {
+            "path".to_string() => JailConfValue::String(self.mountpoint.to_string()),
+        };
+
         fs::write(
             &self.conf_path,
-            templates::render_jail_conf(&self.name, &self.conf_defaults, &self.settings.conf)?,
+            templates::render_jail_conf(
+                &self.name,
+                &self.conf_defaults,
+                &self.settings.conf,
+                &extra_conf,
+            )?,
         )?;
         Ok(())
     }
@@ -212,6 +223,7 @@ mod tests {
             mount.devfs = true;
 
             test2 {
+                path = "/jails/test2";
                 host.hostname = "test2.jail";
                 allow.set_hostname = 1;
                 allow.raw_sockets = 1;
