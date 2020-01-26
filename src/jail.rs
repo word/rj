@@ -64,7 +64,6 @@ impl Jail<'_> {
         info!("Creating jail '{}'", self.name());
         // install the jail using whatever source
         self.source.install(&self.mountpoint, &self.zfs_ds)?;
-        println!("WORD: {}", &self.conf_path);
         self.configure()?;
         self.provision()
     }
@@ -219,7 +218,8 @@ mod tests {
                 ip4.addr = "lo0|10.11.11.2/32";
                 ip4.addr += "lo0|10.23.23.2/32";
                 allow.mount = true;
-            }"#
+            }
+            "#
         );
         let jail_conf_path = "/etc/jail.test2.conf";
 

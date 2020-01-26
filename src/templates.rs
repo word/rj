@@ -61,8 +61,8 @@ pub fn render_jail_conf(
         conf: &conf,
     };
 
-    let rendered = jail_template.render()?;
-
+    let mut rendered = jail_template.render()?;
+    rendered.push_str("\n");
     Ok(rendered)
 }
 
@@ -108,7 +108,8 @@ mod tests {
                 allow.set_hostname = 1;
                 ip4.addr = "lo0|10.11.11.2/32";
                 ip4.addr += "lo0|10.23.23.2/32";
-            }"#
+            }
+            "#
         );
         println!("{:?}", ok);
         assert_eq!(rendered, ok);
