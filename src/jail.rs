@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 use anyhow::Result;
 use indexmap::IndexMap;
-use log::info;
+use log::{debug, info};
 use std::fs;
+use std::path::Path;
 
 use crate::settings;
 use crate::source::Source;
@@ -19,6 +20,7 @@ pub struct Jail<'a> {
     zfs_ds: zfs::DataSet,
     settings: &'a JailSettings,
     conf_defaults: &'a IndexMap<String, JailConfValue>,
+    conf_path: String,
 }
 
 impl Jail<'_> {
@@ -39,15 +41,17 @@ impl Jail<'_> {
     ) -> Jail<'a> {
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
+        let name = components.last().unwrap().to_string();
 
         Jail {
-            name: components.last().unwrap().to_string(),
+            name: name.clone(),
             mountpoint: format!("/{}", components.join("/")),
             source,
             zfs_ds_path: ds_path.to_string(),
             zfs_ds: zfs::DataSet::new(ds_path),
             settings,
             conf_defaults,
+            conf_path: format!("/etc/jail.{}.conf", name),
         }
     }
 
@@ -60,6 +64,8 @@ impl Jail<'_> {
         info!("Creating jail '{}'", self.name());
         // install the jail using whatever source
         self.source.install(&self.mountpoint, &self.zfs_ds)?;
+        println!("WORD: {}", &self.conf_path);
+        self.configure()?;
         self.provision()
     }
 
@@ -71,22 +77,30 @@ impl Jail<'_> {
             return Ok(());
         }
 
+        // remove jail config file
+        if Path::new(&self.conf_path).is_file() {
+            debug!("Removing config file: {}", &self.conf_path);
+            fs::remove_file(&self.conf_path)?;
+        }
+
+        // remove zfs snapshots
         let snaps = self.zfs_ds.list_snaps()?;
         if !(snaps.is_empty()) {
+            debug!("Destroying snapshots");
             for snap in snaps {
                 self.zfs_ds.snap_destroy(&snap)?;
             }
         }
+        // destroy zfs dataset
         self.zfs_ds.destroy()
     }
 
     pub fn configure(&self) -> Result<()> {
-        let conf =
-            templates::render_jail_conf(&self.name, &self.conf_defaults, &self.settings.conf)?;
-        let conf_path = format!("/etc/jail.{}.conf", &self.name);
-
-        fs::write(conf_path, conf)?;
-
+        info!("Writing config to: {}", &self.conf_path);
+        fs::write(
+            &self.conf_path,
+            templates::render_jail_conf(&self.name, &self.conf_defaults, &self.settings.conf)?,
+        )?;
         Ok(())
     }
 
@@ -110,6 +124,7 @@ mod tests {
     use lazy_static::lazy_static;
     use pretty_assertions::assert_eq;
     use settings::Settings;
+    // use simplelog::*;
     use std::path::Path;
     use std::sync::Once;
 
@@ -129,6 +144,7 @@ mod tests {
         );
 
         INIT.call_once(|| {
+            // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
             // cleanup before all
             // jails_ds.destroy_r().unwrap();
             jails_ds.create().unwrap();
@@ -185,8 +201,9 @@ mod tests {
             &S.jail["test2"],
             &S.jail_conf_defaults,
         );
+        // make sure the jail doesn't exist
+        jail.destroy()?;
         jail.create()?;
-        jail.configure()?;
 
         let ok_jail_conf = indoc!(
             r#"

@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::ArgMatches;
 use indexmap::IndexMap;
 use log::{debug, error};
-use simplelog::*;
+use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
 use std::process;
 
 mod cli;
