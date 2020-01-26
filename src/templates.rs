@@ -80,28 +80,23 @@ mod tests {
     #[test]
     fn test_render_jail_conf() {
         let name = "prison";
-        let mut defaults = IndexMap::new();
-        defaults.insert(
-            "exec_start".to_string(),
-            JailConfValue::String("/bin/sh /etc/rc".to_string()),
-        );
-        defaults.insert(
-            "exec_stop".to_string(),
-            JailConfValue::String("/bin/sh /etc/rc.shutdown".to_string()),
-        );
-        let mut conf = IndexMap::new();
-        conf.insert(
-            "host_hostname".to_string(),
-            JailConfValue::String("prison.example".to_string()),
-        );
-        conf.insert("allow_set_hostname".to_string(), JailConfValue::Int(1));
-        conf.insert(
-            "ip4_addr".to_string(),
-            JailConfValue::Vec(vec![
-                "lo0|10.11.11.2/32".to_string(),
-                "lo0|10.23.23.2/32".to_string(),
-            ]),
-        );
+        let defaults = indexmap! {
+            "exec_start".to_string() =>
+                JailConfValue::String("/bin/sh /etc/rc".to_string()),
+            "exec_stop".to_string() =>
+                JailConfValue::String("/bin/sh /etc/rc.shutdown".to_string()),
+        };
+        let conf = indexmap! {
+            "host_hostname".to_string() =>
+                JailConfValue::String("prison.example".to_string()),
+            "allow_set_hostname".to_string() =>
+                JailConfValue::Int(1),
+            "ip4_addr".to_string() =>
+                JailConfValue::Vec(vec![
+                    "lo0|10.11.11.2/32".to_string(),
+                    "lo0|10.23.23.2/32".to_string(),
+                ]),
+        };
         let extra_conf = indexmap! {
             "path".to_string() => JailConfValue::String("/jails/prison".to_string()),
         };
