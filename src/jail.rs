@@ -68,7 +68,12 @@ impl Jail<'_> {
         self.source.install(&self.mountpoint, &self.zfs_ds)?;
         self.configure()?;
         self.provision()?;
-        self.enable()
+
+        if self.settings.enable {
+            self.enable()?;
+        }
+
+        Ok(())
     }
 
     pub fn destroy(&self) -> Result<()> {
@@ -172,13 +177,14 @@ mod tests {
         // Setup the basejail
         let jails_ds = zfs::DataSet::new("zroot/jails");
         let basejail = Jail::new(
-            "zroot/jails/basejail",
+            "zroot/jails/base",
             &S.source["freebsd12"],
             &S.jail["base"],
             &S.jail_conf_defaults,
         );
 
         INIT.call_once(|| {
+            // enable log messages for debugging
             // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
             // cleanup before all
             // jails_ds.destroy_r().unwrap();
@@ -195,30 +201,14 @@ mod tests {
     #[test]
     fn test_jail_mountpoint() {
         let basejail = setup_once();
-        assert_eq!(basejail.mountpoint, "/jails/basejail");
+        assert_eq!(basejail.mountpoint, "/jails/base");
     }
 
     #[test]
     fn test_jail_name() {
         let basejail = setup_once();
-        assert_eq!(basejail.name, "basejail");
+        assert_eq!(basejail.name, "base");
     }
-
-    // #[test]
-    // fn test_jail_thin_create_destroy() -> Result<()> {
-    //     setup_once();
-    //     let jail = Jail::new(
-    //         "zroot/jails/thin",
-    //         &S.source["base"],
-    //         &S.jail["test1"],
-    //         &S.jail_conf_defaults,
-    //     );
-    //     jail.create()?;
-    //     assert!(jail.exists()?);
-    //     jail.destroy()?;
-    //     assert!(!jail.exists()?);
-    //     Ok(())
-    // }
 
     // Trying to create an already created jail should just skip it without an error.
     #[test]
@@ -229,7 +219,7 @@ mod tests {
     }
 
     #[test]
-    fn test_jail_create() -> Result<()> {
+    fn test_jail_create_destroy() -> Result<()> {
         setup_once();
         let jail = Jail::new(
             "zroot/jails/test2",
@@ -277,6 +267,18 @@ mod tests {
         let enabled_jails = cmd::run(&mut sysrc)?;
         assert!(enabled_jails.trim_end().is_empty());
         assert_eq!(Path::new(jail_conf_path).is_file(), false);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_jail_disabled() -> Result<()> {
+        setup_once();
+        // Check that the base jail isn't enabled in rc.conf
+        let mut sysrc = Command::new("sysrc");
+        sysrc.arg("-n").arg("-q").arg("jails_list");
+        let enabled_jails = cmd::run(&mut sysrc)?;
+        assert!(enabled_jails.trim_end().is_empty());
 
         Ok(())
     }

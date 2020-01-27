@@ -10,6 +10,7 @@
 == next up
 
 * split up the big jail test into smaller tests?
+* tests for main
 
 == backlog
 

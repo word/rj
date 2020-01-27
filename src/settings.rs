@@ -19,6 +19,8 @@ pub enum JailConfValue {
 #[derive(Clone, Debug, Deserialize)]
 pub struct JailSettings {
     pub source: String,
+    #[serde(default = "default_enable")]
+    pub enable: bool,
     #[serde(default)]
     pub conf: IndexMap<String, JailConfValue>,
 }
@@ -47,6 +49,10 @@ impl Settings {
     }
 }
 
+fn default_enable() -> bool {
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -56,14 +62,19 @@ mod tests {
     fn test_settings() {
         let s = Settings::new("config.toml").unwrap();
         println!("{:?}", s);
+
         assert_eq!(s.jails_dataset, "zroot/jails");
         assert_eq!(s.jails_mountpoint, "/jails");
         assert_eq!(
             s.jail_conf_defaults["exec_start"],
             JailConfValue::String("/bin/sh /etc/rc".to_string())
         );
+
         assert_eq!(s.jail["base"].source, "freebsd12");
         assert_eq!(s.jail["test1"].source, "base");
+
+        // test 'conf' option
+
         assert_eq!(
             s.jail["test2"].conf["host_hostname"],
             JailConfValue::String("test2.jail".to_string())
@@ -84,6 +95,8 @@ mod tests {
             ])
         );
 
+        // test sources
+
         if let Source::FreeBSD {
             release,
             mirror,
@@ -98,5 +111,11 @@ mod tests {
         if let Source::Cloned { path } = &s.source["base"] {
             assert_eq!(path, "zroot/jails/base");
         }
+
+        // test 'enabled' option
+
+        assert_eq!(s.jail["base"].enable, false);
+        assert!(s.jail["test1"].enable);
+        assert!(s.jail["test2"].enable);
     }
 }
