@@ -69,7 +69,7 @@ impl Jail<'_> {
         self.configure()?;
         self.provision()?;
 
-        if self.settings.enable {
+        if self.settings.start {
             self.enable()?;
         }
 

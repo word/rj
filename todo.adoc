@@ -5,12 +5,14 @@
 * jail
   * start/stop
   * enable/disable (done)
-    * config option
+    * + related config toggles
 
 == next up
 
+* check jail config is specified before starting
 * split up the big jail test into smaller tests?
 * tests for main
+* fail on unknown config options
 
 == backlog
 

@@ -19,8 +19,8 @@ pub enum JailConfValue {
 #[derive(Clone, Debug, Deserialize)]
 pub struct JailSettings {
     pub source: String,
-    #[serde(default = "default_enable")]
-    pub enable: bool,
+    #[serde(default = "default_true")]
+    pub start: bool,
     #[serde(default)]
     pub conf: IndexMap<String, JailConfValue>,
 }
@@ -49,7 +49,7 @@ impl Settings {
     }
 }
 
-fn default_enable() -> bool {
+fn default_true() -> bool {
     true
 }
 
@@ -114,8 +114,8 @@ mod tests {
 
         // test 'enabled' option
 
-        assert_eq!(s.jail["base"].enable, false);
-        assert!(s.jail["test1"].enable);
-        assert!(s.jail["test2"].enable);
+        assert_eq!(s.jail["base"].start, false);
+        assert!(s.jail["test1"].start);
+        assert!(s.jail["test2"].start);
     }
 }

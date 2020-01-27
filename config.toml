@@ -23,7 +23,7 @@ path = "zroot/jails/base"
 
 [jail.base]
 source = "freebsd12"
-enable = false
+start = false
 # provisioners = [ "shell" ]
 
 [jail.test1]
