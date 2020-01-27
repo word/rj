@@ -4,7 +4,9 @@ use indexmap::{indexmap, IndexMap};
 use log::{debug, info};
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
+use crate::cmd;
 use crate::settings;
 use crate::source::Source;
 use crate::templates;
@@ -65,7 +67,8 @@ impl Jail<'_> {
         // install the jail using whatever source
         self.source.install(&self.mountpoint, &self.zfs_ds)?;
         self.configure()?;
-        self.provision()
+        self.provision()?;
+        self.enable()
     }
 
     pub fn destroy(&self) -> Result<()> {
@@ -75,6 +78,9 @@ impl Jail<'_> {
             info!("Jail '{}' doesn't exist, skipping", &self.name);
             return Ok(());
         }
+
+        // disable in rc.conf
+        self.disable()?;
 
         // remove jail config file
         if Path::new(&self.conf_path).is_file() {
@@ -115,9 +121,28 @@ impl Jail<'_> {
     }
 
     pub fn update() {}
+    pub fn rollback() {}
     pub fn start() {}
     pub fn stop() {}
-    pub fn enable() {}
+
+    pub fn enable(&self) -> Result<()> {
+        info!("Enabling in rc.conf");
+
+        let mut sysrc = Command::new("sysrc");
+        sysrc.arg(format!(r#"jails_list+="{}""#, &self.name));
+        cmd::run(&mut sysrc)?;
+        Ok(())
+    }
+
+    pub fn disable(&self) -> Result<()> {
+        info!("Disabling in rc.conf");
+
+        let mut sysrc = Command::new("sysrc");
+        sysrc.arg(format!(r#"jails_list-="{}""#, &self.name));
+        cmd::run(&mut sysrc)?;
+        Ok(())
+    }
+
     pub fn provision(&self) -> Result<()> {
         self.zfs_ds.snap("ready")
     }
@@ -179,22 +204,23 @@ mod tests {
         assert_eq!(basejail.name, "basejail");
     }
 
-    #[test]
-    fn test_jail_thin_create_destroy() -> Result<()> {
-        setup_once();
-        let jail = Jail::new(
-            "zroot/jails/thin",
-            &S.source["base"],
-            &S.jail["test1"],
-            &S.jail_conf_defaults,
-        );
-        jail.create()?;
-        assert!(jail.exists()?);
-        jail.destroy()?;
-        assert!(!jail.exists()?);
-        Ok(())
-    }
+    // #[test]
+    // fn test_jail_thin_create_destroy() -> Result<()> {
+    //     setup_once();
+    //     let jail = Jail::new(
+    //         "zroot/jails/thin",
+    //         &S.source["base"],
+    //         &S.jail["test1"],
+    //         &S.jail_conf_defaults,
+    //     );
+    //     jail.create()?;
+    //     assert!(jail.exists()?);
+    //     jail.destroy()?;
+    //     assert!(!jail.exists()?);
+    //     Ok(())
+    // }
 
+    // Trying to create an already created jail should just skip it without an error.
     #[test]
     fn test_jail_create_existing() {
         let basejail = setup_once();
@@ -203,7 +229,7 @@ mod tests {
     }
 
     #[test]
-    fn test_jail_configure() -> Result<()> {
+    fn test_jail_create() -> Result<()> {
         setup_once();
         let jail = Jail::new(
             "zroot/jails/test2",
@@ -211,10 +237,11 @@ mod tests {
             &S.jail["test2"],
             &S.jail_conf_defaults,
         );
-        // make sure the jail doesn't exist
-        jail.destroy()?;
+        jail.destroy()?; // ensure clean start
         jail.create()?;
+        assert!(jail.exists()?);
 
+        // Check jail conf is created correctly
         let ok_jail_conf = indoc!(
             r#"
             exec.start = "/bin/sh /etc/rc";
@@ -234,11 +261,23 @@ mod tests {
             "#
         );
         let jail_conf_path = "/etc/jail.test2.conf";
-
         assert!(Path::new(jail_conf_path).is_file());
         assert_eq!(ok_jail_conf, fs::read_to_string(jail_conf_path)?);
 
+        // Check jail is enabled in rc.conf
+        let mut sysrc = Command::new("sysrc");
+        sysrc.arg("-n").arg("jails_list");
+        let enabled_jails = cmd::run(&mut sysrc)?;
+        assert_eq!(enabled_jails.trim_end(), "test2");
+
         jail.destroy()?;
+
+        // make sure all resources are cleaned up
+        assert_eq!(Path::new(jail_conf_path).is_file(), false);
+        let enabled_jails = cmd::run(&mut sysrc)?;
+        assert!(enabled_jails.trim_end().is_empty());
+        assert_eq!(Path::new(jail_conf_path).is_file(), false);
+
         Ok(())
     }
 }

@@ -1,13 +1,18 @@
 = Todo
 
-== doing:
+== doing
 
-* create jail.conf
+* jail
+  * start
+  * stop
 
-== next up:
+== next up
 
+* split up the big jail test into smaller tests?
 
-== backlog:
+== backlog
+
+=== First release
 
 * run
   * in chroot
@@ -16,18 +21,18 @@
 * provision jail
   * shell script
   * puppet
-* jail
-  * start
-  * stop
 * config includes or conf.d style include
 * confirmation before deleting all jails (and -f to force)
+* move cmd::run to utils::run
 
-== missing tests:
-  * cmd function
-  * fetch extract function
+=== Later
+
+* parallel operation (create/upgrade etc)
+  * need to resurrect ordering
 
 == Done:
 
+* create jail.conf
 * logger
 * cli args
 * read config from a toml file
