@@ -4,7 +4,8 @@
 Vagrant.configure("2") do |config|
   # https://docs.vagrantup.com
 
-  config.vm.box = "punktde/freebsd-120-zfs"
+  config.vm.box = "punktde/freebsd-121-zfs"
+
   config.ssh.shell = "/bin/sh"
 
   # config.vm.network "forwarded_port", guest: 80, host: 8080
@@ -14,6 +15,11 @@ Vagrant.configure("2") do |config|
 
 
   config.vm.synced_folder ".", "/vagrant", type: "nfs"
+
+  # config.vm.provider :libvirt do |libvirt|
+  #   libvirt.cpus = 2
+  #   libvirt.memory = "3048"
+  # end
 
   config.vm.provider "virtualbox" do |vb|
     # Display the VirtualBox GUI when booting the machine
