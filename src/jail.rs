@@ -250,14 +250,14 @@ mod tests {
         let mut sysrc = Command::new("sysrc");
         sysrc.arg("-n").arg("jails_list");
         let enabled_jails = cmd::run(&mut sysrc)?;
-        assert_eq!(enabled_jails.find("test2"), Some(5));
+        assert!(enabled_jails.contains("test2"));
 
         jail.destroy()?;
 
         // make sure all resources are cleaned up
         assert_eq!(Path::new(jail_conf_path).is_file(), false);
         let enabled_jails = cmd::run(&mut sysrc)?;
-        assert_eq!(enabled_jails.find("test2"), None);
+        assert!(!enabled_jails.contains("test2"));
         assert_eq!(Path::new(jail_conf_path).is_file(), false);
 
         Ok(())
@@ -270,7 +270,7 @@ mod tests {
         let mut sysrc = Command::new("sysrc");
         sysrc.arg("-n").arg("-q").arg("jails_list");
         let enabled_jails = cmd::run(&mut sysrc)?;
-        assert_eq!(enabled_jails.find("base"), None);
+        assert!(!enabled_jails.contains("base"));
 
         Ok(())
     }
