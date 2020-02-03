@@ -4,6 +4,7 @@ use indexmap::IndexMap;
 use log::{debug, error};
 use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
 use std::process;
+use std::process::Command;
 
 mod cli;
 mod cmd;
@@ -64,10 +65,15 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
     let settings = Settings::new(matches.value_of("config").unwrap())?;
     let jails = settings.to_jails()?;
 
+    // TODO - move this to 'init' sub command
     // Create jails root ZFS dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
     jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
+    // enable jails in rc.conf
+    let mut sysrc = Command::new("sysrc");
+    sysrc.arg("jail_enable=YES");
+    cmd::run(&mut sysrc)?;
 
     // Execute the subcommand
     if let (sub_name, Some(sub_matches)) = matches.subcommand() {
