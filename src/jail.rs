@@ -188,8 +188,18 @@ mod tests {
 
             // Create test jails
             for (_, jail) in jails.iter() {
-                if !jail.exists().unwrap() {
-                    jail.create().unwrap();
+                if jail.exists().unwrap() {
+                    // Tidy up any jails left over from failed tests.
+                    // Leave 'base' around because it takes a while to extract.
+                    if jail.name() != "base" {
+                        jail.destroy().unwrap();
+                        jail.create().unwrap_or_else(|e| {
+                            panic!("Failed creating jail {}: {}", &jail.name(), e)
+                        });
+                    }
+                } else {
+                    jail.create()
+                        .unwrap_or_else(|e| panic!("Failed creating jail {}: {}", &jail.name(), e));
                 }
             }
         });
@@ -219,9 +229,10 @@ mod tests {
     #[test]
     fn test_jail_create_destroy() -> Result<()> {
         let jails = setup_once();
-        let jail = &jails["test2"];
+        let jail1 = &jails["test1"];
+        let jail2 = &jails["test2"];
 
-        assert!(jail.exists()?);
+        assert!(jail1.exists()?);
 
         // Check jail conf is created correctly
         let ok_jail_conf = indoc!(
@@ -252,13 +263,16 @@ mod tests {
         let enabled_jails = cmd::run(&mut sysrc)?;
         assert!(enabled_jails.contains("test2"));
 
-        jail.destroy()?;
-
+        jail2.destroy()?;
         // make sure all resources are cleaned up
         assert_eq!(Path::new(jail_conf_path).is_file(), false);
         let enabled_jails = cmd::run(&mut sysrc)?;
         assert!(!enabled_jails.contains("test2"));
         assert_eq!(Path::new(jail_conf_path).is_file(), false);
+
+        jail1.destroy()?;
+        let enabled_jails = cmd::run(&mut sysrc)?;
+        assert!(!enabled_jails.contains("test1"));
 
         Ok(())
     }
