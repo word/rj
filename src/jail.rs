@@ -173,15 +173,10 @@ mod tests {
         static ref S: Settings = Settings::new("config.toml").unwrap();
     }
 
-    pub fn setup_once<'a>() -> Jail<'a> {
+    pub fn setup_once<'a>() -> IndexMap<String, Jail<'a>> {
         // Setup the basejail
         let jails_ds = zfs::DataSet::new("zroot/jails");
-        let basejail = Jail::new(
-            "zroot/jails/base",
-            &S.source["freebsd12"],
-            &S.jail["base"],
-            &S.jail_conf_defaults,
-        );
+        let jails = S.to_jails().unwrap();
 
         INIT.call_once(|| {
             // enable log messages for debugging
@@ -190,43 +185,40 @@ mod tests {
             // jails_ds.destroy_r().unwrap();
             jails_ds.create().unwrap();
             jails_ds.set("mountpoint", "/jails").unwrap();
-            if !(basejail.exists().unwrap()) {
-                basejail.create().unwrap();
+            for (_, jail) in jails.iter() {
+                if !(jail.exists().unwrap()) {
+                    jail.create().unwrap();
+                }
             }
         });
-
-        basejail
+        jails
     }
 
     #[test]
     fn test_jail_mountpoint() {
-        let basejail = setup_once();
-        assert_eq!(basejail.mountpoint, "/jails/base");
+        let jails = setup_once();
+        assert_eq!(jails["base"].mountpoint, "/jails/base");
     }
 
     #[test]
     fn test_jail_name() {
-        let basejail = setup_once();
-        assert_eq!(basejail.name, "base");
+        let jails = setup_once();
+        assert_eq!(jails["base"].name, "base");
     }
 
     // Trying to create an already created jail should just skip it without an error.
     #[test]
     fn test_jail_create_existing() {
-        let basejail = setup_once();
-        let result = basejail.create();
+        let jails = setup_once();
+        let result = jails["base"].create();
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_jail_create_destroy() -> Result<()> {
-        setup_once();
-        let jail = Jail::new(
-            "zroot/jails/test2",
-            &S.source["base"],
-            &S.jail["test2"],
-            &S.jail_conf_defaults,
-        );
+        let jails = setup_once();
+        let jail = &jails["test2"];
+
         jail.destroy()?; // ensure clean start
         jail.create()?;
         assert!(jail.exists()?);
