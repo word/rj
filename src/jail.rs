@@ -185,8 +185,10 @@ mod tests {
             // jails_ds.destroy_r().unwrap();
             jails_ds.create().unwrap();
             jails_ds.set("mountpoint", "/jails").unwrap();
+
+            // Create test jails
             for (_, jail) in jails.iter() {
-                if !(jail.exists().unwrap()) {
+                if !jail.exists().unwrap() {
                     jail.create().unwrap();
                 }
             }
@@ -219,8 +221,6 @@ mod tests {
         let jails = setup_once();
         let jail = &jails["test2"];
 
-        jail.destroy()?; // ensure clean start
-        jail.create()?;
         assert!(jail.exists()?);
 
         // Check jail conf is created correctly
@@ -250,14 +250,14 @@ mod tests {
         let mut sysrc = Command::new("sysrc");
         sysrc.arg("-n").arg("jails_list");
         let enabled_jails = cmd::run(&mut sysrc)?;
-        assert_eq!(enabled_jails.trim_end(), "test2");
+        assert_eq!(enabled_jails.find("test2"), Some(5));
 
         jail.destroy()?;
 
         // make sure all resources are cleaned up
         assert_eq!(Path::new(jail_conf_path).is_file(), false);
         let enabled_jails = cmd::run(&mut sysrc)?;
-        assert!(enabled_jails.trim_end().is_empty());
+        assert_eq!(enabled_jails.find("test2"), None);
         assert_eq!(Path::new(jail_conf_path).is_file(), false);
 
         Ok(())
@@ -270,7 +270,7 @@ mod tests {
         let mut sysrc = Command::new("sysrc");
         sysrc.arg("-n").arg("-q").arg("jails_list");
         let enabled_jails = cmd::run(&mut sysrc)?;
-        assert!(enabled_jails.trim_end().is_empty());
+        assert_eq!(enabled_jails.find("base"), None);
 
         Ok(())
     }
