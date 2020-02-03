@@ -134,7 +134,7 @@ impl Jail<'_> {
         info!("Enabling in rc.conf");
 
         let mut sysrc = Command::new("sysrc");
-        sysrc.arg(format!(r#"jails_list+="{}""#, &self.name));
+        sysrc.arg(format!("jails_list+={}", &self.name));
         cmd::run(&mut sysrc)?;
         Ok(())
     }
@@ -143,7 +143,7 @@ impl Jail<'_> {
         info!("Disabling in rc.conf");
 
         let mut sysrc = Command::new("sysrc");
-        sysrc.arg(format!(r#"jails_list-="{}""#, &self.name));
+        sysrc.arg(format!("jails_list-={}", &self.name));
         cmd::run(&mut sysrc)?;
         Ok(())
     }
@@ -262,6 +262,9 @@ mod tests {
         sysrc.arg("-n").arg("jails_list");
         let enabled_jails = cmd::run(&mut sysrc)?;
         assert!(enabled_jails.contains("test2"));
+
+        // Start the jail
+        // jail1.start();
 
         jail2.destroy()?;
         // make sure all resources are cleaned up
