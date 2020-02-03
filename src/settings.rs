@@ -4,6 +4,7 @@ use serde::Deserialize;
 use std::fs;
 use toml;
 
+use super::Jail;
 use super::Source;
 
 // Represents the different types of values a jail.conf option can have.
@@ -46,6 +47,23 @@ impl Settings {
         //     .sort_by(|_, av, _, bv| av.order.cmp(&bv.order));
 
         Ok(settings)
+    }
+
+    pub fn to_jails(&self) -> Result<IndexMap<String, Jail>> {
+        let mut jails = IndexMap::new();
+        for (jname, jsettings) in &mut self.jail.iter() {
+            let jail = Jail::new(
+                // data set path
+                &format!("{}/{}", &self.jails_dataset, &jname),
+                // jail source
+                &self.source[&jsettings.source],
+                // jail conf
+                &jsettings,
+                &self.jail_conf_defaults,
+            );
+            jails.insert(jname.to_string(), jail);
+        }
+        Ok(jails)
     }
 }
 
@@ -117,5 +135,14 @@ mod tests {
         assert_eq!(s.jail["base"].start, false);
         assert!(s.jail["test1"].start);
         assert!(s.jail["test2"].start);
+    }
+
+    #[test]
+    fn test_settings_to_jail() {
+        let s = Settings::new("config.toml").unwrap();
+        let jails = s.to_jails().unwrap();
+        assert_eq!(jails["base"].name(), "base");
+        assert_eq!(jails["test1"].name(), "test1");
+        assert_eq!(jails["test2"].name(), "test2");
     }
 }

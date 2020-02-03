@@ -62,21 +62,7 @@ fn subcommand(
 
 fn make_it_so(matches: ArgMatches) -> Result<()> {
     let settings = Settings::new(matches.value_of("config").unwrap())?;
-
-    // Create an IndexMap of jails from settings
-    let mut jails = IndexMap::new();
-    for (jname, jsettings) in settings.jail.iter() {
-        let jail = Jail::new(
-            // data set path
-            &format!("{}/{}", &settings.jails_dataset, &jname),
-            // jail source
-            &settings.source[&jsettings.source],
-            // jail conf
-            &jsettings,
-            &settings.jail_conf_defaults,
-        );
-        jails.insert(jname.to_string(), jail);
-    }
+    let jails = settings.to_jails()?;
 
     // Create jails root ZFS dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);

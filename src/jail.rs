@@ -43,7 +43,7 @@ impl Jail<'_> {
     ) -> Jail<'a> {
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
-        let name = components.last().unwrap().to_string();
+        let name = (*components.last().unwrap()).to_string();
 
         Jail {
             name: name.clone(),
@@ -217,11 +217,6 @@ mod tests {
         let result = basejail.create();
         assert!(result.is_ok());
     }
-
-    // #[test]
-    // fn test_rc_enable() {
-
-    // }
 
     #[test]
     fn test_jail_create_destroy() -> Result<()> {
