@@ -218,6 +218,11 @@ mod tests {
         assert!(result.is_ok());
     }
 
+    // #[test]
+    // fn test_rc_enable() {
+
+    // }
+
     #[test]
     fn test_jail_create_destroy() -> Result<()> {
         setup_once();

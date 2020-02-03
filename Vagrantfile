@@ -14,7 +14,10 @@ Vagrant.configure("2") do |config|
   config.vm.network "private_network", ip: "10.33.55.5"
 
 
-  config.vm.synced_folder ".", "/vagrant", type: "nfs"
+  # config.vm.synced_folder ".", "/vagrant", type: "nfs"
+  config.vm.synced_folder ".", "/vagrant", type: "rsync",
+      rsync__exclude: [ "target/", ".vagrant/", ".git/" ],
+      rsync__args: ["-a", "--delete"]
 
   # config.vm.provider :libvirt do |libvirt|
   #   libvirt.cpus = 2
@@ -25,7 +28,7 @@ Vagrant.configure("2") do |config|
     # Display the VirtualBox GUI when booting the machine
     vb.gui = false
     # Customize the amount of memory on the VM:
-    vb.memory = "3048"
+    vb.memory = "4048"
     # CPUs
     vb.cpus = 2
     # Disable audio
