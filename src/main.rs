@@ -61,11 +61,7 @@ fn subcommand(
     }
 }
 
-fn make_it_so(matches: ArgMatches) -> Result<()> {
-    let settings = Settings::new(matches.value_of("config").unwrap())?;
-    let jails = settings.to_jails()?;
-
-    // TODO - move this to 'init' sub command
+fn init(settings: &Settings) -> Result<()> {
     // Create jails root ZFS dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
@@ -74,6 +70,15 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
     let mut sysrc = Command::new("sysrc");
     sysrc.arg("jail_enable=YES");
     cmd::run(&mut sysrc)?;
+    Ok(())
+}
+
+fn make_it_so(matches: ArgMatches) -> Result<()> {
+    let settings = Settings::new(matches.value_of("config").unwrap())?;
+    let jails = settings.to_jails()?;
+
+    // TODO - put this behind a subcommand
+    init(&settings)?;
 
     // Execute the subcommand
     if let (sub_name, Some(sub_matches)) = matches.subcommand() {

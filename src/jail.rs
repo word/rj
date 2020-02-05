@@ -71,6 +71,7 @@ impl Jail<'_> {
 
         if self.settings.start {
             self.enable()?;
+            self.start()?;
         }
 
         Ok(())
@@ -84,6 +85,8 @@ impl Jail<'_> {
             return Ok(());
         }
 
+        // stop - FIXME - check if running
+        self.stop()?;
         // disable in rc.conf
         self.disable()?;
 
@@ -127,11 +130,36 @@ impl Jail<'_> {
 
     pub fn update() {}
     pub fn rollback() {}
-    pub fn start() {}
-    pub fn stop() {}
+
+    pub fn start(&self) -> Result<()> {
+        info!("Starting jail {}", &self.name);
+
+        let mut service = Command::new("service");
+        service.arg("jail").arg("start").arg(&self.name);
+        cmd::run(&mut service)?;
+        Ok(())
+    }
+
+    pub fn stop(&self) -> Result<()> {
+        info!("Stopping jail {}", &self.name);
+
+        let mut service = Command::new("service");
+        service.arg("jail").arg("stop").arg(&self.name);
+        cmd::run(&mut service)?;
+        Ok(())
+    }
+
+    pub fn is_running(&self) -> Result<bool> {
+        let status = Command::new("jls")
+            .arg("-n")
+            .arg("-j")
+            .arg(&self.name)
+            .status()?;
+        Ok(status.success())
+    }
 
     pub fn enable(&self) -> Result<()> {
-        info!("Enabling in rc.conf");
+        info!("Enabling jail {} in rc.conf", &self.name);
 
         let mut sysrc = Command::new("sysrc");
         sysrc.arg(format!("jails_list+={}", &self.name));
@@ -175,7 +203,7 @@ mod tests {
 
     pub fn setup_once<'a>() -> IndexMap<String, Jail<'a>> {
         // Setup the basejail
-        let jails_ds = zfs::DataSet::new("zroot/jails");
+        // let jails_ds = zfs::DataSet::new("zroot/jails");
         let jails = S.to_jails().unwrap();
 
         INIT.call_once(|| {
@@ -183,8 +211,9 @@ mod tests {
             // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
             // cleanup before all
             // jails_ds.destroy_r().unwrap();
-            jails_ds.create().unwrap();
-            jails_ds.set("mountpoint", "/jails").unwrap();
+            crate::init(&S).unwrap();
+            // jails_ds.create().unwrap();
+            // jails_ds.set("mountpoint", "/jails").unwrap();
 
             // Create test jails
             for (_, jail) in jails.iter() {
@@ -263,8 +292,14 @@ mod tests {
         let enabled_jails = cmd::run(&mut sysrc)?;
         assert!(enabled_jails.contains("test2"));
 
-        // Start the jail
-        // jail1.start();
+        // Check that it's running
+        let status = Command::new("jls")
+            .arg("-n")
+            .arg("-j")
+            .arg("test2")
+            .status()
+            .unwrap();
+        assert!(status.success());
 
         jail2.destroy()?;
         // make sure all resources are cleaned up
