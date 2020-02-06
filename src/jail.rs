@@ -85,8 +85,9 @@ impl Jail<'_> {
             return Ok(());
         }
 
-        // stop - FIXME - check if running
-        self.stop()?;
+        if self.is_running()? {
+            self.stop()?;
+        }
         // disable in rc.conf
         self.disable()?;
 
@@ -293,13 +294,7 @@ mod tests {
         assert!(enabled_jails.contains("test2"));
 
         // Check that it's running
-        let status = Command::new("jls")
-            .arg("-n")
-            .arg("-j")
-            .arg("test2")
-            .status()
-            .unwrap();
-        assert!(status.success());
+        assert!(jail2.is_running().unwrap());
 
         jail2.destroy()?;
         // make sure all resources are cleaned up
