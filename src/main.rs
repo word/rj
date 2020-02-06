@@ -21,6 +21,7 @@ use settings::Settings;
 use source::Source;
 
 fn jail_action(action: &str, jail: &Jail) -> Result<()> {
+    debug!("action {}", action);
     match action {
         "create" => jail.create(),
         "destroy" => jail.destroy(),
@@ -65,7 +66,9 @@ fn init(settings: &Settings) -> Result<()> {
     // Create jails root ZFS dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
-    jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
+    if jails_ds.get("mountpoint")? != settings.jails_mountpoint {
+        jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
+    }
     // enable jails in rc.conf
     let mut sysrc = Command::new("sysrc");
     sysrc.arg("jail_enable=YES");
