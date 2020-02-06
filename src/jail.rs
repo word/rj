@@ -151,12 +151,8 @@ impl Jail<'_> {
     }
 
     pub fn is_running(&self) -> Result<bool> {
-        let status = Command::new("jls")
-            .arg("-n")
-            .arg("-j")
-            .arg(&self.name)
-            .status()?;
-        Ok(status.success())
+        let output = Command::new("jls").arg("-j").arg(&self.name).output()?;
+        Ok(output.status.success())
     }
 
     pub fn enable(&self) -> Result<()> {
