@@ -129,8 +129,12 @@ impl Jail<'_> {
         Ok(())
     }
 
-    pub fn update() {}
-    pub fn rollback() {}
+    pub fn update() {
+        todo!()
+    }
+    pub fn rollback() {
+        todo!()
+    }
 
     pub fn start(&self) -> Result<()> {
         info!("Starting jail {}", &self.name);
