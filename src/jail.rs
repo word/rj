@@ -295,33 +295,33 @@ mod tests {
             }
             "#
         );
-        let jail_conf_path = "/etc/jail.test2.conf";
-        assert!(Path::new(jail_conf_path).is_file());
-        assert_eq!(ok_jail_conf, fs::read_to_string(jail_conf_path)?);
+        let jail1_conf_path = "/etc/jail.test1.conf";
+        let jail2_conf_path = "/etc/jail.test2.conf";
+        assert!(Path::new(jail1_conf_path).is_file());
+        assert!(Path::new(jail2_conf_path).is_file());
+        assert_eq!(ok_jail_conf, fs::read_to_string(jail2_conf_path)?);
 
         // Check jail is enabled in rc.conf
+        assert!(jail1.is_enabled().unwrap());
         assert!(jail2.is_enabled().unwrap());
-        // let mut sysrc = Command::new("sysrc");
-        // sysrc.arg("-n").arg("jails_list");
-        // let enabled_jails = cmd::run(&mut sysrc)?;
-        // assert!(enabled_jails.contains("test2"));
 
         // Check that it's running
+        assert!(jail1.is_running().unwrap());
         assert!(jail2.is_running().unwrap());
 
-        jail2.destroy()?;
         // make sure all resources are cleaned up after destroy
-        // check config file is gone
-        assert_eq!(Path::new(jail_conf_path).is_file(), false);
-        // check jail is disabled in rc.conf
-        let mut sysrc = Command::new("sysrc");
-        sysrc.arg("-n").arg("jails_list");
-        let enabled_jails = cmd::run(&mut sysrc)?;
-        assert!(!enabled_jails.contains("test2"));
-
         jail1.destroy()?;
-        let enabled_jails = cmd::run(&mut sysrc)?;
-        assert!(!enabled_jails.contains("test1"));
+        // check config file is gone
+        assert_eq!(Path::new(jail1_conf_path).is_file(), false);
+        // check jail is disabled in rc.conf
+        assert_eq!(jail1.is_enabled().unwrap(), false);
+        // check jail is dead
+        assert_eq!(jail1.is_running().unwrap(), false);
+
+        jail2.destroy()?;
+        assert_eq!(Path::new(jail2_conf_path).is_file(), false);
+        assert_eq!(jail2.is_enabled().unwrap(), false);
+        assert_eq!(jail2.is_running().unwrap(), false);
 
         Ok(())
     }
