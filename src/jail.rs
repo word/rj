@@ -249,27 +249,27 @@ mod tests {
     }
 
     #[test]
-    fn test_jail_mountpoint() {
+    fn jail_mountpoint() {
         let jails = setup_once();
         assert_eq!(jails["base"].mountpoint, "/jails/base");
     }
 
     #[test]
-    fn test_jail_name() {
+    fn jail_name() {
         let jails = setup_once();
         assert_eq!(jails["base"].name, "base");
     }
 
     // Trying to create an already created jail should just skip it without an error.
     #[test]
-    fn test_jail_create_existing() {
+    fn jail_create_existing() {
         let jails = setup_once();
         let result = jails["base"].create();
         assert!(result.is_ok());
     }
 
     #[test]
-    fn test_jail_create_destroy() -> Result<()> {
+    fn jail_create_destroy() -> Result<()> {
         let jails = setup_once();
         let jail1 = &jails["test1"];
         let jail2 = &jails["test2"];
@@ -327,14 +327,11 @@ mod tests {
     }
 
     #[test]
-    fn test_jail_disabled() -> Result<()> {
-        setup_once();
-        // Check that the base jail isn't enabled in rc.conf
-        let mut sysrc = Command::new("sysrc");
-        sysrc.arg("-n").arg("-q").arg("jails_list");
-        let enabled_jails = cmd::run(&mut sysrc)?;
-        assert!(!enabled_jails.contains("base"));
-
+    fn jail_base_disabled() -> Result<()> {
+        let jails = setup_once();
+        let basejail = &jails["base"];
+        assert_eq!(basejail.is_enabled().unwrap(), false);
+        assert_eq!(basejail.is_running().unwrap(), false);
         Ok(())
     }
 }
