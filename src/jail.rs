@@ -88,8 +88,11 @@ impl Jail<'_> {
         if self.is_running()? {
             self.stop()?;
         }
+
         // disable in rc.conf
-        self.disable()?;
+        if self.is_enabled()? {
+            self.disable()?;
+        }
 
         // remove jail config file
         if Path::new(&self.conf_path).is_file() {
@@ -105,6 +108,7 @@ impl Jail<'_> {
                 self.zfs_ds.snap_destroy(&snap)?;
             }
         }
+
         // destroy zfs dataset
         self.zfs_ds.destroy()
     }
@@ -129,10 +133,11 @@ impl Jail<'_> {
         Ok(())
     }
 
-    pub fn update() {
+    pub fn update(&self) -> Result<()> {
         todo!()
     }
-    pub fn rollback() {
+
+    pub fn rollback(&self) -> Result<()> {
         todo!()
     }
 
@@ -159,6 +164,13 @@ impl Jail<'_> {
         Ok(output.status.success())
     }
 
+    pub fn is_enabled(&self) -> Result<bool> {
+        // let mut sysrc = Command::new("sysrc");
+        // sysrc.arg("-n").arg("jails_list");
+        let enabled_jails = cmd::run(&mut Command::new("sysrc").arg("-n").arg("jails_list"))?;
+        Ok(enabled_jails.contains(&self.name))
+    }
+
     pub fn enable(&self) -> Result<()> {
         info!("Enabling jail {} in rc.conf", &self.name);
 
@@ -180,6 +192,7 @@ impl Jail<'_> {
     pub fn provision(&self) -> Result<()> {
         self.zfs_ds.snap("ready")
     }
+
     pub fn exists(&self) -> Result<bool> {
         self.zfs_ds.exists()
     }
@@ -202,9 +215,8 @@ mod tests {
         static ref S: Settings = Settings::new("config.toml").unwrap();
     }
 
+    // Initialise and create test jails from example config file
     pub fn setup_once<'a>() -> IndexMap<String, Jail<'a>> {
-        // Setup the basejail
-        // let jails_ds = zfs::DataSet::new("zroot/jails");
         let jails = S.to_jails().unwrap();
 
         INIT.call_once(|| {
@@ -212,15 +224,15 @@ mod tests {
             // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
             // cleanup before all
             // jails_ds.destroy_r().unwrap();
+
+            // Initialise
             crate::init(&S).unwrap();
-            // jails_ds.create().unwrap();
-            // jails_ds.set("mountpoint", "/jails").unwrap();
 
             // Create test jails
             for (_, jail) in jails.iter() {
                 if jail.exists().unwrap() {
-                    // Tidy up any jails left over from failed tests.
-                    // Leave 'base' around because it takes a while to extract.
+                    // Tidy up any jails that may be left over from failed tests.
+                    // Leave 'base' around because it takes log time to extract.
                     if jail.name() != "base" {
                         jail.destroy().unwrap();
                         jail.create().unwrap_or_else(|e| {
@@ -288,20 +300,24 @@ mod tests {
         assert_eq!(ok_jail_conf, fs::read_to_string(jail_conf_path)?);
 
         // Check jail is enabled in rc.conf
-        let mut sysrc = Command::new("sysrc");
-        sysrc.arg("-n").arg("jails_list");
-        let enabled_jails = cmd::run(&mut sysrc)?;
-        assert!(enabled_jails.contains("test2"));
+        assert!(jail2.is_enabled().unwrap());
+        // let mut sysrc = Command::new("sysrc");
+        // sysrc.arg("-n").arg("jails_list");
+        // let enabled_jails = cmd::run(&mut sysrc)?;
+        // assert!(enabled_jails.contains("test2"));
 
         // Check that it's running
         assert!(jail2.is_running().unwrap());
 
         jail2.destroy()?;
-        // make sure all resources are cleaned up
+        // make sure all resources are cleaned up after destroy
+        // check config file is gone
         assert_eq!(Path::new(jail_conf_path).is_file(), false);
+        // check jail is disabled in rc.conf
+        let mut sysrc = Command::new("sysrc");
+        sysrc.arg("-n").arg("jails_list");
         let enabled_jails = cmd::run(&mut sysrc)?;
         assert!(!enabled_jails.contains("test2"));
-        assert_eq!(Path::new(jail_conf_path).is_file(), false);
 
         jail1.destroy()?;
         let enabled_jails = cmd::run(&mut sysrc)?;

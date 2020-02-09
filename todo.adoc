@@ -6,11 +6,11 @@
   * start/stop
   * enable/disable (done)
     * + related config toggles
+  * enabled check
 
 == next up
 
 * check jail config is specified before starting
-* split up the big jail test into smaller tests?
 * tests for main
 * fail on unknown config options
 
