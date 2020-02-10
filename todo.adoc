@@ -2,11 +2,7 @@
 
 == doing
 
-* jail
-  * start/stop
-  * enable/disable (done)
-    * + related config toggles
-  * enabled check
+ * apply config changes
 
 == next up
 
@@ -36,6 +32,9 @@
 
 == Done:
 
+* jail
+  * start/stop
+  * enable/disable
 * create jail.conf
 * logger
 * cli args

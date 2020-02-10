@@ -57,31 +57,44 @@ impl Jail<'_> {
         }
     }
 
+    // TODO - rename to 'apply'
     pub fn create(&self) -> Result<()> {
         if self.exists()? {
-            info!("jail '{}' exists already, skipping", self.name());
-            return Ok(());
+            info!("jail '{}' exists, updating", self.name());
+            // TODO - display diff and only update if changed
+            //      - config change needs to trigger a jail restart
+            self.configure()?;
+            // TODO - reprovision only if forced
+            // self.provision()?;
+            if self.settings.start {
+                if !(self.is_enabled()?) {
+                    info!("{}: disabled -> enabled", &self.name);
+                    self.enable()?
+                }
+                if !(self.is_running()?) {
+                    info!("{}: stopped -> running", &self.name);
+                    self.start()?
+                }
+            }
+        } else {
+            info!("Creating jail '{}'", self.name());
+            self.source.install(&self.mountpoint, &self.zfs_ds)?;
+            self.configure()?;
+            self.provision()?;
+            if self.settings.start {
+                self.enable()?;
+                self.start()?;
+            }
         };
-
-        info!("Creating jail '{}'", self.name());
-        // install the jail using whatever source
-        self.source.install(&self.mountpoint, &self.zfs_ds)?;
-        self.configure()?;
-        self.provision()?;
-
-        if self.settings.start {
-            self.enable()?;
-            self.start()?;
-        }
 
         Ok(())
     }
 
     pub fn destroy(&self) -> Result<()> {
         if self.exists()? {
-            info!("Destroying jail '{}'", &self.name);
+            info!("{}: destroying", &self.name);
         } else {
-            info!("Jail '{}' doesn't exist, skipping", &self.name);
+            info!("{}: doesn't exist, skipping", &self.name);
             return Ok(());
         }
 
@@ -96,14 +109,14 @@ impl Jail<'_> {
 
         // remove jail config file
         if Path::new(&self.conf_path).is_file() {
-            debug!("Removing config file: {}", &self.conf_path);
+            debug!("{}: removing config file: {}", &self.name, &self.conf_path);
             fs::remove_file(&self.conf_path)?;
         }
 
         // remove zfs snapshots
         let snaps = self.zfs_ds.list_snaps()?;
         if !(snaps.is_empty()) {
-            debug!("Destroying snapshots");
+            debug!("{}: destroying snapshots", &self.name);
             for snap in snaps {
                 self.zfs_ds.snap_destroy(&snap)?;
             }
@@ -114,7 +127,7 @@ impl Jail<'_> {
     }
 
     pub fn configure(&self) -> Result<()> {
-        info!("Writing config to: {}", &self.conf_path);
+        info!("{}: writing config to: {}", &self.name, &self.conf_path);
 
         // add "path" jail parameter
         let extra_conf = indexmap! {
@@ -142,7 +155,7 @@ impl Jail<'_> {
     }
 
     pub fn start(&self) -> Result<()> {
-        info!("Starting jail {}", &self.name);
+        info!("{}: starting", &self.name);
 
         let mut service = Command::new("service");
         service.arg("jail").arg("start").arg(&self.name);
@@ -151,7 +164,7 @@ impl Jail<'_> {
     }
 
     pub fn stop(&self) -> Result<()> {
-        info!("Stopping jail {}", &self.name);
+        info!("{}: stopping", &self.name);
 
         let mut service = Command::new("service");
         service.arg("jail").arg("stop").arg(&self.name);
@@ -165,14 +178,12 @@ impl Jail<'_> {
     }
 
     pub fn is_enabled(&self) -> Result<bool> {
-        // let mut sysrc = Command::new("sysrc");
-        // sysrc.arg("-n").arg("jails_list");
         let enabled_jails = cmd::run(&mut Command::new("sysrc").arg("-n").arg("jails_list"))?;
         Ok(enabled_jails.contains(&self.name))
     }
 
     pub fn enable(&self) -> Result<()> {
-        info!("Enabling jail {} in rc.conf", &self.name);
+        info!("{}: enabling in rc.conf", &self.name);
 
         let mut sysrc = Command::new("sysrc");
         sysrc.arg(format!("jails_list+={}", &self.name));
@@ -181,7 +192,7 @@ impl Jail<'_> {
     }
 
     pub fn disable(&self) -> Result<()> {
-        info!("Disabling in rc.conf");
+        info!("{}: disabling in rc.conf", &self.name);
 
         let mut sysrc = Command::new("sysrc");
         sysrc.arg(format!("jails_list-={}", &self.name));
@@ -190,6 +201,7 @@ impl Jail<'_> {
     }
 
     pub fn provision(&self) -> Result<()> {
+        // TODO - add timestamp and rename to 'provisioned'
         self.zfs_ds.snap("ready")
     }
 
@@ -215,7 +227,7 @@ mod tests {
         static ref S: Settings = Settings::new("config.toml").unwrap();
     }
 
-    // Initialise and create test jails from example config file
+    // Initialise and create test jails from an example config file
     pub fn setup_once<'a>() -> IndexMap<String, Jail<'a>> {
         let jails = S.to_jails().unwrap();
 
