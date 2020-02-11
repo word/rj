@@ -320,6 +320,18 @@ mod tests {
         assert!(jail1.is_running().unwrap());
         assert!(jail2.is_running().unwrap());
 
+        // test apply method recovering state
+        // Stopped
+        jail2.stop().unwrap();
+        assert_eq!(jail2.is_running().unwrap(), false);
+        jail2.create().unwrap();
+        assert!(jail2.is_running().unwrap());
+        // Disabled
+        jail2.disable().unwrap();
+        assert_eq!(jail2.is_enabled().unwrap(), false);
+        jail2.create().unwrap();
+        assert!(jail2.is_enabled().unwrap());
+
         // make sure all resources are cleaned up after destroy
         jail1.destroy()?;
         // check config file is gone
