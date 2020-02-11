@@ -134,15 +134,14 @@ impl Jail<'_> {
             "path".to_string() => JailConfValue::String(self.mountpoint.to_string()),
         };
 
-        fs::write(
-            &self.conf_path,
-            templates::render_jail_conf(
-                &self.name,
-                &self.conf_defaults,
-                &self.settings.conf,
-                &extra_conf,
-            )?,
+        let rendered = templates::render_jail_conf(
+            &self.name,
+            &self.conf_defaults,
+            &self.settings.conf,
+            &extra_conf,
         )?;
+
+        fs::write(&self.conf_path, &rendered)?;
         Ok(())
     }
 
