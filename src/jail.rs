@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use anyhow::Result;
+use difference::Changeset;
 use indexmap::{indexmap, IndexMap};
 use log::{debug, info};
 use std::fs;
@@ -58,9 +59,10 @@ impl Jail<'_> {
     }
 
     // TODO - rename to 'apply'
+    // split update and create to separate functions
     pub fn create(&self) -> Result<()> {
         if self.exists()? {
-            info!("jail '{}' exists, updating", self.name());
+            info!("{}: jail exists, checking for changes", self.name());
             // TODO - display diff and only update if changed
             //      - config change needs to trigger a jail restart
             self.configure()?;
@@ -127,9 +129,7 @@ impl Jail<'_> {
     }
 
     pub fn configure(&self) -> Result<()> {
-        info!("{}: writing config to: {}", &self.name, &self.conf_path);
-
-        // add "path" jail parameter
+        // add any additional config params
         let extra_conf = indexmap! {
             "path".to_string() => JailConfValue::String(self.mountpoint.to_string()),
         };
@@ -141,7 +141,19 @@ impl Jail<'_> {
             &extra_conf,
         )?;
 
-        fs::write(&self.conf_path, &rendered)?;
+        // check if a config file exists already
+        if Path::is_file(Path::new(&self.conf_path)) {
+            let current = fs::read_to_string(&self.conf_path)?;
+            if current != rendered {
+                let diff = Changeset::new(&current, &rendered, "");
+                info!("{}: updating {}\n{}", &self.name, &self.conf_path, &diff);
+                fs::write(&self.conf_path, &rendered)?;
+            }
+        } else {
+            info!("{}: creating {}", &self.name, &self.conf_path);
+            fs::write(&self.conf_path, &rendered)?;
+        }
+
         Ok(())
     }
 
@@ -320,15 +332,13 @@ mod tests {
         assert!(jail1.is_running().unwrap());
         assert!(jail2.is_running().unwrap());
 
-        // test apply method recovering state
+        // Test state drift and updating config
         // Stopped
         jail2.stop().unwrap();
-        assert_eq!(jail2.is_running().unwrap(), false);
         jail2.create().unwrap();
         assert!(jail2.is_running().unwrap());
         // Disabled
         jail2.disable().unwrap();
-        assert_eq!(jail2.is_enabled().unwrap(), false);
         jail2.create().unwrap();
         assert!(jail2.is_enabled().unwrap());
 

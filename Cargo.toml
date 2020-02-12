@@ -15,6 +15,7 @@ exclude = [
 anyhow = "1.0"
 askama = "0.8"
 clap = "2.33"
+difference = "2.0.0"
 indexmap = { version = "1.3.0", features = ["serde-1"] }
 log = "0.4"
 reqwest = "0.9"
