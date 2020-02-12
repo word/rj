@@ -325,36 +325,40 @@ mod tests {
         assert_eq!(ok_jail_conf, fs::read_to_string(jail2_conf_path)?);
 
         // Check jail is enabled in rc.conf
-        assert!(jail1.is_enabled().unwrap());
-        assert!(jail2.is_enabled().unwrap());
+        assert!(jail1.is_enabled()?);
+        assert!(jail2.is_enabled()?);
 
         // Check that it's running
-        assert!(jail1.is_running().unwrap());
-        assert!(jail2.is_running().unwrap());
+        assert!(jail1.is_running()?);
+        assert!(jail2.is_running()?);
 
-        // Test state drift and updating config
+        // Test updating and correcting drift
         // Stopped
-        jail2.stop().unwrap();
-        jail2.create().unwrap();
-        assert!(jail2.is_running().unwrap());
+        jail2.stop()?;
+        jail2.create()?;
+        assert!(jail2.is_running()?);
         // Disabled
-        jail2.disable().unwrap();
-        jail2.create().unwrap();
-        assert!(jail2.is_enabled().unwrap());
+        jail2.disable()?;
+        jail2.create()?;
+        assert!(jail2.is_enabled()?);
+        // Config changes
+        fs::write(&jail2.conf_path, "local change")?;
+        jail2.create()?;
+        assert_eq!(ok_jail_conf, fs::read_to_string(jail2_conf_path)?);
 
         // make sure all resources are cleaned up after destroy
         jail1.destroy()?;
         // check config file is gone
         assert_eq!(Path::new(jail1_conf_path).is_file(), false);
         // check jail is disabled in rc.conf
-        assert_eq!(jail1.is_enabled().unwrap(), false);
+        assert_eq!(jail1.is_enabled()?, false);
         // check jail is dead
-        assert_eq!(jail1.is_running().unwrap(), false);
+        assert_eq!(jail1.is_running()?, false);
 
         jail2.destroy()?;
         assert_eq!(Path::new(jail2_conf_path).is_file(), false);
-        assert_eq!(jail2.is_enabled().unwrap(), false);
-        assert_eq!(jail2.is_running().unwrap(), false);
+        assert_eq!(jail2.is_enabled()?, false);
+        assert_eq!(jail2.is_running()?, false);
 
         Ok(())
     }
