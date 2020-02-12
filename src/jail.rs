@@ -58,34 +58,44 @@ impl Jail<'_> {
         }
     }
 
-    // TODO: split into update and create functions
     pub fn apply(&self) -> Result<()> {
         if self.exists()? {
-            info!("{}: jail exists, checking for changes", self.name());
-            self.configure()?;
-            // TODO - reprovision if forced
-            // self.provision()?;
-            if self.settings.start {
-                if !(self.is_enabled()?) {
-                    info!("{}: disabled -> enabled", &self.name);
-                    self.enable()?
-                }
-                if !(self.is_running()?) {
-                    info!("{}: stopped -> running", &self.name);
-                    self.start()?
-                }
-            }
+            self.update()?;
         } else {
-            info!("{}: creating new jail", self.name());
-            self.source.install(&self.mountpoint, &self.zfs_ds)?;
-            self.configure()?;
-            self.provision()?;
-            if self.settings.start {
-                self.enable()?;
-                self.start()?;
-            }
+            self.create()?;
         };
 
+        Ok(())
+    }
+
+    fn update(&self) -> Result<()> {
+        info!("{}: jail exists, checking for changes", self.name());
+        self.configure()?;
+        // TODO - reprovision if forced
+        // self.provision()?;
+        if self.settings.start {
+            if !(self.is_enabled()?) {
+                info!("{}: disabled -> enabled", &self.name);
+                self.enable()?
+            }
+            if !(self.is_running()?) {
+                info!("{}: stopped -> running", &self.name);
+                self.start()?
+            }
+        }
+
+        Ok(())
+    }
+
+    fn create(&self) -> Result<()> {
+        info!("{}: creating new jail", self.name());
+        self.source.install(&self.mountpoint, &self.zfs_ds)?;
+        self.configure()?;
+        self.provision()?;
+        if self.settings.start {
+            self.enable()?;
+            self.start()?;
+        }
         Ok(())
     }
 
@@ -154,7 +164,7 @@ impl Jail<'_> {
         Ok(())
     }
 
-    pub fn update(&self) -> Result<()> {
+    pub fn upgrade(&self) -> Result<()> {
         todo!()
     }
 
