@@ -58,15 +58,12 @@ impl Jail<'_> {
         }
     }
 
-    // TODO - rename to 'apply'
-    // split update and create to separate functions
-    pub fn create(&self) -> Result<()> {
+    // TODO: split into update and create functions
+    pub fn apply(&self) -> Result<()> {
         if self.exists()? {
             info!("{}: jail exists, checking for changes", self.name());
-            // TODO - display diff and only update if changed
-            //      - config change needs to trigger a jail restart
             self.configure()?;
-            // TODO - reprovision only if forced
+            // TODO - reprovision if forced
             // self.provision()?;
             if self.settings.start {
                 if !(self.is_enabled()?) {
@@ -79,7 +76,7 @@ impl Jail<'_> {
                 }
             }
         } else {
-            info!("Creating jail '{}'", self.name());
+            info!("{}: creating new jail", self.name());
             self.source.install(&self.mountpoint, &self.zfs_ds)?;
             self.configure()?;
             self.provision()?;
@@ -258,12 +255,12 @@ mod tests {
                     // Leave 'base' around because it takes log time to extract.
                     if jail.name() != "base" {
                         jail.destroy().unwrap();
-                        jail.create().unwrap_or_else(|e| {
+                        jail.apply().unwrap_or_else(|e| {
                             panic!("Failed creating jail {}: {}", &jail.name(), e)
                         });
                     }
                 } else {
-                    jail.create()
+                    jail.apply()
                         .unwrap_or_else(|e| panic!("Failed creating jail {}: {}", &jail.name(), e));
                 }
             }
@@ -285,14 +282,14 @@ mod tests {
 
     // Trying to create an already created jail should just skip it without an error.
     #[test]
-    fn jail_create_existing() {
+    fn jail_apply_existing() {
         let jails = setup_once();
-        let result = jails["base"].create();
+        let result = jails["base"].apply();
         assert!(result.is_ok());
     }
 
     #[test]
-    fn jail_create_destroy() -> Result<()> {
+    fn jail_apply_and_destroy() -> Result<()> {
         let jails = setup_once();
         let jail1 = &jails["test1"];
         let jail2 = &jails["test2"];
@@ -335,15 +332,15 @@ mod tests {
         // Test updating and correcting drift
         // Stopped
         jail2.stop()?;
-        jail2.create()?;
+        jail2.apply()?;
         assert!(jail2.is_running()?);
         // Disabled
         jail2.disable()?;
-        jail2.create()?;
+        jail2.apply()?;
         assert!(jail2.is_enabled()?);
         // Config changes
         fs::write(&jail2.conf_path, "local change")?;
-        jail2.create()?;
+        jail2.apply()?;
         assert_eq!(ok_jail_conf, fs::read_to_string(jail2_conf_path)?);
 
         // make sure all resources are cleaned up after destroy

@@ -24,11 +24,11 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .help("Show debug messages"),
         )
         .subcommand(
-            SubCommand::with_name("create")
-                .about("Creates jails")
+            SubCommand::with_name("apply")
+                .about("Apply changes")
                 .arg(
                     Arg::with_name("jail_name")
-                        .help("Name of the jail to create")
+                        .help("Name of the jail to apply changes to")
                         .index(1)
                         .required_unless("all"),
                 )
@@ -36,7 +36,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                     Arg::with_name("all")
                         .short("a")
                         .long("all")
-                        .help("Create all jails"),
+                        .help("Apply to all jails"),
                 ),
         )
         .subcommand(

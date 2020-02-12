@@ -23,7 +23,7 @@ use source::Source;
 fn jail_action(action: &str, jail: &Jail) -> Result<()> {
     debug!("action {}", action);
     match action {
-        "create" => jail.create(),
+        "apply" => jail.apply(),
         "destroy" => jail.destroy(),
         _ => panic!("unknown action {}", action),
     }
