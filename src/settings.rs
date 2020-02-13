@@ -18,6 +18,7 @@ pub enum JailConfValue {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct JailSettings {
     pub source: String,
     #[serde(default = "default_true")]
@@ -77,7 +78,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_settings() {
+    fn deserialize() {
         let s = Settings::new("config.toml").unwrap();
         println!("{:?}", s);
 
@@ -138,11 +139,21 @@ mod tests {
     }
 
     #[test]
-    fn test_settings_to_jail() {
+    fn to_jail() {
         let s = Settings::new("config.toml").unwrap();
         let jails = s.to_jails().unwrap();
         assert_eq!(jails["base"].name(), "base");
         assert_eq!(jails["test1"].name(), "test1");
         assert_eq!(jails["test2"].name(), "test2");
+    }
+
+    #[test]
+    #[should_panic]
+    fn unknown_field() {
+        let mut config = fs::read_to_string("config.toml").unwrap();
+        let slice = "[jail.test1]";
+        let pos = config.rfind(slice).unwrap() + slice.len();
+        config.insert_str(pos, "\nunknown = whatever");
+        let _s: Settings = toml::from_str(&config).unwrap();
     }
 }

@@ -2,36 +2,31 @@
 
 == doing
 
- * apply config changes
 
 == next up
 
-* check jail config is specified before starting
-* tests for main
 * fail on unknown config options
 
 == backlog
 
 === First release
 
-* run
-  * in chroot
-  * in jail
 * freebsd-update jail
 * provision jail
   * shell script
   * puppet
-* config includes or conf.d style include
 * confirmation before deleting all jails (and -f to force)
-* move cmd::run to utils::run
+* tests for main
 
 === Later
 
+* config includes or conf.d style include
 * parallel operation (create/upgrade etc)
   * need to resurrect ordering
 
 == Done:
 
+* apply config changes
 * jail
   * start/stop
   * enable/disable
