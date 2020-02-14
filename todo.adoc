@@ -11,6 +11,7 @@
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names
+ * settings: tidy up example/test config files
 
 == backlog
 

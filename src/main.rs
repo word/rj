@@ -3,6 +3,7 @@ use clap::ArgMatches;
 use indexmap::IndexMap;
 use log::{debug, error};
 use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
+use std::fs;
 use std::process;
 use std::process::Command;
 
@@ -79,7 +80,8 @@ fn init(settings: &Settings) -> Result<()> {
 }
 
 fn make_it_so(matches: ArgMatches) -> Result<()> {
-    let settings = Settings::new(matches.value_of("config").unwrap())?;
+    let config_path = matches.value_of("config").unwrap();
+    let settings = Settings::new(fs::read_to_string(config_path)?)?;
     let jails = settings.to_jails()?;
 
     // TODO - put this behind a subcommand

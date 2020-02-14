@@ -13,8 +13,8 @@ pub struct File {
 }
 
 impl File {
-    pub fn provision(&self, jail: Jail) -> Result<()> {
-        info!("File provisioner running");
+    pub fn provision(&self, jail: &Jail) -> Result<()> {
+        info!("{}: file provisioner running", jail.name());
         Ok(())
     }
 }

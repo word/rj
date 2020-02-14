@@ -2,6 +2,8 @@ use anyhow::Result;
 use log::info;
 use serde::Deserialize;
 
+use crate::jail::Jail;
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Exec {
@@ -9,8 +11,23 @@ pub struct Exec {
 }
 
 impl Exec {
-    pub fn provision(&self) -> Result<()> {
-        info!("Exec provisioner running");
+    pub fn provision(&self, jail: &Jail) -> Result<()> {
+        info!("{}: exec provisioner running", jail.name());
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::settings::Settings;
+    use std::fs;
+
+    #[test]
+    fn provision() -> Result<()> {
+        let s = Settings::new(fs::read_to_string("config.toml")?)?;
+        let jails = s.to_jails()?;
+
         Ok(())
     }
 }

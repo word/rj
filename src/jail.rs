@@ -225,7 +225,7 @@ impl Jail<'_> {
 
     pub fn provision(&self) -> Result<()> {
         for p in self.provisioners.iter() {
-            p.provision()?;
+            p.provision(&self)?;
         }
         // TODO - add timestamp and rename to 'provisioned'
         self.zfs_ds.snap("ready")
@@ -245,12 +245,13 @@ mod tests {
     use pretty_assertions::assert_eq;
     use settings::Settings;
     // use simplelog::*;
+    use std::fs;
     use std::path::Path;
     use std::sync::Once;
 
     static INIT: Once = Once::new();
     lazy_static! {
-        static ref S: Settings = Settings::new("config.toml").unwrap();
+        static ref S: Settings = Settings::new(fs::read_to_string("config.toml").unwrap()).unwrap();
     }
 
     // Initialise and create test jails from an example config file

@@ -40,7 +40,6 @@ mode = "0755"
 [jail.base]
 source = "freebsd12"
 start = false
-provisioners = [ "exec", "file" ]
 
 [jail.test1]
 source = "base"
@@ -48,6 +47,7 @@ source = "base"
 
 [jail.test2]
 source = "base"
+provisioners = [ "exec", "file" ]
 [jail.test2.conf]
 host_hostname = "test2.jail"
 allow_set_hostname = 1
