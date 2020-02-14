@@ -26,6 +26,8 @@ pub struct JailSettings {
     pub start: bool,
     #[serde(default)]
     pub conf: IndexMap<String, JailConfValue>,
+    #[serde(default)]
+    pub provisioners: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -55,6 +57,13 @@ impl Settings {
     pub fn to_jails(&self) -> Result<IndexMap<String, Jail>> {
         let mut jails = IndexMap::new();
         for (jname, jsettings) in &mut self.jail.iter() {
+            // gather jail provisioners
+            let mut provisioners = vec![];
+            for p in jsettings.provisioners.iter() {
+                provisioners.push(&self.provisioner[p]);
+            }
+
+            // make a jail
             let jail = Jail::new(
                 // data set path
                 &format!("{}/{}", &self.jails_dataset, &jname),
@@ -63,6 +72,7 @@ impl Settings {
                 // jail conf
                 &jsettings,
                 &self.jail_conf_defaults,
+                provisioners,
             );
             jails.insert(jname.to_string(), jail);
         }

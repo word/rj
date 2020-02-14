@@ -1,66 +1,39 @@
 #![allow(dead_code)]
 use anyhow::Result;
-use log::info;
 use serde::Deserialize;
+
+mod exec;
+mod file;
+mod test;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "type")]
 pub enum Provisioner {
     #[serde(alias = "file")]
-    File(ProFile),
+    File(file::File),
     #[serde(alias = "exec")]
-    Exec(ProExec),
+    Exec(exec::Exec),
+    #[serde(alias = "test")]
+    Test(test::Test),
 }
 
 impl Provisioner {
     fn provision(&self) -> Result<()> {
         match self {
-            Provisioner::File(p) => p.provision()?,
-            Provisioner::Exec(p) => p.provision()?,
-        };
-        Ok(())
+            Provisioner::File(p) => p.provision(),
+            Provisioner::Exec(p) => p.provision(),
+            Provisioner::Test(p) => p.provision(),
+        }
     }
-}
-
-impl ProFile {
-    fn provision(&self) -> Result<()> {
-        println!("ProFile running!");
-        Ok(())
-    }
-}
-
-impl ProExec {
-    fn provision(&self) -> Result<()> {
-        println!("ProExec running!");
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ProFile {
-    source: String,
-    dest: String,
-    mode: String,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ProExec {
-    path: String,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use pretty_assertions::assert_eq;
+    use super::{test, Provisioner};
+    // use pretty_assertions::assert_eq;
 
     #[test]
-    fn prov() {
-        let exec = ProExec {
-            path: "/path".to_string(),
-        };
-        let prov = Provisioner::Exec(exec);
-        prov.provision().unwrap();
+    fn provision() {
+        Provisioner::Test(test::Test).provision().unwrap();
     }
 }

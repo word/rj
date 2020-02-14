@@ -8,6 +8,7 @@ use std::path::Path;
 use std::process::Command;
 
 use crate::cmd;
+use crate::provisioner::Provisioner;
 use crate::settings;
 use crate::source::Source;
 use crate::templates;
@@ -24,6 +25,7 @@ pub struct Jail<'a> {
     settings: &'a JailSettings,
     conf_defaults: &'a IndexMap<String, JailConfValue>,
     conf_path: String,
+    provisioners: Vec<&'a Provisioner>,
 }
 
 impl Jail<'_> {
@@ -41,7 +43,9 @@ impl Jail<'_> {
         source: &'a Source,
         settings: &'a JailSettings,
         conf_defaults: &'a IndexMap<String, JailConfValue>,
+        provisioners: Vec<&'a Provisioner>,
     ) -> Jail<'a> {
+        // Workout jail name from data set path (fixme: just get it from settings)
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
         let name = (*components.last().unwrap()).to_string();
@@ -55,6 +59,7 @@ impl Jail<'_> {
             settings,
             conf_defaults,
             conf_path: format!("/etc/jail.{}.conf", name),
+            provisioners,
         }
     }
 
