@@ -21,11 +21,10 @@ impl Exec {
 mod tests {
     use super::*;
     use crate::settings::Settings;
-    use std::fs;
 
     #[test]
     fn provision() -> Result<()> {
-        let s = Settings::new(fs::read_to_string("config.toml")?)?;
+        let s = Settings::new("config.toml")?;
         let jails = s.to_jails()?;
 
         Ok(())

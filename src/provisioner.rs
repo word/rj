@@ -32,12 +32,11 @@ impl Provisioner {
 mod tests {
     use super::*;
     use crate::settings::Settings;
-    use std::fs;
     // use pretty_assertions::assert_eq;
 
     #[test]
     fn provision() -> Result<()> {
-        let s = Settings::new(fs::read_to_string("config.toml")?)?;
+        let s = Settings::new("config.toml")?;
         let jails = s.to_jails()?;
         Provisioner::Test(test::Test).provision(&jails["test1"])
     }

@@ -1,6 +1,7 @@
 use anyhow::Result;
 use indexmap::IndexMap; // like HashMap but preserves insertion order
 use serde::Deserialize;
+use std::fs;
 use toml;
 
 use super::Jail;
@@ -42,8 +43,8 @@ pub struct Settings {
 
 #[allow(dead_code)]
 impl Settings {
-    pub fn new(config: String) -> Result<Self> {
-        let settings: Settings = toml::from_str(&config)?;
+    pub fn new(config_file: &str) -> Result<Self> {
+        let settings: Settings = toml::from_str(&fs::read_to_string(config_file)?)?;
 
         // Sort jails by 'order' field
         // settings
@@ -88,11 +89,10 @@ fn default_true() -> bool {
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
-    use std::fs;
 
     #[test]
     fn deserialize() {
-        let s = Settings::new(fs::read_to_string("config.toml").unwrap()).unwrap();
+        let s = Settings::new("config.toml").unwrap();
         println!("{:?}", s);
 
         assert_eq!(s.jails_dataset, "zroot/jails");
@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn to_jail() -> Result<()> {
-        let s = Settings::new(fs::read_to_string("config.toml")?)?;
+        let s = Settings::new("config.toml")?;
         let jails = s.to_jails()?;
         assert_eq!(jails["base"].name(), "base");
         assert_eq!(jails["test1"].name(), "test1");
