@@ -56,6 +56,7 @@ impl Settings {
 
     pub fn to_jails(&self) -> Result<IndexMap<String, Jail>> {
         let mut jails = IndexMap::new();
+
         for (jname, jsettings) in &mut self.jail.iter() {
             // gather jail provisioners
             let mut provisioners = vec![];
@@ -63,7 +64,7 @@ impl Settings {
                 provisioners.push(&self.provisioner[p]);
             }
 
-            // make a jail
+            // make jail
             let jail = Jail::new(
                 // data set path
                 &format!("{}/{}", &self.jails_dataset, &jname),

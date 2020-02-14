@@ -2,6 +2,8 @@ use anyhow::Result;
 use log::info;
 use serde::Deserialize;
 
+use crate::jail::Jail;
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct File {
@@ -11,7 +13,7 @@ pub struct File {
 }
 
 impl File {
-    pub fn provision(&self) -> Result<()> {
+    pub fn provision(&self, jail: Jail) -> Result<()> {
         info!("File provisioner running");
         Ok(())
     }

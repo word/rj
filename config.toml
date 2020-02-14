@@ -40,11 +40,11 @@ mode = "0755"
 [jail.base]
 source = "freebsd12"
 start = false
-# provisioners = [ "shell" ]
+provisioners = [ "exec", "file" ]
 
 [jail.test1]
 source = "base"
-# provisioners = [ "puppet" ]
+# provisioners = [ "file" ]
 
 [jail.test2]
 source = "base"

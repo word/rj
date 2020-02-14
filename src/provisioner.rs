@@ -18,7 +18,7 @@ pub enum Provisioner {
 }
 
 impl Provisioner {
-    fn provision(&self) -> Result<()> {
+    pub fn provision(&self) -> Result<()> {
         match self {
             Provisioner::File(p) => p.provision(),
             Provisioner::Exec(p) => p.provision(),

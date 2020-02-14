@@ -8,7 +8,9 @@
 
 == next up
 
- * conf: deny unknown fields everywhere
+ * settings: deny unknown fields everywhere
+ * settings: validate source name
+ * settings: validate provisioner names
 
 == backlog
 

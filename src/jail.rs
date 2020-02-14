@@ -177,7 +177,7 @@ impl Jail<'_> {
         todo!()
     }
 
-    pub fn start(&self) -> Result<()> {
+    fn start(&self) -> Result<()> {
         info!("{}: starting", &self.name);
 
         let mut service = Command::new("service");
@@ -186,7 +186,7 @@ impl Jail<'_> {
         Ok(())
     }
 
-    pub fn stop(&self) -> Result<()> {
+    fn stop(&self) -> Result<()> {
         info!("{}: stopping", &self.name);
 
         let mut service = Command::new("service");
@@ -195,17 +195,17 @@ impl Jail<'_> {
         Ok(())
     }
 
-    pub fn is_running(&self) -> Result<bool> {
+    fn is_running(&self) -> Result<bool> {
         let output = Command::new("jls").arg("-j").arg(&self.name).output()?;
         Ok(output.status.success())
     }
 
-    pub fn is_enabled(&self) -> Result<bool> {
+    fn is_enabled(&self) -> Result<bool> {
         let enabled_jails = cmd::run(&mut Command::new("sysrc").arg("-n").arg("jails_list"))?;
         Ok(enabled_jails.contains(&self.name))
     }
 
-    pub fn enable(&self) -> Result<()> {
+    fn enable(&self) -> Result<()> {
         info!("{}: enabling in rc.conf", &self.name);
 
         let mut sysrc = Command::new("sysrc");
@@ -214,7 +214,7 @@ impl Jail<'_> {
         Ok(())
     }
 
-    pub fn disable(&self) -> Result<()> {
+    fn disable(&self) -> Result<()> {
         info!("{}: disabling in rc.conf", &self.name);
 
         let mut sysrc = Command::new("sysrc");
@@ -224,11 +224,14 @@ impl Jail<'_> {
     }
 
     pub fn provision(&self) -> Result<()> {
+        for p in self.provisioners.iter() {
+            p.provision()?;
+        }
         // TODO - add timestamp and rename to 'provisioned'
         self.zfs_ds.snap("ready")
     }
 
-    pub fn exists(&self) -> Result<bool> {
+    fn exists(&self) -> Result<bool> {
         self.zfs_ds.exists()
     }
 }
