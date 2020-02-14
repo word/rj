@@ -19,6 +19,22 @@ dists = [ "base", "lib32" ]
 type = "clone"
 path = "zroot/jails/base"
 
+# Provisioners
+
+[provisioner.exec]
+type = "exec"
+path = "example/provision/bootstrap.sh"
+
+[provisioner.file]
+type = "file"
+source = "example/provision/file.txt"
+dest = "/var/tmp/file.txt"
+mode = "0755"
+
+# [provisioner.puppet]
+# type = "puppet"
+# manifest = "example/provision/puppet"
+
 # Jails
 
 [jail.base]

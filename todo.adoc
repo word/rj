@@ -2,30 +2,32 @@
 
 == doing
 
+* provision jail
+  * shell script
+  * puppet
 
 == next up
 
-* fail on unknown config options
+ * conf: deny unknown fields everywhere
 
 == backlog
 
 === First release
 
-* freebsd-update jail
-* provision jail
-  * shell script
-  * puppet
 * confirmation before deleting all jails (and -f to force)
-* tests for main
+* tidy up and tests for main
+* tidy up zfs code
 
 === Later
 
+* freebsd-update jail
 * config includes or conf.d style include
 * parallel operation (create/upgrade etc)
   * need to resurrect ordering
 
 == Done:
 
+* fail on unknown config options
 * apply config changes
 * jail
   * start/stop

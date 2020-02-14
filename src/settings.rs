@@ -5,6 +5,7 @@ use std::fs;
 use toml;
 
 use super::Jail;
+use super::Provisioner;
 use super::Source;
 
 // Represents the different types of values a jail.conf option can have.
@@ -35,6 +36,7 @@ pub struct Settings {
     pub jail_conf_defaults: IndexMap<String, JailConfValue>,
     pub jail: IndexMap<String, JailSettings>,
     pub source: IndexMap<String, Source>,
+    pub provisioner: IndexMap<String, Provisioner>,
 }
 
 #[allow(dead_code)]

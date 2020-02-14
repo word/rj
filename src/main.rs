@@ -10,6 +10,7 @@ mod cli;
 mod cmd;
 mod errors;
 mod jail;
+mod provisioner;
 mod settings;
 mod source;
 mod templates;
@@ -17,6 +18,7 @@ mod util;
 mod zfs;
 
 use jail::Jail;
+use provisioner::Provisioner;
 use settings::Settings;
 use source::Source;
 
