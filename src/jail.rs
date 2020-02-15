@@ -179,11 +179,13 @@ impl Jail<'_> {
 
     fn start(&self) -> Result<()> {
         info!("{}: starting", &self.name);
-
-        let mut service = Command::new("service");
-        service.arg("jail").arg("start").arg(&self.name);
-        cmd::run(&mut service)?;
+        cmd!("service", "jail", "start", &self.name);
         Ok(())
+
+        // let mut service = Command::new("service");
+        // service.arg("jail").arg("start").arg(&self.name);
+        // cmd::run(&mut service)?;
+        // Ok(())
     }
 
     fn stop(&self) -> Result<()> {
@@ -231,7 +233,7 @@ impl Jail<'_> {
         self.zfs_ds.snap("ready")
     }
 
-    fn exists(&self) -> Result<bool> {
+    pub fn exists(&self) -> Result<bool> {
         self.zfs_ds.exists()
     }
 }
@@ -244,7 +246,7 @@ mod tests {
     use lazy_static::lazy_static;
     use pretty_assertions::assert_eq;
     use settings::Settings;
-    use simplelog::*;
+    // use simplelog::*;
     use std::fs;
     use std::path::Path;
     use std::sync::Once;
@@ -260,7 +262,7 @@ mod tests {
 
         INIT.call_once(|| {
             // enable log messages for debugging
-            TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
+            // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
             // cleanup before all
             // jails_ds.destroy_r().unwrap();
 

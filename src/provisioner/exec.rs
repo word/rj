@@ -27,13 +27,16 @@ mod tests {
     fn provision() -> Result<()> {
         let s = Settings::new("testdata/config.toml")?;
         let jails = s.to_jails()?;
-        // TODO: init
         let jail = &jails["exec_test"];
+        // TODO: init
+        if jail.exists()? {
+            jail.destroy()?;
+        }
         jail.apply()?;
 
         // cmd!("chroot", jail.mountpoint(), "cat", "/tmp/exec_test")?;
 
-        jails["exec_test"].destroy()?;
+        jail.destroy()?;
         Ok(())
     }
 }
