@@ -244,7 +244,7 @@ mod tests {
     use lazy_static::lazy_static;
     use pretty_assertions::assert_eq;
     use settings::Settings;
-    // use simplelog::*;
+    use simplelog::*;
     use std::fs;
     use std::path::Path;
     use std::sync::Once;
@@ -260,55 +260,49 @@ mod tests {
 
         INIT.call_once(|| {
             // enable log messages for debugging
-            // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
+            TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
             // cleanup before all
             // jails_ds.destroy_r().unwrap();
 
             // Initialise
             crate::init(&S).unwrap();
 
-            // Create test jails
-            for (_, jail) in jails.iter() {
-                if jail.exists().unwrap() {
-                    // Tidy up any jails that may be left over from failed tests.
-                    // Leave 'base' around because it takes log time to extract.
-                    if jail.name() != "base" {
-                        jail.destroy().unwrap();
-                        jail.apply().unwrap_or_else(|e| {
-                            panic!("Failed creating jail {}: {}", &jail.name(), e)
-                        });
-                    }
-                } else {
-                    jail.apply()
-                        .unwrap_or_else(|e| panic!("Failed creating jail {}: {}", &jail.name(), e));
-                }
+            // destroy existing test1 and test2 jails
+            if jails["test1"].exists().unwrap() {
+                jails["test1"].destroy().unwrap();
             }
+            if jails["test2"].exists().unwrap() {
+                jails["test2"].destroy().unwrap();
+            }
+
+            jails["test1"].apply().unwrap();
+            jails["test2"].apply().unwrap();
         });
         jails
     }
 
     #[test]
-    fn jail_mountpoint() {
+    fn mountpoint() {
         let jails = setup_once();
         assert_eq!(jails["base"].mountpoint, "/jails/base");
     }
 
     #[test]
-    fn jail_name() {
+    fn name() {
         let jails = setup_once();
         assert_eq!(jails["base"].name, "base");
     }
 
     // Trying to create an already created jail should just skip it without an error.
     #[test]
-    fn jail_apply_existing() {
+    fn apply_existing() {
         let jails = setup_once();
         let result = jails["base"].apply();
         assert!(result.is_ok());
     }
 
     #[test]
-    fn jail_apply_and_destroy() -> Result<()> {
+    fn apply_and_destroy() -> Result<()> {
         let jails = setup_once();
         let jail1 = &jails["test1"];
         let jail2 = &jails["test2"];
@@ -380,7 +374,7 @@ mod tests {
     }
 
     #[test]
-    fn jail_base_disabled() -> Result<()> {
+    fn _base_disabled() -> Result<()> {
         let jails = setup_once();
         let basejail = &jails["base"];
         assert_eq!(basejail.is_enabled().unwrap(), false);
