@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     fn deserialize() {
-        let s = Settings::new("config.toml").unwrap();
+        let s = Settings::new("testdata/config.toml").unwrap();
         println!("{:?}", s);
 
         assert_eq!(s.jails_dataset, "zroot/jails");
@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn to_jail() -> Result<()> {
-        let s = Settings::new("config.toml")?;
+        let s = Settings::new("testdata/config.toml")?;
         let jails = s.to_jails()?;
         assert_eq!(jails["base"].name(), "base");
         assert_eq!(jails["test1"].name(), "test1");
@@ -164,7 +164,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn unknown_field() {
-        let mut config = fs::read_to_string("config.toml").unwrap();
+        let mut config = fs::read_to_string("testdata/config.toml").unwrap();
         let slice = "[jail.test1]";
         let pos = config.rfind(slice).unwrap() + slice.len();
         config.insert_str(pos, "\nunknown = whatever");

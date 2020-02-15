@@ -23,12 +23,12 @@ path = "zroot/jails/base"
 
 [provisioner.exec]
 type = "exec"
-path = "example/provision/bootstrap.sh"
+path = "testdata/provisioner/exec.sh"
 
 [provisioner.file]
 type = "file"
-source = "example/provision/file.txt"
-dest = "/var/tmp/file.txt"
+source = "testdata/provisioner/file.txt"
+dest = "/tmp/file.txt"
 mode = "0755"
 
 # [provisioner.puppet]
@@ -43,7 +43,6 @@ start = false
 
 [jail.test1]
 source = "base"
-# provisioners = [ "file" ]
 
 [jail.test2]
 source = "base"

@@ -24,8 +24,8 @@ mod tests {
 
     #[test]
     fn provision() -> Result<()> {
-        let s = Settings::new("config.toml")?;
-        let jails = s.to_jails()?;
+        // let s = Settings::new("testdata/config.toml")?;
+        // let jails = s.to_jails()?;
 
         Ok(())
     }

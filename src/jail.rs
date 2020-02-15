@@ -251,7 +251,7 @@ mod tests {
 
     static INIT: Once = Once::new();
     lazy_static! {
-        static ref S: Settings = Settings::new("config.toml").unwrap();
+        static ref S: Settings = Settings::new("testdata/config.toml").unwrap();
     }
 
     // Initialise and create test jails from an example config file
