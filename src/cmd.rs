@@ -3,7 +3,7 @@ use anyhow::Result;
 use log::{error, info};
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::process::{Command, Stdio};
+use std::process::{Command, Output, Stdio};
 use std::thread;
 
 // Deprecated Command wrapper
@@ -23,8 +23,22 @@ pub fn run(command: &mut Command) -> Result<String> {
     }
 }
 
-// Wrapper around Command which checks the exist status and returns an Err if it isn't success.
-pub fn cmd<T>(program: &str, args: T) -> Result<String>
+// Wrapper around Command that check the exit status and errors if not 0
+pub fn cmd<T>(program: &str, args: T) -> Result<()>
+where
+    T: IntoIterator,
+    T::Item: ToString,
+{
+    let mut argv_vec = Vec::new();
+    argv_vec.extend(args.into_iter().map(|s| s.to_string()));
+    let output = Command::new(&program).args(&argv_vec).output()?;
+    check_exit_status(program, argv_vec, output)?;
+    Ok(())
+}
+
+// Run Command and capture output into a String
+// Checks the exist status and returns an Err if it's not 0.
+pub fn cmd_capture<T>(program: &str, args: T) -> Result<String>
 where
     T: IntoIterator,
     T::Item: ToString,
@@ -33,19 +47,22 @@ where
     argv_vec.extend(args.into_iter().map(|s| s.to_string()));
 
     let output = Command::new(&program).args(&argv_vec).output()?;
+    check_exit_status(program, argv_vec, output)
+}
 
-    // check the status
+fn check_exit_status(program: &str, args: Vec<String>, output: Output) -> Result<String> {
+    let stdout = String::from_utf8(output.stdout)?;
+    let stderr = String::from_utf8(output.stderr)?;
     if output.status.success() {
-        Ok(String::from_utf8(output.stdout)?)
+        Ok(stdout)
     } else {
-        let stderr_out = String::from_utf8(output.stderr)?;
         let cmd_err = RunError {
             code: output.status.code(),
             message: format!(
                 "Failed running: '{} {}', stderr: {}",
                 program,
-                argv_vec.join(" "),
-                stderr_out
+                args.join(" "),
+                stderr
             ),
         };
         Err(anyhow::Error::new(cmd_err))
@@ -105,6 +122,15 @@ macro_rules! cmd {
 }
 
 #[macro_export]
+macro_rules! cmd_capture {
+    ( $program:expr $(, $arg:expr )* $(,)? ) => {
+        {
+            $crate::cmd::cmd_capture($program, &[$( $arg ),*])
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! cmd_stream {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
@@ -121,15 +147,26 @@ mod tests {
     use tempfile::NamedTempFile;
 
     #[test]
-    fn cmd_output() -> Result<()> {
-        let output = cmd!("echo", "hello")?;
-        assert_eq!(output, "hello\n");
+    fn cmd_run() -> Result<()> {
+        cmd!("echo", "hello")?;
         Ok(())
     }
 
     #[test]
     fn cmd_error() {
         assert!(cmd!("cat", "nonexistent").is_err());
+    }
+
+    #[test]
+    fn capture_output() -> Result<()> {
+        let output = cmd_capture!("echo", "hello")?;
+        assert_eq!(output, "hello\n");
+        Ok(())
+    }
+
+    #[test]
+    fn capture_error() {
+        assert!(cmd_capture!("cat", "nonexistent").is_err());
     }
 
     // This test doesn't play well with others because logger is initialised globally

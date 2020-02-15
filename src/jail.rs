@@ -179,7 +179,7 @@ impl Jail<'_> {
 
     fn start(&self) -> Result<()> {
         info!("{}: starting", &self.name);
-        cmd!("service", "jail", "start", &self.name);
+        cmd!("service", "jail", "start", &self.name)?;
         Ok(())
 
         // let mut service = Command::new("service");
