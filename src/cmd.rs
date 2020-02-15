@@ -1,7 +1,6 @@
 use crate::errors::RunError;
 use anyhow::Result;
 use log::{error, info};
-use std::ffi::OsString;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::process::{Command, Stdio};
@@ -24,17 +23,17 @@ pub fn run(command: &mut Command) -> Result<String> {
 }
 
 // Run a command and stream stdout and stderr into the logger
-// Fail on command status other than 0
+// Fail on exit status other than 0
 pub fn stream<T>(program: &str, args: T) -> Result<()>
 where
     T: IntoIterator,
-    T::Item: Into<OsString>,
+    T::Item: ToString,
 {
     let mut argv_vec = Vec::new();
-    argv_vec.extend(args.into_iter().map(Into::<OsString>::into));
+    argv_vec.extend(args.into_iter().map(|s| s.to_string()));
 
-    let mut child = Command::new(program)
-        .args(argv_vec)
+    let mut child = Command::new(&program)
+        .args(&argv_vec)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
@@ -55,7 +54,25 @@ where
     stderr_handle.join().unwrap();
     let status = child.wait()?;
 
-    Ok(())
+    if status.success() {
+        Ok(())
+    } else {
+        let err = RunError {
+            code: status.code(),
+            message: format!("Failed running: {} {}", program, argv_vec.join(" ")),
+        };
+        Err(anyhow::Error::new(err))
+    }
+}
+
+#[macro_export]
+macro_rules! cmd_stream {
+    ( $program:expr $(, $arg:expr )* $(,)? ) => {
+        {
+            let args: &[String] = &[$( $arg.to_string() ),*];
+            $crate::cmd::stream($program, args)
+        }
+    };
 }
 
 #[cfg(test)]
@@ -64,8 +81,10 @@ mod tests {
     use simplelog::{Config, LevelFilter, WriteLogger};
     use tempfile::NamedTempFile;
 
+    // This test doesn't play well with others because logger is initialised globally
     #[test]
-    fn streamer() -> Result<()> {
+    #[ignore]
+    fn stream_output() -> Result<()> {
         let test_script = r#"
             echo out1
             sleep 1
@@ -79,21 +98,30 @@ mod tests {
         let logfile = NamedTempFile::new()?;
         let mut outfile = logfile.reopen()?;
         WriteLogger::init(LevelFilter::Info, Config::default(), logfile)?;
+        // let file_logger = WriteLogger::new(LevelFilter::Info, Config::default(), logfile);
         stream("sh", &["-c", test_script])?;
         let mut output = String::new();
         outfile.read_to_string(&mut output)?;
+        let mut output_iter = output.lines();
 
-        let mut valid_lines = [
+        let valid_lines = [
             "[ INFO] out1",
             "[ERROR] err1",
             "[ INFO] out2",
             "[ERROR] err2",
-        ]
-        .iter();
+        ];
 
-        for line in output.lines() {
-            assert!(line.contains(valid_lines.next().unwrap()));
+        println!("{}", output);
+
+        for line in valid_lines.iter() {
+            assert!(output_iter.next().unwrap().contains(line));
         }
         Ok(())
+    }
+
+    #[test]
+    fn stream_error() {
+        // assert!(stream("cat", &["nonexistent"]).is_err());
+        assert!(cmd_stream!("cat", "nonexistent").is_err());
     }
 }
