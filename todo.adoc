@@ -12,6 +12,7 @@
  * settings: validate source name
  * settings: validate provisioner names
  * settings: tidy up example/test config files
+ * setup resolv.conf in test basejail
 
 == backlog
 
