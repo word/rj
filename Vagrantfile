@@ -38,11 +38,19 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
-    sysrc rpc_lockd_enable="YES"
-    sysrc rpc_statd_enable="YES"
-    service lockd start
-    service statd start
+    #sysrc rpc_lockd_enable="YES"
+    #sysrc rpc_statd_enable="YES"
+    #service lockd start
+    #service statd start
     pkg update
     pkg install -y rust vim-tiny
+
+    # jail networking
+    echo 'nat on em0 from 10.11.11.0/24 to any -> (em0)' > /etc/pf.conf
+    echo 'pass all' >> /etc/pf.conf
+    sysrc pf_enable=yes
+    service pf start
+    sysrc gateway_enable=yes
+    sysctl net.inet.ip.forwarding=1
   SHELL
 end
