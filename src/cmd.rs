@@ -6,9 +6,33 @@ use std::io::BufReader;
 use std::process::{Command, Stdio};
 use std::thread;
 
+// Deprecated Command wrapper
 pub fn run(command: &mut Command) -> Result<String> {
     // execute the command
     let output = command.output()?;
+
+    // check the status
+    if output.status.success() {
+        Ok(String::from_utf8(output.stdout)?)
+    } else {
+        let cmd_err = RunError {
+            code: output.status.code(),
+            message: String::from_utf8(output.stderr)?,
+        };
+        Err(anyhow::Error::new(cmd_err))
+    }
+}
+
+// Wrapper around Command which returns error when exit code is anything other than 0
+pub fn cmd<T>(program: &str, args: T) -> Result<String>
+where
+    T: IntoIterator,
+    T::Item: ToString,
+{
+    let mut argv_vec = Vec::new();
+    argv_vec.extend(args.into_iter().map(|s| s.to_string()));
+
+    let output = Command::new(&program).args(&argv_vec).output()?;
 
     // check the status
     if output.status.success() {
@@ -66,11 +90,19 @@ where
 }
 
 #[macro_export]
+macro_rules! cmd {
+    ( $program:expr $(, $arg:expr )* $(,)? ) => {
+        {
+            $crate::cmd::cmd($program, &[$( $arg ),*])
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! cmd_stream {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
-            let args: &[String] = &[$( $arg.to_string() ),*];
-            $crate::cmd::stream($program, args)
+            $crate::cmd::stream($program, &[$( $arg ),*])
         }
     };
 }
@@ -78,8 +110,16 @@ macro_rules! cmd_stream {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
     use simplelog::{Config, LevelFilter, WriteLogger};
     use tempfile::NamedTempFile;
+
+    #[test]
+    fn cmd_output() -> Result<()> {
+        let output = cmd!("echo", "hello")?;
+        assert_eq!(output, "hello\n");
+        Ok(())
+    }
 
     // This test doesn't play well with others because logger is initialised globally
     #[test]
@@ -98,7 +138,6 @@ mod tests {
         let logfile = NamedTempFile::new()?;
         let mut outfile = logfile.reopen()?;
         WriteLogger::init(LevelFilter::Info, Config::default(), logfile)?;
-        // let file_logger = WriteLogger::new(LevelFilter::Info, Config::default(), logfile);
         stream("sh", &["-c", test_script])?;
         let mut output = String::new();
         outfile.read_to_string(&mut output)?;
