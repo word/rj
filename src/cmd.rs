@@ -23,7 +23,7 @@ pub fn run(command: &mut Command) -> Result<String> {
     }
 }
 
-// Wrapper around Command which returns error when exit code is anything other than 0
+// Wrapper around Command which checks the exist status and returns an Err if it isn't success.
 pub fn cmd<T>(program: &str, args: T) -> Result<String>
 where
     T: IntoIterator,
@@ -38,9 +38,15 @@ where
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)?)
     } else {
+        let stderr_out = String::from_utf8(output.stderr)?;
         let cmd_err = RunError {
             code: output.status.code(),
-            message: String::from_utf8(output.stderr)?,
+            message: format!(
+                "Failed running: '{} {}', stderr: {}",
+                program,
+                argv_vec.join(" "),
+                stderr_out
+            ),
         };
         Err(anyhow::Error::new(cmd_err))
     }
@@ -121,6 +127,11 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn cmd_error() {
+        assert!(cmd!("cat", "nonexistent").is_err());
+    }
+
     // This test doesn't play well with others because logger is initialised globally
     #[test]
     #[ignore]
@@ -160,7 +171,6 @@ mod tests {
 
     #[test]
     fn stream_error() {
-        // assert!(stream("cat", &["nonexistent"]).is_err());
         assert!(cmd_stream!("cat", "nonexistent").is_err());
     }
 }

@@ -1,10 +1,8 @@
 use anyhow::Result;
-use duct::cmd;
 use log::{error, info};
 use serde::Deserialize;
-use std::io::prelude::*;
-use std::io::BufReader;
 
+use crate::cmd;
 use crate::jail::Jail;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -16,13 +14,6 @@ pub struct Exec {
 impl Exec {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: exec provisioner running", jail.name());
-
-        let cmd = cmd!("find", "/usrrrr");
-        let reader = cmd.reader()?;
-        for line in BufReader::new(reader).lines() {
-            info!("{}", line?);
-        }
-
         Ok(())
     }
 }
@@ -40,7 +31,7 @@ mod tests {
         let jail = &jails["exec_test"];
         jail.apply()?;
 
-        cmd!("chroot", jail.mountpoint(), "cat", "/tmp/exec_test").read()?;
+        // cmd!("chroot", jail.mountpoint(), "cat", "/tmp/exec_test")?;
 
         jails["exec_test"].destroy()?;
         Ok(())
