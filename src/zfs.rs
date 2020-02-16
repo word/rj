@@ -1,9 +1,8 @@
-use log::info;
-use std::process::Command;
-
-use super::cmd;
-use super::cmd_capture;
 use anyhow::Result;
+use log::info;
+
+use crate::cmd;
+use crate::cmd_capture;
 
 #[derive(Debug)]
 pub struct DataSet {
@@ -17,6 +16,10 @@ impl DataSet {
         }
     }
 
+    pub fn path(&self) -> &String {
+        &self.path
+    }
+
     // create the zfs data set if it doesn't exist already
     pub fn create(&self) -> Result<bool> {
         if self.exists()? {
@@ -24,86 +27,44 @@ impl DataSet {
             Ok(false)
         } else {
             info!("Creating zfs dataset {}", &self.path);
-            let mut zfs = Command::new("zfs");
-            zfs.arg("create");
-            zfs.arg(&self.path);
-            cmd::run(&mut zfs)?;
+            cmd!("zfs", "create", &self.path)?;
             Ok(true)
         }
     }
 
-    #[allow(dead_code)]
-    pub fn get_path(&self) -> &String {
-        &self.path
-    }
-
     pub fn set(&self, property: &str, value: &str) -> Result<()> {
-        let mut zfs = Command::new("zfs");
-        zfs.arg("set");
-        zfs.arg(format!("{}={}", property, value));
-        zfs.arg(&self.path);
-        cmd::run(&mut zfs)?;
-        Ok(())
+        let prop = format!("{}={}", property, value);
+        cmd!("zfs", "set", &prop, &self.path)
     }
 
-    #[allow(dead_code)]
     pub fn get(&self, property: &str) -> Result<String> {
         // zfs get -H -o value mountpoint zroot/jails
-        let mut zfs = Command::new("zfs");
-        zfs.args(&["get", "-H", "-o", "value"]);
-        zfs.arg(property);
-        zfs.arg(&self.path);
-        match cmd::run(&mut zfs) {
-            Ok(out) => {
-                let mut trim = out;
-                trim.pop();
-                Ok(trim)
-            }
-            Err(e) => Err(e),
-        }
+        let value = cmd_capture!("zfs", "get", "-H", "-o", "value", property, &self.path)?;
+        Ok(value.trim().to_string())
     }
 
-    #[allow(dead_code)]
     pub fn destroy(&self) -> Result<()> {
         info!("Destroying zfs dataset: {}", &self.path);
-        let mut zfs = Command::new("zfs");
-        zfs.arg("destroy");
-        zfs.arg(&self.path);
-        cmd::run(&mut zfs)?;
-        Ok(())
+        cmd!("zfs", "destroy", &self.path)
     }
 
     // destroy recursively
     #[allow(dead_code)]
     pub fn destroy_r(&self) -> Result<()> {
         info!("Destroying zfs dataset recursively: {}", &self.path);
-        let mut zfs = Command::new("zfs");
-        zfs.arg("destroy");
-        zfs.arg("-r");
-        zfs.arg(&self.path);
-        cmd::run(&mut zfs)?;
-        Ok(())
+        cmd!("zfs", "destroy", "-r", &self.path)
     }
 
-    #[allow(dead_code)]
     pub fn snap(&self, snap_name: &str) -> Result<()> {
         let snap_path = format!("{}@{}", &self.path, &snap_name);
         info!("Creating snapshot: {}", &snap_path);
-        let mut zfs = Command::new("zfs");
-        zfs.arg("snapshot");
-        zfs.arg(&snap_path);
-        cmd::run(&mut zfs)?;
-        Ok(())
+        cmd!("zfs", "snapshot", &snap_path)
     }
 
-    #[allow(dead_code)]
     pub fn clone(&self, snap: &str, dest: &str) -> Result<DataSet> {
         info!("Cloning {} to {}", &self.path, &dest);
-        let mut zfs = Command::new("zfs");
-        zfs.arg("clone");
-        zfs.arg(format!("{}@{}", &self.path, snap));
-        zfs.arg(&dest);
-        cmd::run(&mut zfs)?;
+        let snap_name = format!("{}@{}", &self.path, snap);
+        cmd!("zfs", "clone", &snap_name, &dest)?;
         Ok(DataSet::new(dest))
     }
 
@@ -111,21 +72,12 @@ impl DataSet {
         self.ds_exists(&self.path)
     }
 
-    #[allow(dead_code)]
     pub fn snap_exists(&self, snap_name: &str) -> Result<bool> {
         self.ds_exists(&format!("{}@{}", &self.path, snap_name))
     }
 
-    #[allow(dead_code)]
     pub fn list_snaps(&self) -> Result<Vec<String>> {
-        let mut zfs = Command::new("zfs");
-        zfs.arg("list")
-            .arg("-H")
-            .arg("-o")
-            .arg("name")
-            .arg("-t")
-            .arg("snap");
-        let output = cmd::run(&mut zfs)?;
+        let output = cmd_capture!("zfs", "list", "-H", "-o", "name", "-t", "snap")?;
         let snaps = output
             .lines()
             .filter(|s| s.starts_with(&self.path))
@@ -134,14 +86,14 @@ impl DataSet {
         Ok(snaps)
     }
 
-    #[allow(dead_code)]
     pub fn snap_destroy(&self, snap_name: &str) -> Result<()> {
         info!("Destroying snapshot {}@{}", &self.path, snap_name);
         let snap_full_name = format!("{}@{}", self.path, snap_name);
         cmd!("zfs", "destroy", &snap_full_name)
     }
 
-    // checks if data set exists
+    // checks if data set exists.
+    // this is used by self.exists() and self.snap_exists()
     fn ds_exists(&self, ds_path: &str) -> Result<bool> {
         let msg_pattern = format!("cannot open \'{}\': dataset does not exist\n", &ds_path);
 
@@ -176,17 +128,13 @@ mod tests {
         let rand_string: String = thread_rng().sample_iter(&Alphanumeric).take(5).collect();
         let mut ds = DataSet::new(&format!("zroot/rjtest-{}", rand_string));
         ds.create()?;
-        // assert!(ds.create().is_ok());
 
         // Run the test closure but catch the panic so that the teardown section below
         // can run.
         let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds)));
 
         // Teardown
-        let destroy_result = ds.destroy_r();
-        // Output is displayed in case of panic
-        println!("{:?}", &destroy_result);
-        assert!(destroy_result.is_ok());
+        ds.destroy_r()?;
 
         // Check result
         println!("{:?}", &result);
@@ -196,12 +144,12 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_exists() -> Result<()> {
+    fn ds_exists() -> Result<()> {
         run_test(|ds| ds.exists())
     }
 
     #[test]
-    fn test_ds_double_destroy() {
+    fn ds_double_destroy() {
         let ds = DataSet::new("zroot/rjtest");
         assert!(ds.create().is_ok());
         assert!(ds.destroy().is_ok());
@@ -209,7 +157,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_set() -> Result<()> {
+    fn ds_set() -> Result<()> {
         run_test(|ds| {
             ds.set("atime", "off")?;
             assert_eq!(ds.get("atime")?, "off");
@@ -218,7 +166,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_invalid_set() -> Result<()> {
+    fn ds_invalid_set() -> Result<()> {
         run_test(|ds| {
             assert!(ds.set("noexist", "nope").is_err());
             Ok(())
@@ -228,7 +176,7 @@ mod tests {
     // Creating a DS that already exists shoudn't fail.  It becomes a representation
     // of the existing DS.
     #[test]
-    fn test_ds_already_exists() -> Result<()> {
+    fn ds_already_exists() -> Result<()> {
         run_test(|ds| {
             let result = ds.create();
             // should not error
@@ -240,13 +188,13 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_invalid_path() {
+    fn ds_invalid_path() {
         let inv_ds = DataSet::new("noexist/rjtest");
         assert!(inv_ds.create().is_err());
     }
 
     #[test]
-    fn test_ds_snap() -> Result<()> {
+    fn ds_snap() -> Result<()> {
         run_test(|ds| {
             assert!(ds.snap("testsnap").is_ok());
             assert!(ds.snap_exists("testsnap")?);
@@ -255,7 +203,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_snap_already_exists() -> Result<()> {
+    fn ds_snap_already_exists() -> Result<()> {
         run_test(|ds| {
             ds.snap("testsnap")?;
             assert!(ds.snap("testsnap").is_err());
@@ -264,7 +212,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_snap_invalid_name() -> Result<()> {
+    fn ds_snap_invalid_name() -> Result<()> {
         run_test(|ds| {
             assert!(ds.snap("test&snap").is_err());
             Ok(())
@@ -272,7 +220,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_clone() -> Result<()> {
+    fn ds_clone() -> Result<()> {
         run_test(|ds| {
             ds.snap("test")?;
             let cloned = ds.clone("test", "zroot/test")?;
@@ -284,7 +232,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_invalid_clone() -> Result<()> {
+    fn ds_invalid_clone() -> Result<()> {
         run_test(|ds| {
             assert!(ds.clone("noexist", "zroot/test").is_err());
             Ok(())
@@ -292,7 +240,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_list_snaps() -> Result<()> {
+    fn ds_list_snaps() -> Result<()> {
         run_test(|ds| {
             ds.snap("test1")?;
             ds.snap("test2")?;
@@ -305,7 +253,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ds_snap_destroy() -> Result<()> {
+    fn ds_snap_destroy() -> Result<()> {
         run_test(|ds| {
             ds.snap("test1")?;
             ds.snap("test2")?;

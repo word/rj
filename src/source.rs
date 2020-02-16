@@ -59,7 +59,7 @@ impl Source {
 
     fn install_clone(&self, path: &str, dest_dataset: &zfs::DataSet) -> Result<()> {
         let src_dataset = zfs::DataSet::new(path);
-        src_dataset.clone(&"ready", dest_dataset.get_path())?;
+        src_dataset.clone(&"ready", dest_dataset.path())?;
         Ok(())
     }
 }

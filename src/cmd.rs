@@ -7,23 +7,6 @@ use std::io::BufReader;
 use std::process::{Command, Output, Stdio};
 use std::thread;
 
-// Deprecated Command wrapper
-pub fn run(command: &mut Command) -> Result<String> {
-    // execute the command
-    let output = command.output()?;
-
-    // check the status
-    if output.status.success() {
-        Ok(String::from_utf8(output.stdout)?)
-    } else {
-        let cmd_err = RunError {
-            code: output.status.code(),
-            message: String::from_utf8(output.stderr)?,
-        };
-        Err(anyhow::Error::new(cmd_err))
-    }
-}
-
 // Wrapper around Command that check the exit status and errors if not 0
 pub fn cmd<T, U>(program: U, args: T) -> Result<()>
 where
@@ -197,7 +180,7 @@ mod tests {
         let logfile = NamedTempFile::new()?;
         let mut outfile = logfile.reopen()?;
         WriteLogger::init(LevelFilter::Info, Config::default(), logfile)?;
-        stream("sh", &["-c", test_script])?;
+        cmd_stream!("sh", "-c", test_script)?;
         let mut output = String::new();
         outfile.read_to_string(&mut output)?;
         let mut output_iter = output.lines();

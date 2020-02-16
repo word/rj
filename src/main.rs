@@ -4,7 +4,6 @@ use indexmap::IndexMap;
 use log::{debug, error};
 use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
 use std::process;
-use std::process::Command;
 
 mod cli;
 mod cmd;
@@ -72,10 +71,7 @@ fn init(settings: &Settings) -> Result<()> {
         jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
     }
     // enable jails in rc.conf
-    let mut sysrc = Command::new("sysrc");
-    sysrc.arg("jail_enable=YES");
-    cmd::run(&mut sysrc)?;
-    Ok(())
+    cmd!("sysrc", "jail_enable=YES")
 }
 
 fn make_it_so(matches: ArgMatches) -> Result<()> {

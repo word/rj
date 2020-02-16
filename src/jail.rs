@@ -335,7 +335,7 @@ mod tests {
     }
 
     #[test]
-    fn _base_disabled() -> Result<()> {
+    fn base_disabled() -> Result<()> {
         let jails = setup_once();
         let basejail = &jails["base"];
         assert_eq!(basejail.is_enabled().unwrap(), false);
