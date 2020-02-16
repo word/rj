@@ -38,7 +38,7 @@ where
 
 // Run Command and capture output into a String
 // Checks the exist status and returns an Err if it's not 0.
-pub fn cmd_capture<T>(program: &str, args: T) -> Result<String>
+pub fn capture<T>(program: &str, args: T) -> Result<String>
 where
     T: IntoIterator,
     T::Item: ToString,
@@ -124,7 +124,7 @@ macro_rules! cmd {
 macro_rules! cmd_capture {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
-            $crate::cmd::cmd_capture($program, &[$( $arg ),*])
+            $crate::cmd::capture($program, &[$( $arg ),*])
         }
     };
 }

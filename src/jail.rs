@@ -65,14 +65,11 @@ impl Jail<'_> {
 
     pub fn apply(&self) -> Result<()> {
         info!("{}: applying changes", self.name());
-        if !(self.exists()?) {
+
+        if !self.exists()? {
             self.source.install(&self.mountpoint, &self.zfs_ds)?;
         }
         self.configure()?;
-        if !(self.exists()?) {
-            // TODO - reprovision if forced
-            self.provision()?;
-        }
         if self.settings.start {
             if !(self.is_enabled()?) {
                 info!("{}: disabled -> enabled", &self.name);
@@ -83,7 +80,7 @@ impl Jail<'_> {
                 self.start()?
             }
         }
-
+        self.provision()?;
         Ok(())
     }
 

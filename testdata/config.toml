@@ -23,7 +23,7 @@ path = "zroot/jails/base"
 
 [provisioner.exec]
 type = "exec"
-path = "testdata/provisioner/exec.sh"
+path = "testdata/provisioners/exec.sh"
 
 [provisioner.file]
 type = "file"

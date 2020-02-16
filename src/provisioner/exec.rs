@@ -1,8 +1,12 @@
 use anyhow::Result;
-use log::{error, info};
+use log::info;
 use serde::Deserialize;
+use std::fs::copy;
+use std::path::Path;
 
 use crate::cmd;
+use crate::cmd_capture;
+use crate::cmd_stream;
 use crate::jail::Jail;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -14,7 +18,20 @@ pub struct Exec {
 impl Exec {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: exec provisioner running", jail.name());
-        Ok(())
+        info!("{}: executing: {}", jail.name(), &self.path);
+        // TODO: validate the path is correct and exists
+        let exe_filename = Path::new(&self.path).file_name().unwrap();
+        let exe_tmp_path = cmd_capture!(
+            "jexec",
+            jail.name(),
+            "mktemp",
+            "-t",
+            exe_filename.to_str().unwrap()
+        )?;
+        copy(&self.path, format!("{}{}", jail.mountpoint(), exe_tmp_path))?;
+        cmd!("jexec", jail.name(), "chmod", "0700", &exe_tmp_path)?;
+        cmd_stream!("jexec", jail.name(), &exe_tmp_path)?;
+        cmd!("jexec", jail.name(), "rm", &exe_tmp_path)
     }
 }
 
@@ -37,7 +54,7 @@ mod tests {
         }
         jail.apply()?;
 
-        // cmd!("chroot", jail.mountpoint(), "cat", "/tmp/exec_test")?;
+        cmd!("jexec", jail.name(), "cat", "/tmp/exec_test")?;
 
         jail.destroy()?;
         Ok(())
