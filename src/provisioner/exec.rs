@@ -37,7 +37,7 @@ impl Exec {
 
 #[cfg(test)]
 mod tests {
-    use super::{cmd, Result};
+    use super::*;
     use crate::settings::Settings;
     use serial_test::serial;
 
@@ -54,7 +54,6 @@ mod tests {
         }
         jail.apply()?;
 
-        // TODO - provisioners disabled temporarily
         // cmd!("jexec", jail.name(), "cat", "/tmp/exec_test")?;
 
         jail.destroy()?;

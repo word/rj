@@ -8,6 +8,7 @@ use std::path::Path;
 use std::process::Command;
 
 use crate::cmd;
+use crate::cmd_capture;
 use crate::provisioner::Provisioner;
 use crate::settings;
 use crate::source::Source;
@@ -160,17 +161,12 @@ impl Jail<'_> {
 
     pub fn start(&self) -> Result<()> {
         info!("{}: starting", &self.name);
-        cmd!("service", "jail", "start", &self.name)?;
-        Ok(())
+        cmd!("service", "jail", "start", &self.name)
     }
 
     pub fn stop(&self) -> Result<()> {
         info!("{}: stopping", &self.name);
-
-        let mut service = Command::new("service");
-        service.arg("jail").arg("stop").arg(&self.name);
-        cmd::run(&mut service)?;
-        Ok(())
+        cmd!("service", "jail", "stop", &self.name)
     }
 
     pub fn is_running(&self) -> Result<bool> {
@@ -179,26 +175,20 @@ impl Jail<'_> {
     }
 
     pub fn is_enabled(&self) -> Result<bool> {
-        let enabled_jails = cmd::run(&mut Command::new("sysrc").arg("-n").arg("jail_list"))?;
+        let enabled_jails = cmd_capture!("sysrc", "-n", "jail_list")?;
         Ok(enabled_jails.contains(&self.name))
     }
 
     fn enable(&self) -> Result<()> {
         info!("{}: enabling in rc.conf", &self.name);
-
-        let mut sysrc = Command::new("sysrc");
-        sysrc.arg(format!("jail_list+={}", &self.name));
-        cmd::run(&mut sysrc)?;
-        Ok(())
+        let arg = format!("jail_list+={}", &self.name);
+        cmd!("sysrc", arg)
     }
 
     fn disable(&self) -> Result<()> {
         info!("{}: disabling in rc.conf", &self.name);
-
-        let mut sysrc = Command::new("sysrc");
-        sysrc.arg(format!("jail_list-={}", &self.name));
-        cmd::run(&mut sysrc)?;
-        Ok(())
+        let arg = format!("jail_list-={}", &self.name);
+        cmd!("sysrc", arg)
     }
 
     pub fn provision(&self) -> Result<()> {
