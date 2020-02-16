@@ -37,6 +37,7 @@ where
     check_exit_status(program.as_ref(), argv_vec, output)
 }
 
+// Return Err if exit status is not 0
 fn check_exit_status(program: &str, args: Vec<String>, output: Output) -> Result<String> {
     let stdout = String::from_utf8(output.stdout)?;
     let stderr = String::from_utf8(output.stderr)?;

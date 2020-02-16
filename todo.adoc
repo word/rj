@@ -2,7 +2,10 @@
 
 == doing
 
-* use OsString in cmd
+ * snapshots:
+    * add timestamps
+    * add pre-provision
+    * add function to get latest snap
 * provision jail
   * shell script
   * file
@@ -10,10 +13,6 @@
 
 == next up
 
- * snapshots:
-    * add timestamps
-    * add pre-provision
-    * add function to get latest snap
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names
@@ -26,7 +25,6 @@
 
 * confirmation before deleting all jails (and -f to force)
 * tidy up and tests for main
-* tidy up zfs code
 
 === Later
 
@@ -35,6 +33,7 @@
 
 == Done:
 
+* tidy up zfs code
 * fail on unknown config options
 * apply config changes
 * jail
@@ -50,56 +49,3 @@
   * zfs snapshot method
   * zfs clone method
 * try testing commands with mockall
-
-== What makes a jail?
-
-* zfs data set
-* jails.conf config entry
-* provisioned config (configuration puppet or whatever)
-* processes
-* network socket
-* rc service
-
-* think about config versioning!
-
-== Config layout
-
-/usr/local/etc/rj.conf
-/usr/local/etc/rj.conf.d/
-
-== CLI interface
-
-bring up new jails
-
-----
-rj create <jailname>
-----
-
-upgrade jail
- * stop jail
- * freebsd-update
- * start jail
- * optional release flag
-
-----
-rj upgrade <jailname> -r <release>
-----
-
-show outdated jails
- * compare to the release in config file
- * lookup the latest patch release
-   * or just run freebsd-update to see if anything is outstanding
-
-----
-rj outdated
-----
-
-----
-rj rm <jailname>
-----
-
-reserved for bundled config?
-
-----
-rj apply
-----
