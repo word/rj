@@ -2,6 +2,7 @@ use log::info;
 use std::process::Command;
 
 use super::cmd;
+use super::cmd_capture;
 use anyhow::Result;
 
 #[derive(Debug)]
@@ -136,24 +137,18 @@ impl DataSet {
     #[allow(dead_code)]
     pub fn snap_destroy(&self, snap_name: &str) -> Result<()> {
         info!("Destroying snapshot {}@{}", &self.path, snap_name);
-        let mut zfs = Command::new("zfs");
-        zfs.arg("destroy")
-            .arg(&format!("{}@{}", self.path, snap_name));
-        cmd::run(&mut zfs)?;
-        Ok(())
+        let snap_full_name = format!("{}@{}", self.path, snap_name);
+        cmd!("zfs", "destroy", &snap_full_name)
     }
 
     // checks if data set exists
     fn ds_exists(&self, ds_path: &str) -> Result<bool> {
-        let mut zfs = Command::new("zfs");
-        zfs.arg("list").arg(&ds_path);
+        let msg_pattern = format!("cannot open \'{}\': dataset does not exist\n", &ds_path);
 
-        match cmd::run(&mut zfs) {
+        match cmd_capture!("zfs", "list", &ds_path) {
             Ok(_) => Ok(true),
             Err(e) => {
-                let not_exists =
-                    format!("(1) cannot open \'{}\': dataset does not exist\n", &ds_path);
-                if e.to_string() == not_exists {
+                if e.to_string().contains(&msg_pattern) {
                     Ok(false)
                 } else {
                     Err(e)
@@ -180,7 +175,8 @@ mod tests {
         // Set up
         let rand_string: String = thread_rng().sample_iter(&Alphanumeric).take(5).collect();
         let mut ds = DataSet::new(&format!("zroot/rjtest-{}", rand_string));
-        assert!(ds.create().is_ok());
+        ds.create()?;
+        // assert!(ds.create().is_ok());
 
         // Run the test closure but catch the panic so that the teardown section below
         // can run.
