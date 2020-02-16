@@ -164,11 +164,6 @@ impl Jail<'_> {
         info!("{}: starting", &self.name);
         cmd!("service", "jail", "start", &self.name)?;
         Ok(())
-
-        // let mut service = Command::new("service");
-        // service.arg("jail").arg("start").arg(&self.name);
-        // cmd::run(&mut service)?;
-        // Ok(())
     }
 
     pub fn stop(&self) -> Result<()> {
@@ -247,8 +242,6 @@ mod tests {
         INIT.call_once(|| {
             // enable log messages for debugging
             // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
-            // cleanup before all
-            // jails_ds.destroy_r().unwrap();
 
             // Initialise
             crate::init(&S).unwrap();

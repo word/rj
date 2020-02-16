@@ -58,7 +58,7 @@ fn check_exit_status(program: &str, args: Vec<String>, output: Output) -> Result
         let cmd_err = RunError {
             code: output.status.code(),
             message: format!(
-                "Failed running: '{} {}', stderr: {}",
+                "Failed command: '{} {}', stderr: {}",
                 program,
                 args.join(" "),
                 stderr
@@ -105,7 +105,7 @@ where
     } else {
         let err = RunError {
             code: status.code(),
-            message: format!("Failed running: {} {}", program, argv_vec.join(" ")),
+            message: format!("Failed command: {} {}", program, argv_vec.join(" ")),
         };
         Err(anyhow::Error::new(err))
     }
