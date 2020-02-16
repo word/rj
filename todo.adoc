@@ -2,12 +2,18 @@
 
 == doing
 
+* use OsString in cmd
 * provision jail
   * shell script
+  * file
   * puppet
 
 == next up
 
+ * snapshots:
+    * add timestamps
+    * add pre-provision
+    * add function to get latest snap
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names
@@ -26,8 +32,6 @@
 
 * freebsd-update jail
 * config includes or conf.d style include
-* parallel operation (create/upgrade etc)
-  * need to resurrect ordering
 
 == Done:
 

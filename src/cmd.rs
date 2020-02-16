@@ -1,6 +1,7 @@
 use crate::errors::RunError;
 use anyhow::Result;
 use log::{error, info};
+use std::ffi::OsStr;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::process::{Command, Output, Stdio};
@@ -24,29 +25,33 @@ pub fn run(command: &mut Command) -> Result<String> {
 }
 
 // Wrapper around Command that check the exit status and errors if not 0
-pub fn cmd<T>(program: &str, args: T) -> Result<()>
+pub fn cmd<T, U>(program: U, args: T) -> Result<()>
 where
+    U: AsRef<OsStr>,
+    U: AsRef<str>,
     T: IntoIterator,
     T::Item: ToString,
 {
     let mut argv_vec = Vec::new();
     argv_vec.extend(args.into_iter().map(|s| s.to_string()));
     let output = Command::new(&program).args(&argv_vec).output()?;
-    check_exit_status(program, argv_vec, output)?;
+    check_exit_status(program.as_ref(), argv_vec, output)?;
     Ok(())
 }
 
 // Run Command and capture output into a String
 // Checks the exist status and returns an Err if it's not 0.
-pub fn capture<T>(program: &str, args: T) -> Result<String>
+pub fn capture<T, U>(program: U, args: T) -> Result<String>
 where
+    U: AsRef<OsStr>,
+    U: AsRef<str>,
     T: IntoIterator,
     T::Item: ToString,
 {
     let mut argv_vec = Vec::new();
     argv_vec.extend(args.into_iter().map(|s| s.to_string()));
     let output = Command::new(&program).args(&argv_vec).output()?;
-    check_exit_status(program, argv_vec, output)
+    check_exit_status(program.as_ref(), argv_vec, output)
 }
 
 fn check_exit_status(program: &str, args: Vec<String>, output: Output) -> Result<String> {
@@ -70,8 +75,10 @@ fn check_exit_status(program: &str, args: Vec<String>, output: Output) -> Result
 
 // Run a command and stream stdout and stderr into the logger
 // Fail on exit status other than 0
-pub fn stream<T>(program: &str, args: T) -> Result<()>
+pub fn stream<T, U>(program: U, args: T) -> Result<()>
 where
+    U: AsRef<OsStr>,
+    U: AsRef<str>,
     T: IntoIterator,
     T::Item: ToString,
 {
@@ -105,7 +112,11 @@ where
     } else {
         let err = RunError {
             code: status.code(),
-            message: format!("Failed command: {} {}", program, argv_vec.join(" ")),
+            message: format!(
+                "Failed command: {} {}",
+                AsRef::<str>::as_ref(&program),
+                argv_vec.join(" ")
+            ),
         };
         Err(anyhow::Error::new(err))
     }
