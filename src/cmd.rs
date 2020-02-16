@@ -45,7 +45,6 @@ where
 {
     let mut argv_vec = Vec::new();
     argv_vec.extend(args.into_iter().map(|s| s.to_string()));
-
     let output = Command::new(&program).args(&argv_vec).output()?;
     check_exit_status(program, argv_vec, output)
 }

@@ -64,20 +64,15 @@ impl Jail<'_> {
     }
 
     pub fn apply(&self) -> Result<()> {
-        if self.exists()? {
-            self.update()?;
-        } else {
-            self.create()?;
-        };
-
-        Ok(())
-    }
-
-    fn update(&self) -> Result<()> {
-        info!("{}: jail exists, checking for changes", self.name());
+        info!("{}: applying changes", self.name());
+        if !(self.exists()?) {
+            self.source.install(&self.mountpoint, &self.zfs_ds)?;
+        }
         self.configure()?;
-        // TODO - reprovision if forced
-        // self.provision()?;
+        if !(self.exists()?) {
+            // TODO - reprovision if forced
+            self.provision()?;
+        }
         if self.settings.start {
             if !(self.is_enabled()?) {
                 info!("{}: disabled -> enabled", &self.name);
@@ -89,18 +84,6 @@ impl Jail<'_> {
             }
         }
 
-        Ok(())
-    }
-
-    fn create(&self) -> Result<()> {
-        info!("{}: creating new jail", self.name());
-        self.source.install(&self.mountpoint, &self.zfs_ds)?;
-        self.configure()?;
-        self.provision()?;
-        if self.settings.start {
-            self.enable()?;
-            self.start()?;
-        }
         Ok(())
     }
 
@@ -177,7 +160,7 @@ impl Jail<'_> {
         todo!()
     }
 
-    fn start(&self) -> Result<()> {
+    pub fn start(&self) -> Result<()> {
         info!("{}: starting", &self.name);
         cmd!("service", "jail", "start", &self.name)?;
         Ok(())
@@ -188,7 +171,7 @@ impl Jail<'_> {
         // Ok(())
     }
 
-    fn stop(&self) -> Result<()> {
+    pub fn stop(&self) -> Result<()> {
         info!("{}: stopping", &self.name);
 
         let mut service = Command::new("service");
@@ -197,13 +180,13 @@ impl Jail<'_> {
         Ok(())
     }
 
-    fn is_running(&self) -> Result<bool> {
+    pub fn is_running(&self) -> Result<bool> {
         let output = Command::new("jls").arg("-j").arg(&self.name).output()?;
         Ok(output.status.success())
     }
 
-    fn is_enabled(&self) -> Result<bool> {
-        let enabled_jails = cmd::run(&mut Command::new("sysrc").arg("-n").arg("jails_list"))?;
+    pub fn is_enabled(&self) -> Result<bool> {
+        let enabled_jails = cmd::run(&mut Command::new("sysrc").arg("-n").arg("jail_list"))?;
         Ok(enabled_jails.contains(&self.name))
     }
 
@@ -211,7 +194,7 @@ impl Jail<'_> {
         info!("{}: enabling in rc.conf", &self.name);
 
         let mut sysrc = Command::new("sysrc");
-        sysrc.arg(format!("jails_list+={}", &self.name));
+        sysrc.arg(format!("jail_list+={}", &self.name));
         cmd::run(&mut sysrc)?;
         Ok(())
     }
@@ -220,7 +203,7 @@ impl Jail<'_> {
         info!("{}: disabling in rc.conf", &self.name);
 
         let mut sysrc = Command::new("sysrc");
-        sysrc.arg(format!("jails_list-={}", &self.name));
+        sysrc.arg(format!("jail_list-={}", &self.name));
         cmd::run(&mut sysrc)?;
         Ok(())
     }
@@ -247,6 +230,7 @@ mod tests {
     use pretty_assertions::assert_eq;
     use settings::Settings;
     // use simplelog::*;
+    use serial_test::serial;
     use std::fs;
     use std::path::Path;
     use std::sync::Once;
@@ -269,7 +253,7 @@ mod tests {
             // Initialise
             crate::init(&S).unwrap();
 
-            // destroy existing test1 and test2 jails
+            // clean up test jails that may be left over from a failed run
             if jails["test1"].exists().unwrap() {
                 jails["test1"].destroy().unwrap();
             }
@@ -304,6 +288,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn apply_and_destroy() -> Result<()> {
         let jails = setup_once();
         let jail1 = &jails["test1"];

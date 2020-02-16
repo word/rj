@@ -22,13 +22,16 @@ impl Exec {
 mod tests {
     use super::*;
     use crate::settings::Settings;
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn provision() -> Result<()> {
         let s = Settings::new("testdata/config.toml")?;
         let jails = s.to_jails()?;
         let jail = &jails["exec_test"];
-        // TODO: init
+
+        // clean up if left over from a failed test
         if jail.exists()? {
             jail.destroy()?;
         }
