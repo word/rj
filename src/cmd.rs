@@ -168,7 +168,8 @@ mod tests {
         assert!(cmd_capture!("cat", "nonexistent").is_err());
     }
 
-    // This test doesn't play well with others because logger is initialised globally
+    // This test doesn't play well with others because logger is initialised
+    // globally
     #[test]
     #[ignore]
     fn stream_output() -> Result<()> {

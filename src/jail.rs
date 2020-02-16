@@ -238,7 +238,8 @@ mod tests {
 
         INIT.call_once(|| {
             // enable log messages for debugging
-            // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
+            // TermLogger::init(LevelFilter::Debug, Config::default(),
+            // TerminalMode::Mixed).unwrap();
 
             // Initialise
             crate::init(&S).unwrap();
@@ -269,7 +270,8 @@ mod tests {
         assert_eq!(jails["base"].name, "base");
     }
 
-    // Trying to create an already created jail should just skip it without an error.
+    // Trying to create an already created jail should just skip it without an
+    // error.
     #[test]
     fn apply_existing() {
         let jails = setup_once();

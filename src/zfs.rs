@@ -182,7 +182,8 @@ mod tests {
         let mut ds = DataSet::new(&format!("zroot/rjtest-{}", rand_string));
         assert!(ds.create().is_ok());
 
-        // Run the test closure but catch the panic so that the teardown section below can run.
+        // Run the test closure but catch the panic so that the teardown section below
+        // can run.
         let result = panic::catch_unwind(AssertUnwindSafe(|| test(&mut ds)));
 
         // Teardown
@@ -228,8 +229,8 @@ mod tests {
         })
     }
 
-    // Creating a DS that already exists shoudn't fail.  It becomes a representation of the
-    // existing DS.
+    // Creating a DS that already exists shoudn't fail.  It becomes a representation
+    // of the existing DS.
     #[test]
     fn test_ds_already_exists() -> Result<()> {
         run_test(|ds| {

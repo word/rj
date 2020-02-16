@@ -16,6 +16,11 @@ test_nocapture:
 	$(info => Running tests with RUST_BACKTRACE)
 	vagrant ssh -c 'cd /vagrant && sudo RUST_BACKTRACE=1 cargo test -- --nocapture'
 
+fmt:
+	$(info => Formatting)
+	cargo fmt
+	# cargo +nightly fmt
+
 clean:
 	$(info => Cleaning)
 	rm -rf target/
