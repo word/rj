@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chrono::Local;
 use log::info;
 
 use crate::cmd;
@@ -58,6 +59,12 @@ impl DataSet {
     pub fn snap(&self, snap_name: &str) -> Result<()> {
         let snap_path = format!("{}@{}", &self.path, &snap_name);
         info!("Creating snapshot: {}", &snap_path);
+        cmd!("zfs", "snapshot", &snap_path)
+    }
+
+    pub fn snap_with_time(&self, snap_name: &str) -> Result<()> {
+        let ts = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
+        let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &ts);
         cmd!("zfs", "snapshot", &snap_path)
     }
 
@@ -138,7 +145,10 @@ mod tests {
 
         // Check result
         println!("{:?}", &result);
+        // Check if there was a panic
         assert!(result.is_ok());
+        // Check if there was an error
+        assert!(result.unwrap().is_ok());
 
         Ok(())
     }
@@ -198,6 +208,25 @@ mod tests {
         run_test(|ds| {
             assert!(ds.snap("testsnap").is_ok());
             assert!(ds.snap_exists("testsnap")?);
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn ds_snap_with_time() -> Result<()> {
+        run_test(|ds| {
+            let ts = Local::now().format("%Y-%m-%dT%H").to_string();
+            let s = "testsnaptime";
+            ds.snap_with_time(&s)?;
+            let pattern = format!("{}_{}", &s, &ts);
+            let mut exists = false;
+            for snap in ds.list_snaps()?.iter() {
+                if snap.contains(&pattern) {
+                    exists = true;
+                    break;
+                }
+            }
+            assert!(exists);
             Ok(())
         })
     }

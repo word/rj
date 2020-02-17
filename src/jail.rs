@@ -30,7 +30,6 @@ pub struct Jail<'a> {
 }
 
 impl Jail<'_> {
-    // read only aliases for attributes
     pub fn name(&self) -> &String {
         &self.name
     }
@@ -195,7 +194,7 @@ impl Jail<'_> {
         for p in self.provisioners.iter() {
             p.provision(&self)?;
         }
-        // TODO - add timestamp and rename to 'provisioned'
+        // TODO - add timestamp
         self.zfs_ds.snap("ready")
     }
 
