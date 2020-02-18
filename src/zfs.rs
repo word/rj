@@ -109,7 +109,7 @@ impl DataSet {
         let re = Regex::new(r"^(.*)@(.*)\t(\d*)$")?;
         let mut snaps = Vec::new();
 
-        // parse the list of snapshots.  Return only the snapshots that match the ds and pattern.
+        // parse the list of snapshots.  Return only the snapshots that match the ds path and snapshot name pattern.
         for line in output.lines() {
             if line.starts_with(&self.path) {
                 let caps = re.captures(line).unwrap();
