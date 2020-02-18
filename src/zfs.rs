@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{DateTime, Local, NaiveDateTime, SecondsFormat};
+use chrono::{Local, NaiveDateTime};
 use log::info;
 use regex::Regex;
 
@@ -95,7 +95,7 @@ impl DataSet {
         Ok(snaps)
     }
 
-    pub fn snap_latest(&self, pattern: &str) -> Result<String> {
+    pub fn snap_latest(&self, pattern: &str) -> Result<Option<String>> {
         let output = cmd_capture!(
             "zfs",
             "list",
@@ -114,17 +114,22 @@ impl DataSet {
             if line.starts_with(&self.path) {
                 let caps = re.captures(line).unwrap();
                 let snap_name = caps.get(2).unwrap().as_str();
-                let epoch_secs = caps.get(3).unwrap().as_str().parse::<i64>().unwrap();
-                let time = NaiveDateTime::from_timestamp(epoch_secs, 0);
 
                 if snap_name.contains(pattern) {
+                    let epoch_secs = caps.get(3).unwrap().as_str().parse::<i64>().unwrap();
+                    let time = NaiveDateTime::from_timestamp(epoch_secs, 0);
                     snaps.push((snap_name, time));
                 }
             }
         }
 
-        snaps.sort_by(|a, b| a.1.cmp(&b.1));
-        Ok(snaps.last().unwrap().0.to_string())
+        if snaps.is_empty() {
+            Ok(None)
+        } else {
+            snaps.sort_by(|a, b| a.1.cmp(&b.1));
+            // return the last snapshot name
+            Ok(Some(snaps.last().unwrap().0.to_string()))
+        }
     }
 
     pub fn snap_destroy(&self, snap_name: &str) -> Result<()> {
@@ -270,15 +275,21 @@ mod tests {
     #[test]
     fn ds_snap_latest() -> Result<()> {
         run_test(|ds| {
+            // Check that last snap is returned by creation timestamp
             let sec = Duration::from_secs(1);
             ds.snap_with_time("testsnaplatest1")?;
             thread::sleep(sec);
-            ds.snap_with_time("testsnaplatest2")?;
+            ds.snap("testsnaplatest2")?;
             thread::sleep(sec);
-            ds.snap_with_time("testsnaplatest0")?;
+            ds.snap("testsnaplatest0")?;
+
             assert!(ds
                 .snap_latest("testsnaplatest")?
+                .unwrap()
                 .contains("testsnaplatest0"));
+
+            // Check that empty result is handled
+            assert_eq!(ds.snap_latest("noexist")?, None);
             Ok(())
         })
     }
