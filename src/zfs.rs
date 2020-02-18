@@ -1,6 +1,7 @@
 use anyhow::Result;
-use chrono::Local;
+use chrono::{DateTime, Local, NaiveDateTime, SecondsFormat};
 use log::info;
+use regex::Regex;
 
 use crate::cmd;
 use crate::cmd_capture;
@@ -63,7 +64,8 @@ impl DataSet {
     }
 
     pub fn snap_with_time(&self, snap_name: &str) -> Result<()> {
-        let ts = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
+        //
+        let ts = Local::now().format("%Y-%m-%dT%H:%M:%S");
         let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &ts);
         cmd!("zfs", "snapshot", &snap_path)
     }
@@ -91,6 +93,38 @@ impl DataSet {
             .map(|s| s.split('@').last().unwrap().to_string())
             .collect::<Vec<String>>();
         Ok(snaps)
+    }
+
+    pub fn snap_latest(&self, pattern: &str) -> Result<String> {
+        let output = cmd_capture!(
+            "zfs",
+            "list",
+            "-H",
+            "-p",
+            "-o",
+            "name,creation",
+            "-t",
+            "snap"
+        )?;
+        let re = Regex::new(r"^(.*)@(.*)\t(\d*)$")?;
+        let mut snaps = Vec::new();
+
+        // parse the list of snapshots.  Return only the snapshots that match the ds and pattern.
+        for line in output.lines() {
+            if line.starts_with(&self.path) {
+                let caps = re.captures(line).unwrap();
+                let snap_name = caps.get(2).unwrap().as_str();
+                let epoch_secs = caps.get(3).unwrap().as_str().parse::<i64>().unwrap();
+                let time = NaiveDateTime::from_timestamp(epoch_secs, 0);
+
+                if snap_name.contains(pattern) {
+                    snaps.push((snap_name, time));
+                }
+            }
+        }
+
+        snaps.sort_by(|a, b| a.1.cmp(&b.1));
+        Ok(snaps.last().unwrap().0.to_string())
     }
 
     pub fn snap_destroy(&self, snap_name: &str) -> Result<()> {
@@ -125,6 +159,8 @@ mod tests {
     use rand::distributions::Alphanumeric;
     use rand::{thread_rng, Rng};
     use std::panic::{self, AssertUnwindSafe};
+    use std::thread;
+    use std::time::Duration;
 
     fn run_test<T, R>(test: T) -> Result<()>
     where
@@ -227,6 +263,22 @@ mod tests {
                 }
             }
             assert!(exists);
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn ds_snap_latest() -> Result<()> {
+        run_test(|ds| {
+            let sec = Duration::from_secs(1);
+            ds.snap_with_time("testsnaplatest1")?;
+            thread::sleep(sec);
+            ds.snap_with_time("testsnaplatest2")?;
+            thread::sleep(sec);
+            ds.snap_with_time("testsnaplatest0")?;
+            assert!(ds
+                .snap_latest("testsnaplatest")?
+                .contains("testsnaplatest0"));
             Ok(())
         })
     }
