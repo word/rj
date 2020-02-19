@@ -60,13 +60,13 @@ impl Source {
 
     fn install_clone(&self, path: &str, dest_dataset: &zfs::DataSet) -> Result<()> {
         let src_dataset = zfs::DataSet::new(path);
-        match src_dataset.last_snap("rj_ready")? {
+        match src_dataset.last_snap("ready")? {
             Some(s) => {
                 src_dataset.clone(&s, dest_dataset.path())?;
                 Ok(())
             }
             None => {
-                let msg = format!("No 'rj_ready' snapshot found in source dataset: {}", path);
+                let msg = format!("'ready' snapshot not found in source dataset: {}", path);
                 Err(anyhow::Error::new(SourceError(msg)))
             }
         }

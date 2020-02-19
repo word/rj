@@ -1,6 +1,8 @@
 use anyhow::Result;
 use chrono::{Local, NaiveDateTime};
 use log::info;
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 use regex::Regex;
 
 use crate::cmd;
@@ -63,10 +65,17 @@ impl DataSet {
         cmd!("zfs", "snapshot", &snap_path)
     }
 
+    // create a snapshot with date time in the name
     pub fn snap_with_time(&self, snap_name: &str) -> Result<()> {
-        //
         let ts = Local::now().format("%Y-%m-%dT%H:%M:%S");
         let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &ts);
+        cmd!("zfs", "snapshot", &snap_path)
+    }
+
+    // create a snapshot with a random suffix
+    pub fn snap_rand(&self, snap_name: &str) -> Result<()> {
+        let rand: String = thread_rng().sample_iter(&Alphanumeric).take(8).collect();
+        let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &rand);
         cmd!("zfs", "snapshot", &snap_path)
     }
 
@@ -263,6 +272,23 @@ mod tests {
             let mut exists = false;
             for snap in ds.list_snaps()?.iter() {
                 if snap.contains(&pattern) {
+                    exists = true;
+                    break;
+                }
+            }
+            assert!(exists);
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn ds_snap_rand() -> Result<()> {
+        run_test(|ds| {
+            ds.snap_rand("testsnaprand")?;
+            let re = Regex::new(r"^testsnaprand_[a-zA-Z0-9]{8}$")?;
+            let mut exists = false;
+            for snap in ds.list_snaps()?.iter() {
+                if re.is_match(snap) {
                     exists = true;
                     break;
                 }
