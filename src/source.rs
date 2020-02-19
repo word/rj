@@ -2,6 +2,7 @@ use anyhow::Result;
 use log::info;
 use serde::Deserialize;
 
+use crate::errors::SourceError;
 use crate::util;
 use crate::zfs;
 
@@ -59,7 +60,15 @@ impl Source {
 
     fn install_clone(&self, path: &str, dest_dataset: &zfs::DataSet) -> Result<()> {
         let src_dataset = zfs::DataSet::new(path);
-        src_dataset.clone(&"ready", dest_dataset.path())?;
-        Ok(())
+        match src_dataset.last_snap("rj_ready")? {
+            Some(s) => {
+                src_dataset.clone(&s, dest_dataset.path())?;
+                Ok(())
+            }
+            None => {
+                let msg = format!("No 'rj_ready' snapshot found in source dataset: {}", path);
+                Err(anyhow::Error::new(SourceError(msg)))
+            }
+        }
     }
 }

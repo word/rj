@@ -95,7 +95,7 @@ impl DataSet {
         Ok(snaps)
     }
 
-    pub fn snap_latest(&self, pattern: &str) -> Result<Option<String>> {
+    pub fn last_snap(&self, pattern: &str) -> Result<Option<String>> {
         let output = cmd_capture!(
             "zfs",
             "list",
@@ -284,12 +284,12 @@ mod tests {
             ds.snap("testsnaplatest0")?;
 
             assert!(ds
-                .snap_latest("testsnaplatest")?
+                .last_snap("testsnaplatest")?
                 .unwrap()
                 .contains("testsnaplatest0"));
 
             // Check that empty result is handled
-            assert_eq!(ds.snap_latest("noexist")?, None);
+            assert_eq!(ds.last_snap("noexist")?, None);
             Ok(())
         })
     }

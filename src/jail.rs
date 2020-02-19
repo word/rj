@@ -80,8 +80,7 @@ impl Jail<'_> {
                 self.start()?
             }
         }
-        // TODO - fix snapshots before re-enabling
-        // self.provision()?;
+        self.provision()?;
         Ok(())
     }
 
@@ -194,8 +193,7 @@ impl Jail<'_> {
         for p in self.provisioners.iter() {
             p.provision(&self)?;
         }
-        // TODO - add timestamp
-        self.zfs_ds.snap("ready")
+        self.zfs_ds.snap_with_time("rj_ready")
     }
 
     pub fn exists(&self) -> Result<bool> {
@@ -242,6 +240,9 @@ mod tests {
                 jails["test2"].destroy().unwrap();
             }
 
+            if !(jails["base"].exists().unwrap()) {
+                jails["base"].apply().unwrap();
+            }
             jails["test1"].apply().unwrap();
             jails["test2"].apply().unwrap();
         });

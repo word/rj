@@ -37,6 +37,21 @@ impl std::error::Error for JailError {
 }
 
 #[derive(Debug, Clone)]
+pub struct SourceError(pub String);
+
+impl fmt::Display for SourceError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for SourceError {
+    fn description(&self) -> &str {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct ArgError(pub String);
 
 impl fmt::Display for ArgError {
