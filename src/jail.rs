@@ -193,7 +193,7 @@ impl Jail<'_> {
         for p in self.provisioners.iter() {
             p.provision(&self)?;
         }
-        self.zfs_ds.snap_rand("ready")
+        self.zfs_ds.snap_with_time("ready")
     }
 
     pub fn exists(&self) -> Result<bool> {
@@ -233,12 +233,12 @@ mod tests {
             crate::init(&S).unwrap();
 
             // clean up test jails that may be left over from a failed run
-            // if jails["test1"].exists().unwrap() {
-            //     jails["test1"].destroy().unwrap();
-            // }
-            // if jails["test2"].exists().unwrap() {
-            //     jails["test2"].destroy().unwrap();
-            // }
+            if jails["test1"].exists().unwrap() {
+                jails["test1"].destroy().unwrap();
+            }
+            if jails["test2"].exists().unwrap() {
+                jails["test2"].destroy().unwrap();
+            }
 
             if !(jails["base"].exists().unwrap()) {
                 jails["base"].apply().unwrap();
@@ -318,18 +318,18 @@ mod tests {
         assert_eq!(ok_jail_conf, fs::read_to_string(jail2_conf_path)?);
 
         // make sure all resources are cleaned up after destroy
-        // jail1.destroy()?;
-        // // check config file is gone
-        // assert_eq!(Path::new(jail1_conf_path).is_file(), false);
-        // // check jail is disabled in rc.conf
-        // assert_eq!(jail1.is_enabled()?, false);
-        // // check jail is dead
-        // assert_eq!(jail1.is_running()?, false);
+        jail1.destroy()?;
+        // check config file is gone
+        assert_eq!(Path::new(jail1_conf_path).is_file(), false);
+        // check jail is disabled in rc.conf
+        assert_eq!(jail1.is_enabled()?, false);
+        // check jail is dead
+        assert_eq!(jail1.is_running()?, false);
 
-        // jail2.destroy()?;
-        // assert_eq!(Path::new(jail2_conf_path).is_file(), false);
-        // assert_eq!(jail2.is_enabled()?, false);
-        // assert_eq!(jail2.is_running()?, false);
+        jail2.destroy()?;
+        assert_eq!(Path::new(jail2_conf_path).is_file(), false);
+        assert_eq!(jail2.is_enabled()?, false);
+        assert_eq!(jail2.is_running()?, false);
 
         Ok(())
     }

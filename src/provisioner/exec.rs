@@ -33,6 +33,8 @@ impl Exec {
         cmd_stream!("jexec", jail.name(), &exe_tmp_path)?;
         cmd!("jexec", jail.name(), "rm", &exe_tmp_path)
     }
+
+    fn validate(&self) -> Result<()> {}
 }
 
 #[cfg(test)]
@@ -54,9 +56,17 @@ mod tests {
         }
         jail.apply()?;
 
-        // cmd!("jexec", jail.name(), "cat", "/tmp/exec_test")?;
+        cmd!("jexec", jail.name(), "cat", "/tmp/exec_test")?;
 
         jail.destroy()?;
         Ok(())
+    }
+
+    #[test]
+    fn validate() {
+        let exec = Exec {
+            path: "/tmp/doesnotexist23".to_string(),
+        };
+        assert!(exec.validate().is_err());
     }
 }

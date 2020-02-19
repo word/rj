@@ -67,13 +67,13 @@ impl DataSet {
 
     // create a snapshot with date time in the name
     pub fn snap_with_time(&self, snap_name: &str) -> Result<()> {
-        let ts = Local::now().format("%Y-%m-%dT%H:%M:%S");
-        let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &ts);
+        let dt = Local::now().format("%Y-%m-%dT%H:%M:%S%.3f");
+        let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &dt);
         cmd!("zfs", "snapshot", &snap_path)
     }
 
     // create a snapshot with a random suffix
-    pub fn snap_rand(&self, snap_name: &str) -> Result<()> {
+    pub fn snap_with_rand(&self, snap_name: &str) -> Result<()> {
         let rand: String = thread_rng().sample_iter(&Alphanumeric).take(8).collect();
         let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &rand);
         cmd!("zfs", "snapshot", &snap_path)
@@ -284,7 +284,7 @@ mod tests {
     #[test]
     fn ds_snap_rand() -> Result<()> {
         run_test(|ds| {
-            ds.snap_rand("testsnaprand")?;
+            ds.snap_with_rand("testsnaprand")?;
             let re = Regex::new(r"^testsnaprand_[a-zA-Z0-9]{8}$")?;
             let mut exists = false;
             for snap in ds.list_snaps()?.iter() {
