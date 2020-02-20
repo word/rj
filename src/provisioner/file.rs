@@ -17,4 +17,9 @@ impl File {
         info!("{}: file provisioner running", jail.name());
         Ok(())
     }
+
+    pub fn validate(&self) -> Result<()> {
+        info!("Validating file provisioner");
+        Ok(())
+    }
 }

@@ -46,10 +46,10 @@ impl Settings {
     pub fn new(config_file: &str) -> Result<Self> {
         let settings: Settings = toml::from_str(&fs::read_to_string(config_file)?)?;
 
-        // Sort jails by 'order' field
-        // settings
-        //     .jail
-        //     .sort_by(|_, av, _, bv| av.order.cmp(&bv.order));
+        // Validate provisioners
+        for (_, provisioner) in settings.provisioner.iter() {
+            provisioner.validate()?;
+        }
 
         Ok(settings)
     }

@@ -14,4 +14,9 @@ impl Test {
         info!("{}: test provisioner running", jail.name());
         Ok(())
     }
+
+    pub fn validate(&self) -> Result<()> {
+        info!("Validating test provisioner");
+        Ok(())
+    }
 }

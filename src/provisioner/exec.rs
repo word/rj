@@ -19,7 +19,7 @@ pub struct Exec {
 impl Exec {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: exec provisioner running", jail.name());
-        self.validate()?;
+        // self.validate()?;
         info!("{}: executing: {}", jail.name(), &self.path);
         let exe_filename = Path::new(&self.path).file_name().unwrap();
         let exe_tmp_path = cmd_capture!(
@@ -35,11 +35,11 @@ impl Exec {
         cmd!("jexec", jail.name(), "rm", &exe_tmp_path)
     }
 
-    fn validate(&self) -> Result<()> {
+    pub fn validate(&self) -> Result<()> {
         if Path::new(&self.path).is_file() {
             Ok(())
         } else {
-            let msg = format!("Invalid exec path: {}", &self.path);
+            let msg = format!("invalid exec provisioner path: {}", &self.path);
             Err(anyhow::Error::new(ProvError(msg)))
         }
     }

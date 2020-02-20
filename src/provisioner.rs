@@ -26,6 +26,13 @@ impl Provisioner {
             Provisioner::Test(p) => p.provision(jail),
         }
     }
+    pub fn validate(&self) -> Result<()> {
+        match self {
+            Provisioner::File(p) => p.validate(),
+            Provisioner::Exec(p) => p.validate(),
+            Provisioner::Test(p) => p.validate(),
+        }
+    }
 }
 
 #[cfg(test)]
