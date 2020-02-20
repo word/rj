@@ -7,6 +7,7 @@ use std::path::Path;
 use crate::cmd;
 use crate::cmd_capture;
 use crate::cmd_stream;
+use crate::errors::ProvError;
 use crate::jail::Jail;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -18,8 +19,8 @@ pub struct Exec {
 impl Exec {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: exec provisioner running", jail.name());
+        self.validate()?;
         info!("{}: executing: {}", jail.name(), &self.path);
-        // TODO: validate the path is correct and exists
         let exe_filename = Path::new(&self.path).file_name().unwrap();
         let exe_tmp_path = cmd_capture!(
             "jexec",
@@ -34,7 +35,14 @@ impl Exec {
         cmd!("jexec", jail.name(), "rm", &exe_tmp_path)
     }
 
-    fn validate(&self) -> Result<()> {}
+    fn validate(&self) -> Result<()> {
+        if Path::new(&self.path).is_file() {
+            Ok(())
+        } else {
+            let msg = format!("Invalid exec path: {}", &self.path);
+            Err(anyhow::Error::new(ProvError(msg)))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -63,10 +71,17 @@ mod tests {
     }
 
     #[test]
-    fn validate() {
+    fn invalid_path() {
         let exec = Exec {
             path: "/tmp/doesnotexist23".to_string(),
         };
         assert!(exec.validate().is_err());
+    }
+
+    fn valid_path() {
+        let exec = Exec {
+            path: "/etc/hosts".to_string(),
+        };
+        assert!(exec.validate().is_ok());
     }
 }
