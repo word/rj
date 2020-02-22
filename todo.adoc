@@ -16,7 +16,6 @@
  * add provision sub-command
  * add init sub-command (maybe perhaps)
    ** meaningful error when forgot to init
- * add 'is_ready' Jail method
  * test in Jail that snapshots are created
  * settings: deny unknown fields everywhere
  * settings: validate source name

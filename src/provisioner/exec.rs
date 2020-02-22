@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::info;
+use log::{debug, info};
 use serde::Deserialize;
 use std::fs::copy;
 use std::path::Path;
@@ -35,6 +35,7 @@ impl Exec {
     }
 
     pub fn validate(&self) -> Result<()> {
+        debug!("validating exec provisioner");
         if Path::new(&self.path).is_file() {
             Ok(())
         } else {

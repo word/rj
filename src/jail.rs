@@ -85,7 +85,8 @@ impl Jail<'_> {
         if self.zfs_ds.last_snap("ready")?.is_none() {
             self.provision()?;
         }
-        Ok(())
+
+        self.zfs_ds.snap_with_time("ready")
     }
 
     pub fn destroy(&self) -> Result<()> {
@@ -198,10 +199,12 @@ impl Jail<'_> {
     }
 
     pub fn provision(&self) -> Result<()> {
+        self.zfs_ds.snap_with_time("pre-provsion")?;
+
         for p in self.provisioners.iter() {
             p.provision(&self)?;
         }
-        self.zfs_ds.snap_with_time("ready")
+        Ok(())
     }
 
     pub fn exists(&self) -> Result<bool> {
