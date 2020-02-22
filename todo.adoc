@@ -2,14 +2,8 @@
 
 == doing
 
- * snapshots:
-    * add timestamps
-    * add pre-provision
-    * add function to get latest snap
-* provision jail
-  * shell script
-  * file
-  * puppet
+* file provisioner
+* puppet provisioner
 
 == next up
 
@@ -36,6 +30,11 @@
 
 == Done:
 
+* exec provisioner
+* snapshots:
+  * add timestamps
+  * add pre-provision
+  * add function to get latest snap
 * tidy up zfs code
 * fail on unknown config options
 * apply config changes
