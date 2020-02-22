@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::{Local, NaiveDateTime};
-use log::info;
+use log::{debug, info};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use regex::Regex;
@@ -59,6 +59,7 @@ impl DataSet {
         cmd!("zfs", "destroy", "-r", &self.path)
     }
 
+    #[allow(dead_code)]
     pub fn snap(&self, snap_name: &str) -> Result<()> {
         let snap_path = format!("{}@{}", &self.path, &snap_name);
         info!("Creating snapshot: {}", &snap_path);
@@ -73,6 +74,7 @@ impl DataSet {
     }
 
     // create a snapshot with a random suffix
+    #[allow(dead_code)]
     pub fn snap_with_rand(&self, snap_name: &str) -> Result<()> {
         let rand: String = thread_rng().sample_iter(&Alphanumeric).take(8).collect();
         let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &rand);
@@ -80,8 +82,8 @@ impl DataSet {
     }
 
     pub fn clone(&self, snap: &str, dest: &str) -> Result<DataSet> {
-        info!("Cloning {} to {}", &self.path, &dest);
         let snap_name = format!("{}@{}", &self.path, snap);
+        debug!("cloning {} to {}", snap_name, &dest);
         cmd!("zfs", "clone", &snap_name, &dest)?;
         Ok(DataSet::new(dest))
     }
@@ -90,6 +92,7 @@ impl DataSet {
         self.ds_exists(&self.path)
     }
 
+    #[allow(dead_code)]
     pub fn snap_exists(&self, snap_name: &str) -> Result<bool> {
         self.ds_exists(&format!("{}@{}", &self.path, snap_name))
     }

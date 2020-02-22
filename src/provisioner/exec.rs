@@ -19,7 +19,6 @@ pub struct Exec {
 impl Exec {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: exec provisioner running", jail.name());
-        // self.validate()?;
         info!("{}: executing: {}", jail.name(), &self.path);
         let exe_filename = Path::new(&self.path).file_name().unwrap();
         let exe_tmp_path = cmd_capture!(

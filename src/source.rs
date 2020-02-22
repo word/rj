@@ -28,10 +28,7 @@ impl Source {
                 dists,
             } => {
                 dest_dataset.create()?;
-                if !(&dest_dataset.snap_exists("base")?) {
-                    self.install_freebsd(release, mirror, dists, dest_path)?;
-                    dest_dataset.snap("base")?;
-                };
+                self.install_freebsd(release, mirror, dists, dest_path)?;
             }
             Source::Cloned { path } => self.install_clone(path, dest_dataset)?,
         }
@@ -46,8 +43,10 @@ impl Source {
         dists: &[String],
         dest: &str,
     ) -> Result<()> {
+        info!("installing FreeBSD: {}", &release);
+
         for dist in dists {
-            info!("Extracing {} to {}", &dist, &dest);
+            info!("extracing {} to {}", &dist, &dest);
 
             let url = format!(
                 "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
@@ -62,6 +61,12 @@ impl Source {
         let src_dataset = zfs::DataSet::new(path);
         match src_dataset.last_snap("ready")? {
             Some(s) => {
+                info!(
+                    "cloning {}@{} to {}",
+                    &src_dataset.path(),
+                    &s,
+                    dest_dataset.path()
+                );
                 src_dataset.clone(&s, dest_dataset.path())?;
                 Ok(())
             }

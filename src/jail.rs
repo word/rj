@@ -67,7 +67,7 @@ impl Jail<'_> {
         info!("{}: applying changes", self.name());
 
         if !self.exists()? {
-            self.source.install(&self.mountpoint, &self.zfs_ds)?;
+            self.install()?;
         }
         self.configure()?;
         if self.settings.start {
@@ -118,6 +118,10 @@ impl Jail<'_> {
 
         // destroy zfs dataset
         self.zfs_ds.destroy()
+    }
+
+    pub fn install(&self) -> Result<()> {
+        self.source.install(&self.mountpoint, &self.zfs_ds)
     }
 
     pub fn configure(&self) -> Result<()> {
