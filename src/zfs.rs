@@ -268,13 +268,11 @@ mod tests {
     #[test]
     fn ds_snap_with_time() -> Result<()> {
         run_test(|ds| {
-            let ts = Local::now().format("%Y-%m-%dT%H").to_string();
-            let s = "testsnaptime";
-            ds.snap_with_time(&s)?;
-            let pattern = format!("{}_{}", &s, &ts);
+            let re = Regex::new(r"^testsnaptime_\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")?;
+            ds.snap_with_time("testsnaptime")?;
             let mut exists = false;
             for snap in ds.list_snaps()?.iter() {
-                if snap.contains(&pattern) {
+                if re.is_match(snap) {
                     exists = true;
                     break;
                 }
