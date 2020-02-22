@@ -199,7 +199,10 @@ impl Jail<'_> {
     }
 
     pub fn provision(&self) -> Result<()> {
-        self.zfs_ds.snap_with_time("pre-provision")?;
+        // create a pre-provision snapshot but only if there are provisioners configured
+        if !self.provisioners.is_empty() {
+            self.zfs_ds.snap_with_time("pre-provision")?;
+        }
 
         for p in self.provisioners.iter() {
             p.provision(&self)?;
@@ -316,11 +319,17 @@ mod tests {
         assert!(jail2.is_running()?);
 
         // Check that snapshots were created
-        let re_preprov = Regex::new(r"^pre-provision_\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")?;
-        let re_ready = Regex::new(r"^ready_\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")?;
+        let re_preprov = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}_pre-provision$")?;
+        let re_ready = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}_ready$")?;
+
+        // jail1 doesn't have any provisioners configured so should not contain a pre-provision snapshot
+        for snap in jail1.zfs_ds.list_snaps()?.iter() {
+            assert_eq!(re_preprov.is_match(snap), false);
+        }
+
+        // jail2 should contain both snapshots in correct order
         let s = jail2.zfs_ds.list_snaps()?;
         let mut snaps_iter = s.iter();
-
         for re in &[re_preprov, re_ready] {
             assert!(re.is_match(snaps_iter.next().unwrap()));
         }

@@ -69,7 +69,7 @@ impl DataSet {
     // create a snapshot with date time in the name
     pub fn snap_with_time(&self, snap_name: &str) -> Result<()> {
         let dt = Local::now().format("%Y-%m-%dT%H:%M:%S%.3f");
-        let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &dt);
+        let snap_path = format!("{}@{}_{}", &self.path, &dt, &snap_name);
         cmd!("zfs", "snapshot", &snap_path)
     }
 
@@ -77,7 +77,7 @@ impl DataSet {
     #[allow(dead_code)]
     pub fn snap_with_rand(&self, snap_name: &str) -> Result<()> {
         let rand: String = thread_rng().sample_iter(&Alphanumeric).take(8).collect();
-        let snap_path = format!("{}@{}_{}", &self.path, &snap_name, &rand);
+        let snap_path = format!("{}@{}_{}", &self.path, &rand, &snap_name);
         cmd!("zfs", "snapshot", &snap_path)
     }
 
@@ -107,6 +107,8 @@ impl DataSet {
         Ok(snaps)
     }
 
+    // returns the latest snapshot that matches a pattern.
+    // sorts by zfs snapshot creation time so works with snapshots that don't have date/time in the name.
     pub fn last_snap(&self, pattern: &str) -> Result<Option<String>> {
         let output = cmd_capture!(
             "zfs",
@@ -268,7 +270,7 @@ mod tests {
     #[test]
     fn ds_snap_with_time() -> Result<()> {
         run_test(|ds| {
-            let re = Regex::new(r"^testsnaptime_\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")?;
+            let re = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}_testsnaptime$")?;
             ds.snap_with_time("testsnaptime")?;
             let mut exists = false;
             for snap in ds.list_snaps()?.iter() {
@@ -286,7 +288,7 @@ mod tests {
     fn ds_snap_rand() -> Result<()> {
         run_test(|ds| {
             ds.snap_with_rand("testsnaprand")?;
-            let re = Regex::new(r"^testsnaprand_[a-zA-Z0-9]{8}$")?;
+            let re = Regex::new(r"^[a-zA-Z0-9]{8}_testsnaprand$")?;
             let mut exists = false;
             for snap in ds.list_snaps()?.iter() {
                 if re.is_match(snap) {
