@@ -80,7 +80,11 @@ impl Jail<'_> {
                 self.start()?
             }
         }
-        self.provision()?;
+
+        // Only provision is not already provisioned or if previous provisioning attempt did not succeed.
+        if self.zfs_ds.last_snap("ready")?.is_none() {
+            self.provision()?;
+        }
         Ok(())
     }
 

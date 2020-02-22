@@ -14,6 +14,8 @@
 == next up
 
  * add provision sub-command
+ * add init sub-command (maybe perhaps)
+   ** meaningful error when forgot to init
  * add 'is_ready' Jail method
  * test in Jail that snapshots are created
  * settings: deny unknown fields everywhere
@@ -22,8 +24,6 @@
  * settings: tidy up example/test config files
  * setup resolv.conf in test basejail
  * refactor source.rs to work like provisioners
-
-== backlog
 
 === First release
 
