@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Error, Result};
 use clap::ArgMatches;
 use indexmap::IndexMap;
 use log::{debug, error};
@@ -16,6 +16,7 @@ mod templates;
 mod util;
 mod zfs;
 
+use errors::ArgError;
 use jail::Jail;
 use provisioner::Provisioner;
 use settings::Settings;
@@ -56,10 +57,9 @@ fn subcommand(
     if jails.contains_key(jname) {
         jail_action(&sub_name, &jails[jname])
     } else {
-        Err(anyhow::Error::new(errors::ArgError(format!(
-            "Jail '{}' is not defined",
-            jname
-        ))))
+        let msg = format!("Jail '{}' is not defined", jname);
+        let err = Error::new(ArgError(msg));
+        Err(err)
     }
 }
 
