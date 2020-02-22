@@ -41,7 +41,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
         )
         .subcommand(
             SubCommand::with_name("destroy")
-                .about("Destroys jails")
+                .about("Destroy jails")
                 .arg(
                     Arg::with_name("jail_name")
                         .help("Name of the jail to destroy")
@@ -53,6 +53,22 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                         .short("a")
                         .long("all")
                         .help("Destroy all jails"),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("provision")
+                .about("Provision jails")
+                .arg(
+                    Arg::with_name("jail_name")
+                        .help("Name of the jail to provision")
+                        .index(1)
+                        .required_unless("all"),
+                )
+                .arg(
+                    Arg::with_name("all")
+                        .short("a")
+                        .long("all")
+                        .help("Provision all jails"),
                 ),
         )
 }

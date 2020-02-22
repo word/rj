@@ -199,16 +199,23 @@ impl Jail<'_> {
     }
 
     pub fn provision(&self) -> Result<()> {
-        // create a pre-provision snapshot but only if there are provisioners configured
-        if !self.provisioners.is_empty() {
-            self.zfs_ds.snap_with_time("pre-provision")?;
+        if self.provisioners.is_empty() {
+            info!("{}: no provisioners configured", &self.name);
+            // make a ready sanp first time round even if there are no provisioners.  We're assuming the jail is ready as it is.
+            if self.zfs_ds.last_snap("ready")?.is_none() {
+                self.zfs_ds.snap_with_time("ready")?;
+            }
+            return Ok(());
         }
 
+        self.zfs_ds.snap_with_time("pre-provision")?;
         for p in self.provisioners.iter() {
             p.provision(&self)?;
         }
 
-        self.zfs_ds.snap_with_time("ready")
+        self.zfs_ds.snap_with_time("ready")?;
+        info!("{}: provisioning complete", &self.name);
+        Ok(())
     }
 
     pub fn exists(&self) -> Result<bool> {

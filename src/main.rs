@@ -27,6 +27,7 @@ fn jail_action(action: &str, jail: &Jail) -> Result<()> {
     match action {
         "apply" => jail.apply(),
         "destroy" => jail.destroy(),
+        "provision" => jail.provision(),
         _ => panic!("unknown action {}", action),
     }
 }
@@ -37,7 +38,9 @@ fn subcommand(
     sub_matches: &ArgMatches,
     jails: IndexMap<String, Jail>,
 ) -> Result<()> {
+    // work on all jails if --all is set
     if sub_matches.is_present("all") {
+        debug!("working on all jails");
         if sub_name == "destroy" {
             // destroy jails in reverse order
             for (_, jail) in jails.iter().rev() {
@@ -57,7 +60,7 @@ fn subcommand(
     if jails.contains_key(jname) {
         jail_action(&sub_name, &jails[jname])
     } else {
-        let msg = format!("Jail '{}' is not defined", jname);
+        let msg = format!("jail '{}' is not defined", jname);
         let err = Error::new(ArgError(msg));
         Err(err)
     }
@@ -75,6 +78,7 @@ fn init(settings: &Settings) -> Result<()> {
 }
 
 fn make_it_so(matches: ArgMatches) -> Result<()> {
+    // Load settings
     let settings = Settings::new(matches.value_of("config").unwrap())?;
     let jails = settings.to_jails()?;
 
