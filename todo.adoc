@@ -2,7 +2,6 @@
 
 == doing
 
-* tests for Jail snapshots
 * add provision sub-command
 * file provisioner
 * puppet provisioner
@@ -21,6 +20,7 @@
 
 * confirmation before deleting all jails (and -f to force)
 * tidy up and tests for main
+* pick up config from cwd for self contained set ups
 
 === Refactoring
 
@@ -34,6 +34,7 @@
 
 == Done:
 
+* tests for Jail snapshots
 * exec provisioner
 * snapshots:
   * add timestamps
