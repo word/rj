@@ -2,20 +2,20 @@
 
 == doing
 
+* test that Jail snapshots are created
+* add provision sub-command
 * file provisioner
 * puppet provisioner
 
 == next up
 
- * add provision sub-command
  * add init sub-command (maybe perhaps)
    ** meaningful error when forgot to init
- * test in Jail that snapshots are created
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names
  * settings: tidy up example/test config files
- * setup resolv.conf in test basejail
+ * setup resolv.conf in test basejail (needs file provisioner)
  * refactor source.rs to work like provisioners
 
 === First release
