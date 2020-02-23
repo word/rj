@@ -1,14 +1,13 @@
-use anyhow::Result;
-use log::{debug, info};
-use serde::Deserialize;
-use std::fs::copy;
-use std::path::Path;
-
 use crate::cmd;
 use crate::cmd_capture;
 use crate::cmd_stream;
 use crate::errors::ProvError;
 use crate::jail::Jail;
+use anyhow::Result;
+use log::{debug, info};
+use serde::Deserialize;
+use std::fs::copy;
+use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -64,7 +63,7 @@ mod tests {
         }
         jail.apply()?;
 
-        cmd!("jexec", jail.name(), "cat", "/tmp/exec_test")?;
+        cmd!("jexec", jail.name(), "test", "-f", "/tmp/exec_test")?;
 
         jail.destroy()?;
         Ok(())

@@ -27,9 +27,9 @@ path = "testdata/provisioners/exec.sh"
 
 [provisioner.file]
 type = "file"
-source = "testdata/provisioner/file.txt"
+source = "testdata/provisioners/file.txt"
 dest = "/tmp/file.txt"
-mode = "0755"
+mode = "0600"
 
 # [provisioner.puppet]
 # type = "puppet"
@@ -57,3 +57,7 @@ allow_mount = true
 [jail.exec_test]
 source = "base"
 provisioners = [ "exec" ]
+
+[jail.file_test]
+source = "base"
+provisioners = [ "file" ]

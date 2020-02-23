@@ -2,7 +2,6 @@
 
 == doing
 
-* add provision sub-command
 * file provisioner
 * puppet provisioner
 
@@ -13,8 +12,9 @@
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names
- * settings: tidy up example/test config files
+ * settings: validation for sources
  * setup resolv.conf in test basejail (needs file provisioner)
+ * tidy up log messages
 
 === First release
 
@@ -34,6 +34,8 @@
 
 == Done:
 
+* settings: tidy up example/test config files
+* add provision sub-command
 * tests for Jail snapshots
 * exec provisioner
 * snapshots:

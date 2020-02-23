@@ -11,7 +11,7 @@ use crate::jail::Jail;
 #[serde(tag = "type")]
 pub enum Provisioner {
     #[serde(alias = "file")]
-    File(file::File),
+    File(file::ProvFile),
     #[serde(alias = "exec")]
     Exec(exec::Exec),
     #[serde(alias = "test")]
