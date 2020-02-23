@@ -39,7 +39,6 @@ impl Provisioner {
 mod tests {
     use super::*;
     use crate::settings::Settings;
-    // use pretty_assertions::assert_eq;
 
     #[test]
     fn provision() -> Result<()> {

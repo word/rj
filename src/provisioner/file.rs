@@ -1,7 +1,9 @@
 use crate::cmd;
+use crate::errors::ProvError;
 use crate::jail::Jail;
 use anyhow::Result;
 use log::{debug, info};
+use regex::Regex;
 use serde::Deserialize;
 use std::fs::copy;
 use std::fs::{set_permissions, Permissions};
@@ -46,10 +48,40 @@ impl ProvFile {
 
     pub fn validate(&self) -> Result<()> {
         debug!("validating file provisioner");
-        // check source exists
-        // check dest is absolute path
-        // check mode is valid (regex)
-        Ok(())
+        self.validate_source()?;
+        self.validate_dest()?;
+        self.validate_mode()
+    }
+
+    fn validate_source(&self) -> Result<()> {
+        if Path::new(&self.source).is_file() {
+            Ok(())
+        } else {
+            let msg = format!("file provisioner, invalid source: {}", &self.source);
+            Err(anyhow::Error::new(ProvError(msg)))
+        }
+    }
+
+    fn validate_dest(&self) -> Result<()> {
+        if Path::new(&self.dest).is_absolute() {
+            Ok(())
+        } else {
+            let msg = format!(
+                "file provisioner, dest path must be absolute: {}",
+                &self.dest
+            );
+            Err(anyhow::Error::new(ProvError(msg)))
+        }
+    }
+
+    fn validate_mode(&self) -> Result<()> {
+        let re = Regex::new(r"^(0|1|2|4)?[0-7]{3}$")?;
+        if re.is_match(&self.mode) {
+            Ok(())
+        } else {
+            let msg = format!("file provisioner, invalid file mode: {}", &self.mode);
+            Err(anyhow::Error::new(ProvError(msg)))
+        }
     }
 }
 
@@ -84,5 +116,28 @@ mod tests {
 
         jail.destroy()?;
         Ok(())
+    }
+
+    #[test]
+    fn validation() {
+        let mut file = ProvFile {
+            source: "/tmp/whatever123".to_string(),
+            dest: "/tmp/desttest".to_string(),
+            mode: "640".to_string(),
+            owner: "root".to_string(),
+            group: "wheel".to_string(),
+        };
+        assert!(file.validate().is_err());
+        file.source = "/etc/hosts".to_string();
+        assert!(file.validate().is_ok());
+        file.dest = "tmp/desttest".to_string();
+        assert!(file.validate().is_err());
+        file.dest = "/tmp/desttest".to_string();
+        file.mode = "999".to_string();
+        assert!(file.validate().is_err());
+        file.mode = "3644".to_string();
+        assert!(file.validate().is_err());
+        file.mode = "0644".to_string();
+        assert!(file.validate().is_ok());
     }
 }

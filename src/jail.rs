@@ -1,12 +1,4 @@
 #![allow(dead_code)]
-use anyhow::Result;
-use difference::Changeset;
-use indexmap::{indexmap, IndexMap};
-use log::{debug, info};
-use std::fs;
-use std::path::Path;
-use std::process::Command;
-
 use crate::cmd;
 use crate::cmd_capture;
 use crate::provisioner::Provisioner;
@@ -14,6 +6,13 @@ use crate::settings;
 use crate::source::Source;
 use crate::templates;
 use crate::zfs;
+use anyhow::Result;
+use difference::Changeset;
+use indexmap::{indexmap, IndexMap};
+use log::{debug, info};
+use std::fs;
+use std::path::Path;
+use std::process::Command;
 
 use settings::{JailConfValue, JailSettings};
 
