@@ -1,13 +1,11 @@
 use crate::cmd;
-use crate::cmd_capture;
-use crate::errors::ProvError;
 use crate::jail::Jail;
 use anyhow::Result;
 use log::{debug, info};
 use serde::Deserialize;
 use std::fs::copy;
-use std::fs::File;
-use std::os::unix::fs::PermissionsExt;
+use std::fs::{set_permissions, Permissions};
+use std::os::unix::prelude::*;
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -16,6 +14,18 @@ pub struct ProvFile {
     source: String,
     dest: String,
     mode: String,
+    #[serde(default = "default_user")]
+    owner: String,
+    #[serde(default = "default_group")]
+    group: String,
+}
+
+fn default_user() -> String {
+    "root".to_string()
+}
+
+fn default_group() -> String {
+    "wheel".to_string()
 }
 
 impl ProvFile {
@@ -23,15 +33,13 @@ impl ProvFile {
         info!("{}: file provisioner running", jail.name());
 
         let d = Path::new(&self.dest).strip_prefix("/")?;
-        let jail_dest = Path::new(&jail.mountpoint()).join(d);
+        let full_dest = Path::new(&jail.mountpoint()).join(d);
 
-        println!("{:?}", &jail.mountpoint());
-        println!("{:?}", &jail_dest);
-        copy(&self.source, &jail_dest)?;
-        let f = File::open(&jail_dest)?;
-        let metadata = f.metadata()?;
-        let mut permissions = metadata.permissions();
-        permissions.set_mode(u32::from_str_radix(&self.mode, 8)?);
+        copy(&self.source, &full_dest)?;
+        let mode_u32 = u32::from_str_radix(&self.mode, 8)?;
+        set_permissions(&full_dest, Permissions::from_mode(mode_u32))?;
+        let user_group = format!("{}:{}", &self.owner, &self.group);
+        cmd!("chroot", jail.mountpoint(), "chown", user_group, &self.dest)?;
 
         Ok(())
     }
@@ -49,7 +57,9 @@ impl ProvFile {
 mod tests {
     use super::*;
     use crate::settings::Settings;
+    use pretty_assertions::assert_eq;
     use serial_test::serial;
+    use std::os::unix::fs::MetadataExt;
 
     #[test]
     #[serial]
@@ -64,7 +74,13 @@ mod tests {
         }
         jail.apply()?;
 
-        cmd!("jexec", jail.name(), "test", "-f", "/tmp/file.txt")?;
+        let full_dest = format!("{}/tmp/file.txt", jail.mountpoint());
+        let metadata = std::fs::metadata(full_dest)?;
+        assert!(metadata.is_file());
+        let mode_s = format!("{:o}", metadata.mode());
+        assert_eq!(mode_s, "100640");
+        assert_eq!(metadata.uid(), 65534);
+        assert_eq!(metadata.gid(), 65534);
 
         jail.destroy()?;
         Ok(())

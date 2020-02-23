@@ -29,7 +29,9 @@ path = "testdata/provisioners/exec.sh"
 type = "file"
 source = "testdata/provisioners/file.txt"
 dest = "/tmp/file.txt"
-mode = "0600"
+owner = "nobody"
+group = "nobody"
+mode = "0640"
 
 # [provisioner.puppet]
 # type = "puppet"
