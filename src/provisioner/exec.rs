@@ -1,46 +1,28 @@
 use crate::cmd;
-use crate::cmd_capture;
-use crate::cmd_stream;
-use crate::errors::ProvError;
 use crate::jail::Jail;
 use anyhow::Result;
 use log::{debug, info};
 use serde::Deserialize;
-use std::fs::copy;
-use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Exec {
-    path: String,
+    cmd: String,
 }
 
 impl Exec {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: exec provisioner running", jail.name());
-        info!("{}: executing: {}", jail.name(), &self.path);
-        let exe_filename = Path::new(&self.path).file_name().unwrap();
-        let exe_tmp_path = cmd_capture!(
-            "jexec",
-            jail.name(),
-            "mktemp",
-            "-t",
-            exe_filename.to_str().unwrap(),
-        )?;
-        copy(&self.path, format!("{}{}", jail.mountpoint(), exe_tmp_path))?;
-        cmd!("jexec", jail.name(), "chmod", "0700", &exe_tmp_path)?;
-        cmd_stream!("jexec", jail.name(), &exe_tmp_path)?;
-        cmd!("jexec", jail.name(), "rm", &exe_tmp_path)
+        info!("{}: executing: {}", jail.name(), &self.cmd,);
+
+        let mut args: Vec<&str> = self.cmd.split(' ').collect();
+        args.insert(0, jail.name());
+        cmd::stream("jexec", args)
     }
 
     pub fn validate(&self) -> Result<()> {
         debug!("validating exec provisioner");
-        if Path::new(&self.path).is_file() {
-            Ok(())
-        } else {
-            let msg = format!("invalid exec provisioner path: {}", &self.path);
-            Err(anyhow::Error::new(ProvError(msg)))
-        }
+        Ok(())
     }
 }
 
@@ -63,24 +45,11 @@ mod tests {
         }
         jail.apply()?;
 
-        cmd!("jexec", jail.name(), "test", "-f", "/tmp/exec_test")?;
+        let full_dest = format!("{}/tmp/exec_test", jail.mountpoint());
+        let metadata = std::fs::metadata(full_dest)?;
+        assert!(metadata.is_file());
 
         jail.destroy()?;
         Ok(())
-    }
-
-    #[test]
-    fn invalid_path() {
-        let exec = Exec {
-            path: "/tmp/doesnotexist23".to_string(),
-        };
-        assert!(exec.validate().is_err());
-    }
-
-    fn valid_path() {
-        let exec = Exec {
-            path: "/etc/hosts".to_string(),
-        };
-        assert!(exec.validate().is_ok());
     }
 }

@@ -23,7 +23,7 @@ path = "zroot/jails/base"
 
 [provisioner.exec]
 type = "exec"
-path = "testdata/provisioners/exec.sh"
+cmd = "touch /tmp/exec_test"
 
 [provisioner.file]
 type = "file"
