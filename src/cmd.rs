@@ -110,7 +110,8 @@ where
 macro_rules! cmd {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
-            $crate::cmd::cmd($program, &[$( $arg ),*])
+            let args: &[String] = &[$( Into::<String>::into($arg) ),*];
+            $crate::cmd::cmd($program, args)
         }
     };
 }
@@ -119,7 +120,8 @@ macro_rules! cmd {
 macro_rules! cmd_capture {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
-            $crate::cmd::capture($program, &[$( $arg ),*])
+            let args: &[String] = &[$( Into::<String>::into($arg) ),*];
+            $crate::cmd::capture($program, args)
         }
     };
 }
@@ -128,7 +130,8 @@ macro_rules! cmd_capture {
 macro_rules! cmd_stream {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
-            $crate::cmd::stream($program, &[$( $arg ),*])
+            let args: &[String] = &[$( Into::<String>::into($arg) ),*];
+            $crate::cmd::stream($program, args)
         }
     };
 }
@@ -143,6 +146,12 @@ mod tests {
     #[test]
     fn cmd_run() -> Result<()> {
         cmd!("echo", "hello")?;
+        Ok(())
+    }
+
+    #[test]
+    fn cmd_run_noargs() -> Result<()> {
+        cmd!("echo")?;
         Ok(())
     }
 

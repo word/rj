@@ -1,4 +1,6 @@
 use crate::cmd;
+use crate::cmd_capture;
+use crate::errors::ProvError;
 use crate::jail::Jail;
 use anyhow::Result;
 use log::{debug, info};
@@ -26,10 +28,11 @@ impl ProvFile {
         println!("{:?}", &jail.mountpoint());
         println!("{:?}", &jail_dest);
         copy(&self.source, &jail_dest)?;
-        let f = File::create(&jail_dest)?;
+        let f = File::open(&jail_dest)?;
         let metadata = f.metadata()?;
         let mut permissions = metadata.permissions();
         permissions.set_mode(u32::from_str_radix(&self.mode, 8)?);
+
         Ok(())
     }
 

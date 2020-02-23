@@ -24,7 +24,6 @@ tar = "0.4"
 xz2 = "0.1"
 regex = "1"
 rand = "0.7"
-libc = "0.2"
 
 [dependencies.toml]
 version = "0.5"

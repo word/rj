@@ -84,7 +84,7 @@ impl DataSet {
     pub fn clone(&self, snap: &str, dest: &str) -> Result<DataSet> {
         let snap_name = format!("{}@{}", &self.path, snap);
         debug!("cloning {} to {}", snap_name, &dest);
-        cmd!("zfs", "clone", &snap_name, &dest)?;
+        cmd!("zfs", "clone", snap_name, dest)?;
         Ok(DataSet::new(dest))
     }
 
@@ -157,7 +157,7 @@ impl DataSet {
     fn ds_exists(&self, ds_path: &str) -> Result<bool> {
         let msg_pattern = format!("cannot open \'{}\': dataset does not exist\n", &ds_path);
 
-        match cmd_capture!("zfs", "list", &ds_path) {
+        match cmd_capture!("zfs", "list", ds_path) {
             Ok(_) => Ok(true),
             Err(e) => {
                 if e.to_string().contains(&msg_pattern) {
