@@ -37,10 +37,18 @@ impl ProvFile {
         let d = Path::new(&self.dest).strip_prefix("/")?;
         let full_dest = Path::new(&jail.mountpoint()).join(d);
 
+        info!(
+            "{}: {} -> {}",
+            jail.name(),
+            &self.source,
+            full_dest.display()
+        );
         copy(&self.source, &full_dest)?;
         let mode_u32 = u32::from_str_radix(&self.mode, 8)?;
+        debug!("{}: mode -> {:o}", jail.name(), mode_u32);
         set_permissions(&full_dest, Permissions::from_mode(mode_u32))?;
         let user_group = format!("{}:{}", &self.owner, &self.group);
+        debug!("{}: user:group -> {}", jail.name(), user_group);
         cmd!("chroot", jail.mountpoint(), "chown", user_group, &self.dest)?;
 
         Ok(())
