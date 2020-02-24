@@ -15,6 +15,7 @@ use std::path::Path;
 pub struct ProvFile {
     source: String,
     dest: String,
+    #[serde(default = "default_mode")]
     mode: String,
     #[serde(default = "default_user")]
     owner: String,
@@ -28,6 +29,10 @@ fn default_user() -> String {
 
 fn default_group() -> String {
     "wheel".to_string()
+}
+
+fn default_mode() -> String {
+    "644".to_string()
 }
 
 impl ProvFile {
