@@ -38,9 +38,14 @@ owner = "nobody"
 group = "nobody"
 mode = "0640"
 
-# [provisioner.puppet]
-# type = "puppet"
-# manifest = "example/provision/puppet"
+[provisioner.puppet]
+type = "puppet"
+path = "testdata/provisioners/puppet"
+manifest_file = "manifests/site.pp"
+module_path = "site-modules:modules"
+hiera_config = "hiera.yaml"
+extra_args = []
+temp_dir = "/var/rj/"
 
 # Jails
 
@@ -69,3 +74,7 @@ provisioners = [ "exec" ]
 [jail.file_test]
 source = "base"
 provisioners = [ "file" ]
+
+[jail.puppet_test]
+source = "base"
+provisioners = [ "puppet" ]

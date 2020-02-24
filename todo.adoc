@@ -67,3 +67,4 @@ pkg install rubygem-r10k-3.3.3
 
 r10k puppetfile install
 puppet apply --hiera_config hiera.yaml --environmentpath /vagrant/testdata/provisioners --environment puppet manifests/site.pp
+puppet apply --hiera_config hiera.yaml --modulepath site-modules:modules manifests/site.pp
