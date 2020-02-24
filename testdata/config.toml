@@ -21,6 +21,11 @@ path = "zroot/jails/base"
 
 # Provisioners
 
+[provisioner.resolv_conf]
+type = "file"
+source = "/etc/resolv.conf"
+dest = "/etc/resolv.conf"
+
 [provisioner.exec]
 type = "exec"
 cmd = "touch /tmp/exec_test"
@@ -41,6 +46,7 @@ mode = "0640"
 
 [jail.base]
 source = "freebsd12"
+provisioners = ["resolv_conf" ]
 start = false
 
 [jail.test1]
