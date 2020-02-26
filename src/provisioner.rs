@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 mod exec;
 mod file;
+mod puppet;
 mod test;
 use crate::jail::Jail;
 
@@ -16,6 +17,8 @@ pub enum Provisioner {
     Exec(exec::Exec),
     #[serde(alias = "test")]
     Test(test::Test),
+    #[serde(alias = "puppet")]
+    Puppet(puppet::Puppet),
 }
 
 impl Provisioner {
@@ -24,6 +27,7 @@ impl Provisioner {
             Provisioner::File(p) => p.provision(jail),
             Provisioner::Exec(p) => p.provision(jail),
             Provisioner::Test(p) => p.provision(jail),
+            Provisioner::Puppet(p) => p.provision(jail),
         }
     }
     pub fn validate(&self) -> Result<()> {
@@ -31,6 +35,7 @@ impl Provisioner {
             Provisioner::File(p) => p.validate(),
             Provisioner::Exec(p) => p.validate(),
             Provisioner::Test(p) => p.validate(),
+            Provisioner::Puppet(p) => p.validate(),
         }
     }
 }

@@ -45,7 +45,7 @@ manifest_file = "manifests/site.pp"
 module_path = "site-modules:modules"
 hiera_config = "hiera.yaml"
 extra_args = []
-temp_dir = "/var/rj/"
+tmp_dir = "/var/rj/"
 
 # Jails
 
