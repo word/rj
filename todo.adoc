@@ -2,7 +2,7 @@
 
 == doing
 
-* file provisioner
+* run cmd with ENV
 * puppet provisioner
 
 == next up
@@ -34,6 +34,7 @@
 
 == Done:
 
+* file provisioner
 * settings: tidy up example/test config files
 * add provision sub-command
 * tests for Jail snapshots
