@@ -1,5 +1,6 @@
 use crate::cmd;
 use crate::errors::ProvError;
+use crate::errors::RunError;
 use crate::jail::Jail;
 use anyhow::Result;
 use log::{debug, info};
@@ -51,6 +52,12 @@ fn default_extra_args() -> Vec<String> {
 impl Puppet {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: puppet provisioner running", jail.name());
+        let puppet_pkg = format!("puppet{}", self.puppet_version);
+
+        if !Self::is_installed(&jail, &puppet_pkg)? {
+            info!("{}: installing {}", jail.name(), puppet_pkg);
+            cmd!("jexec", jail.name(), "pkg", "install", "-y", puppet_pkg)?;
+        }
 
         Ok(())
     }
@@ -58,6 +65,23 @@ impl Puppet {
     pub fn validate(&self) -> Result<()> {
         debug!("validating puppet provisioner");
         Ok(())
+    }
+
+    // check if pkg is installed
+    fn is_installed(jail: &Jail, pkg_name: &str) -> Result<bool> {
+        match cmd!("jexec", jail.name(), "pkg", "info", pkg_name) {
+            Ok(_) => return Ok(true),
+            Err(e) => match e.downcast_ref::<RunError>() {
+                Some(re) => {
+                    if re.code.unwrap() == 70 {
+                        return Ok(false);
+                    } else {
+                        return Err(e);
+                    }
+                }
+                None => return Err(e),
+            },
+        }
     }
 }
 

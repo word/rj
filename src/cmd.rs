@@ -7,7 +7,7 @@ use std::io::BufReader;
 use std::process::{Command, Output, Stdio};
 use std::thread;
 
-// Wrapper around Command that check the exit status and errors if not 0
+// Wrapper around Command that checks the exit status and errors if not 0
 pub fn cmd<T, U>(program: U, args: T) -> Result<()>
 where
     U: AsRef<OsStr>,
