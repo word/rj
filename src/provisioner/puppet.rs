@@ -9,7 +9,7 @@ use log::{debug, info};
 use serde::Deserialize;
 // use std::collections::HashMap;
 // use std::fs::copy;
-use std::fs::{set_permissions, Permissions};
+use std::fs;
 // use std::os::unix::prelude::*;
 // use std::path::Path;
 
@@ -61,6 +61,30 @@ impl Puppet {
             info!("{}: installing {}", jail.name(), pkg_name);
             pkg.install()?;
         }
+
+        // Copy puppet manifest into the jail
+        fs::create_dir_all(&self.tmp_dir)?;
+        // todo - set tight permissions on tmp_dir
+        let trimmed_path = self.path.trim_end_matches('/');
+        let puppet_dir = format!("{}/{}", &jail.mountpoint(), &self.tmp_dir);
+        cmd!("rsync", "-r", trimmed_path, puppet_dir)?;
+
+        // Construct puppet command
+        let mut puppet_args = vec!["apply"];
+        if let Some(mp) = &self.module_path {
+            puppet_args.push("--modulepath");
+            puppet_args.push(mp);
+        }
+        if let Some(hc) = &self.hiera_config {
+            puppet_args.push("--hiera_config");
+            puppet_args.push(hc);
+        }
+        for ea in self.extra_args.iter() {
+            puppet_args.push(&ea);
+        }
+        puppet_args.push(&self.manifest_file);
+
+        cmd::stream("puppet", puppet_args.as_slice())?;
 
         Ok(())
     }
