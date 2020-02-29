@@ -1,3 +1,5 @@
+#[allow(dead_code)]
+#[allow(unused_imports)]
 use crate::cmd;
 use crate::errors::ProvError;
 use crate::errors::RunError;
@@ -6,6 +8,7 @@ use anyhow::Result;
 use log::{debug, info};
 use regex::Regex;
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::fs::copy;
 use std::fs::{set_permissions, Permissions};
 use std::os::unix::prelude::*;
@@ -56,7 +59,13 @@ impl Puppet {
 
         if !Self::is_installed(&jail, &puppet_pkg)? {
             info!("{}: installing {}", jail.name(), puppet_pkg);
-            cmd!("jexec", jail.name(), "pkg", "install", "-y", puppet_pkg)?;
+            let mut env = HashMap::new();
+            env.insert("TESTENV", "testie");
+            cmd::cmd_env(
+                "jexec",
+                &[jail.name(), "pkg", "install", "-y", &puppet_pkg],
+                env,
+            )?;
         }
 
         Ok(())
@@ -69,7 +78,11 @@ impl Puppet {
 
     // check if pkg is installed
     fn is_installed(jail: &Jail, pkg_name: &str) -> Result<bool> {
-        match cmd!("jexec", jail.name(), "pkg", "info", pkg_name) {
+        let mut env = HashMap::new();
+        env.insert("ASSUME_ALWAYS_YES", "yes");
+        let result = cmd::cmd_env("jexec", &[jail.name(), "pkg", "info", pkg_name], env);
+
+        match result {
             Ok(_) => return Ok(true),
             Err(e) => match e.downcast_ref::<RunError>() {
                 Some(re) => {
@@ -102,11 +115,11 @@ mod tests {
 
         // clean up if left over from a failed test
         if jail.exists()? {
-            jail.destroy()?;
+            // jail.destroy()?;
         }
         jail.apply()?;
 
-        jail.destroy()?;
+        // jail.destroy()?;
         Ok(())
     }
 

@@ -26,6 +26,7 @@
 
 * refactor source.rs to work like provisioners
 * breakout a zfs snapshot into a separate struct
+* factor out test jail set up (for serial tests)
 
 === Later
 

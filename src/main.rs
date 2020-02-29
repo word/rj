@@ -9,6 +9,7 @@ mod cli;
 mod cmd;
 mod errors;
 mod jail;
+mod pkg;
 mod provisioner;
 mod settings;
 mod source;
