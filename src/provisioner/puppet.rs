@@ -1,18 +1,17 @@
-#[allow(dead_code)]
-#[allow(unused_imports)]
 use crate::cmd;
-use crate::errors::ProvError;
-use crate::errors::RunError;
+// use crate::errors::ProvError;
+// use crate::errors::RunError;
 use crate::jail::Jail;
+use crate::pkg::Pkg;
 use anyhow::Result;
 use log::{debug, info};
-use regex::Regex;
+// use regex::Regex;
 use serde::Deserialize;
-use std::collections::HashMap;
-use std::fs::copy;
+// use std::collections::HashMap;
+// use std::fs::copy;
 use std::fs::{set_permissions, Permissions};
-use std::os::unix::prelude::*;
-use std::path::Path;
+// use std::os::unix::prelude::*;
+// use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -55,17 +54,12 @@ fn default_extra_args() -> Vec<String> {
 impl Puppet {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: puppet provisioner running", jail.name());
-        let puppet_pkg = format!("puppet{}", self.puppet_version);
+        let pkg_name = format!("puppet{}", self.puppet_version);
+        let pkg = Pkg::new(&pkg_name, &jail.mountpoint());
 
-        if !Self::is_installed(&jail, &puppet_pkg)? {
-            info!("{}: installing {}", jail.name(), puppet_pkg);
-            let mut env = HashMap::new();
-            env.insert("TESTENV", "testie");
-            cmd::cmd_env(
-                "jexec",
-                &[jail.name(), "pkg", "install", "-y", &puppet_pkg],
-                env,
-            )?;
+        if !pkg.is_installed()? {
+            info!("{}: installing {}", jail.name(), pkg_name);
+            pkg.install()?;
         }
 
         Ok(())
@@ -75,36 +69,15 @@ impl Puppet {
         debug!("validating puppet provisioner");
         Ok(())
     }
-
-    // check if pkg is installed
-    fn is_installed(jail: &Jail, pkg_name: &str) -> Result<bool> {
-        let mut env = HashMap::new();
-        env.insert("ASSUME_ALWAYS_YES", "yes");
-        let result = cmd::cmd_env("jexec", &[jail.name(), "pkg", "info", pkg_name], env);
-
-        match result {
-            Ok(_) => return Ok(true),
-            Err(e) => match e.downcast_ref::<RunError>() {
-                Some(re) => {
-                    if re.code.unwrap() == 70 {
-                        return Ok(false);
-                    } else {
-                        return Err(e);
-                    }
-                }
-                None => return Err(e),
-            },
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::settings::Settings;
-    use pretty_assertions::assert_eq;
+    // use pretty_assertions::assert_eq;
     use serial_test::serial;
-    use std::os::unix::fs::MetadataExt;
+    // use std::os::unix::fs::MetadataExt;
 
     #[test]
     #[serial]
