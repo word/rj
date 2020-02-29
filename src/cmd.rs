@@ -22,6 +22,24 @@ where
     Ok(())
 }
 
+// As above but allows setting environment variables
+pub fn cmd_env<T, U, E, K, V>(program: U, args: T, envs: E) -> Result<()>
+where
+    U: AsRef<OsStr>,
+    U: AsRef<str>,
+    T: IntoIterator,
+    T::Item: ToString,
+    E: IntoIterator<Item = (K, V)>,
+    K: AsRef<OsStr>,
+    V: AsRef<OsStr>,
+{
+    let mut argv_vec = Vec::new();
+    argv_vec.extend(args.into_iter().map(|s| s.to_string()));
+    let output = Command::new(&program).args(&argv_vec).envs(envs).output()?;
+    check_exit_status(program.as_ref(), argv_vec, output)?;
+    Ok(())
+}
+
 // Run Command and capture output into a String
 // Checks the exist status and returns an Err if it's not 0.
 pub fn capture<T, U>(program: U, args: T) -> Result<String>
@@ -141,6 +159,7 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
     use simplelog::{Config, LevelFilter, WriteLogger};
+    use std::collections::HashMap;
     use tempfile::NamedTempFile;
 
     #[test]
@@ -153,6 +172,13 @@ mod tests {
     fn cmd_run_noargs() -> Result<()> {
         cmd!("echo")?;
         Ok(())
+    }
+
+    #[test]
+    fn cmd_with_env() -> Result<()> {
+        let mut env = HashMap::new();
+        env.insert("TESTENV", "testie");
+        cmd_env("printenv", &["TESTENV"], env)
     }
 
     #[test]
