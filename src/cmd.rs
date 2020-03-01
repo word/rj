@@ -47,11 +47,51 @@ impl Cmd {
         self
     }
 
-    #[allow(dead_code)]
     pub fn exec(&mut self) -> Result<()> {
         let output = self.command.output()?;
         Self::check_exit_status(&self, output)?;
         Ok(())
+    }
+
+    pub fn capture(&mut self) -> Result<String> {
+        let output = self.command.output()?;
+        Self::check_exit_status(&self, output)
+    }
+
+    // Run a command and stream stdout and stderr into the logger
+    // Fail on exit status other than 0
+    pub fn stream(&mut self) -> Result<()> {
+        let mut child = self
+            .command
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
+
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
+
+        let stderr_handle = thread::spawn(|| {
+            for line in BufReader::new(stderr).lines() {
+                error!("{}", line.unwrap());
+            }
+        });
+
+        for line in BufReader::new(stdout).lines() {
+            info!("{}", line?);
+        }
+
+        stderr_handle.join().unwrap();
+        let status = child.wait()?;
+
+        if status.success() {
+            Ok(())
+        } else {
+            let err = RunError {
+                code: status.code(),
+                message: format!("Failed command: {:?}", &self.command),
+            };
+            Err(anyhow::Error::new(err))
+        }
     }
 
     // Return Err if exit status is not 0
@@ -205,7 +245,9 @@ macro_rules! cmd_capture {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
             let args: &[String] = &[$( Into::<String>::into($arg) ),*];
-            $crate::cmd::capture($program, args)
+            let mut c = $crate::cmd::Cmd::new($program);
+            c.args(args);
+            c.capture()
         }
     };
 }
@@ -215,7 +257,9 @@ macro_rules! cmd_stream {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
             let args: &[String] = &[$( Into::<String>::into($arg) ),*];
-            $crate::cmd::stream($program, args)
+            let mut c = $crate::cmd::Cmd::new($program);
+            c.args(args);
+            c.stream()
         }
     };
 }
