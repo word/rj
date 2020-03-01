@@ -1,11 +1,75 @@
 use crate::errors::RunError;
 use anyhow::Result;
 use log::{error, info};
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::path::Path;
 use std::process::{Command, Output, Stdio};
 use std::thread;
+
+pub struct Cmd {
+    command: Command,
+}
+
+impl Cmd {
+    pub fn new(program: &str) -> Cmd {
+        Cmd {
+            command: Command::new(program.to_string()),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn args<I, S>(&mut self, args: I) -> &mut Cmd
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        self.command.args(args);
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn envs<I, K, V>(&mut self, vars: I) -> &mut Cmd
+    where
+        I: IntoIterator<Item = (K, V)>,
+        K: AsRef<OsStr>,
+        V: AsRef<OsStr>,
+    {
+        self.command.envs(vars);
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Cmd {
+        self.command.current_dir(dir);
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn exec(&mut self) -> Result<()> {
+        let output = self.command.output()?;
+        Self::check_exit_status(&self, output)?;
+        Ok(())
+    }
+
+    // Return Err if exit status is not 0
+    #[allow(dead_code)]
+    fn check_exit_status(&self, output: Output) -> Result<String> {
+        let stdout = String::from_utf8(output.stdout)?;
+        let stderr = String::from_utf8(output.stderr)?;
+        if output.status.success() {
+            Ok(stdout)
+        } else {
+            let cmd_err = RunError {
+                code: output.status.code(),
+                message: format!("Failed command: '{:?}', stderr: {}", &self.command, stderr),
+            };
+            Err(anyhow::Error::new(cmd_err))
+        }
+    }
+}
 
 // Wrapper around Command that checks the exit status and errors if not 0
 pub fn cmd<T, U>(program: U, args: T) -> Result<()>
@@ -129,7 +193,9 @@ macro_rules! cmd {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
             let args: &[String] = &[$( Into::<String>::into($arg) ),*];
-            $crate::cmd::cmd($program, args)
+            let mut c = $crate::cmd::Cmd::new($program);
+            c.args(args);
+            c.exec()
         }
     };
 }
@@ -159,7 +225,6 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
     use simplelog::{Config, LevelFilter, WriteLogger};
-    use std::collections::HashMap;
     use tempfile::NamedTempFile;
 
     #[test]
