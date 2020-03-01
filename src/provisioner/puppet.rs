@@ -81,21 +81,36 @@ impl Puppet {
         info!("Puppet dir: {}", puppet_dir.to_str().unwrap());
         info!("dst path: {}", dst_path.to_str().unwrap());
         info!("jail mountpoint: {}", jail.mountpoint());
-        // Make puppet wrapper
-        let puppet_wrapper = format!(
-            "#!/bin/sh\ncd {} && /usr/local/bin/puppet $@\n",
-            puppet_dir.to_str().unwrap()
-        );
+
+        // Make exec wrapper
+        let puppet_wrapper = format!("#!/bin/sh\ncd {} && $@\n", puppet_dir.to_str().unwrap());
         let out_wrapper_path = Path::new(&dst_path).join("puppet_wrapper.sh");
+        let in_wrapper_path = Path::new(&self.tmp_dir).join("puppet_wrapper.sh");
         fs::write(&out_wrapper_path, puppet_wrapper)?;
         set_permissions(&out_wrapper_path, Permissions::from_mode(0o755))?;
 
+        // Run r10k
+        // todo - only if puppetfile exists
+        let r10k_pkg = Pkg::new("rubygem-r10k", &jail.mountpoint());
+        if !r10k_pkg.is_installed()? {
+            info!("{}: installing {}", jail.name(), "rubygem-r10k");
+            r10k_pkg.install()?;
+        }
+        cmd!(
+            "jexec",
+            jail.name(),
+            in_wrapper_path.to_str().unwrap(),
+            "r10k",
+            "puppetfile",
+            "install"
+        )?;
+
         // Construct puppet command
-        let in_wrapper_path = Path::new(&self.tmp_dir).join("puppet_wrapper.sh");
         let mut puppet_cmd = Cmd::new("jexec");
         puppet_cmd
             .arg(jail.name())
-            .arg(in_wrapper_path)
+            .arg(&in_wrapper_path)
+            .arg("puppet")
             .arg("apply");
 
         if let Some(mp) = &self.module_path {
