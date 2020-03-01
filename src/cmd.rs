@@ -111,74 +111,6 @@ impl Cmd {
     }
 }
 
-// Wrapper around Command that checks the exit status and errors if not 0
-pub fn cmd<T, U>(program: U, args: T) -> Result<()>
-where
-    U: AsRef<OsStr>,
-    U: AsRef<str>,
-    T: IntoIterator,
-    T::Item: ToString,
-{
-    let mut argv_vec = Vec::new();
-    argv_vec.extend(args.into_iter().map(|s| s.to_string()));
-    let output = Command::new(&program).args(&argv_vec).output()?;
-    check_exit_status(program.as_ref(), argv_vec, output)?;
-    Ok(())
-}
-
-// As above but allows setting environment variables
-pub fn cmd_env<T, U, E, K, V>(program: U, args: T, envs: E) -> Result<()>
-where
-    U: AsRef<OsStr>,
-    U: AsRef<str>,
-    T: IntoIterator,
-    T::Item: ToString,
-    E: IntoIterator<Item = (K, V)>,
-    K: AsRef<OsStr>,
-    V: AsRef<OsStr>,
-{
-    let mut argv_vec = Vec::new();
-    argv_vec.extend(args.into_iter().map(|s| s.to_string()));
-    let output = Command::new(&program).args(&argv_vec).envs(envs).output()?;
-    check_exit_status(program.as_ref(), argv_vec, output)?;
-    Ok(())
-}
-
-// Run Command and capture output into a String
-// Checks the exist status and returns an Err if it's not 0.
-pub fn capture<T, U>(program: U, args: T) -> Result<String>
-where
-    U: AsRef<OsStr>,
-    U: AsRef<str>,
-    T: IntoIterator,
-    T::Item: ToString,
-{
-    let mut argv_vec = Vec::new();
-    argv_vec.extend(args.into_iter().map(|s| s.to_string()));
-    let output = Command::new(&program).args(&argv_vec).output()?;
-    check_exit_status(program.as_ref(), argv_vec, output)
-}
-
-// Return Err if exit status is not 0
-fn check_exit_status(program: &str, args: Vec<String>, output: Output) -> Result<String> {
-    let stdout = String::from_utf8(output.stdout)?;
-    let stderr = String::from_utf8(output.stderr)?;
-    if output.status.success() {
-        Ok(stdout)
-    } else {
-        let cmd_err = RunError {
-            code: output.status.code(),
-            message: format!(
-                "Failed command: '{} {}', stderr: {}",
-                program,
-                args.join(" "),
-                stderr
-            ),
-        };
-        Err(anyhow::Error::new(cmd_err))
-    }
-}
-
 // Run a command and stream stdout and stderr into the logger
 // Fail on exit status other than 0
 pub fn stream<T, U>(program: U, args: T) -> Result<()>
@@ -287,7 +219,7 @@ mod tests {
     fn cmd_with_env() -> Result<()> {
         let mut env = HashMap::new();
         env.insert("TESTENV", "testie");
-        cmd_env("printenv", &["TESTENV"], env)
+        Cmd::new("printenv").args(&["TESTENV"]).envs(env).exec()
     }
 
     #[test]

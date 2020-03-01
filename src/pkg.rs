@@ -1,4 +1,4 @@
-use crate::cmd::cmd_env;
+use crate::cmd::Cmd;
 use crate::errors::RunError;
 use anyhow::Result;
 use log::debug;
@@ -25,11 +25,10 @@ impl Pkg {
 
     pub fn install(&self) -> Result<()> {
         debug!("pkg install {} in {}", &self.name, &self.chroot);
-        cmd_env(
-            "pkg",
-            &["-c", &self.chroot, "install", &self.name],
-            &self.env,
-        )
+        Cmd::new("pkg")
+            .args(&["-c", &self.chroot, "install", &self.name])
+            .envs(&self.env)
+            .exec()
     }
 
     // check if package is installed
@@ -38,7 +37,10 @@ impl Pkg {
             "checking if pkg {} is installed in {}",
             &self.name, &self.chroot
         );
-        let result = cmd_env("pkg", &["-c", &self.chroot, "info", &self.name], &self.env);
+        let result = Cmd::new("pkg")
+            .args(&["-c", &self.chroot, "info", &self.name])
+            .envs(&self.env)
+            .exec();
 
         match result {
             Ok(_) => return Ok(true),
