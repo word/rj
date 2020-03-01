@@ -155,6 +155,10 @@ mod tests {
         }
         jail.apply()?;
 
+        // check that puppet installed rsync using a module from the forge
+        let rsync_pkg = Pkg::new("rsync", &jail.mountpoint());
+        assert!(rsync_pkg.is_installed()?);
+
         // jail.destroy()?;
         Ok(())
     }

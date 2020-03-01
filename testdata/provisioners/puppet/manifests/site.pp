@@ -1,1 +1,3 @@
-class { 'ntp': }
+class { 'rsync':
+  package_ensure => 'latest'
+}
