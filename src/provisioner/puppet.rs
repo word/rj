@@ -1,4 +1,5 @@
 use crate::cmd;
+use crate::cmd::Cmd;
 // use crate::errors::ProvError;
 // use crate::errors::RunError;
 use crate::jail::Jail;
@@ -10,8 +11,9 @@ use serde::Deserialize;
 // use std::collections::HashMap;
 // use std::fs::copy;
 use std::fs;
-// use std::os::unix::prelude::*;
-// use std::path::Path;
+use std::fs::{set_permissions, Permissions};
+use std::os::unix::prelude::*;
+use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -65,26 +67,48 @@ impl Puppet {
         // Copy puppet manifest into the jail
         fs::create_dir_all(&self.tmp_dir)?;
         // todo - set tight permissions on tmp_dir
-        let trimmed_path = self.path.trim_end_matches('/');
-        let puppet_dir = format!("{}/{}", &jail.mountpoint(), &self.tmp_dir);
-        cmd!("rsync", "-r", trimmed_path, puppet_dir)?;
+        let trimmed_src_path = Path::new(self.path.trim_end_matches('/'));
+        let src_path_dirname = Path::new(&trimmed_src_path).file_name().unwrap();
+        let dst_path = Path::new(&jail.mountpoint()).join(&self.tmp_dir.trim_start_matches('/'));
+        let puppet_dir = Path::new(&self.tmp_dir).join(src_path_dirname);
+        cmd!(
+            "rsync",
+            "-r",
+            trimmed_src_path.to_str().unwrap(),
+            dst_path.to_str().unwrap()
+        )?;
+
+        info!("Puppet dir: {}", puppet_dir.to_str().unwrap());
+        info!("dst path: {}", dst_path.to_str().unwrap());
+        info!("jail mountpoint: {}", jail.mountpoint());
+        // Make puppet wrapper
+        let puppet_wrapper = format!(
+            "#!/bin/sh\ncd {} && /usr/local/bin/puppet $@\n",
+            puppet_dir.to_str().unwrap()
+        );
+        let out_wrapper_path = Path::new(&dst_path).join("puppet_wrapper.sh");
+        fs::write(&out_wrapper_path, puppet_wrapper)?;
+        set_permissions(&out_wrapper_path, Permissions::from_mode(0o755))?;
 
         // Construct puppet command
-        // let mut puppet_args = vec![jail.name(), "puppet", "apply"];
-        // if let Some(mp) = &self.module_path {
-        //     puppet_args.push("--modulepath");
-        //     puppet_args.push(mp);
-        // }
-        // if let Some(hc) = &self.hiera_config {
-        //     puppet_args.push("--hiera_config");
-        //     puppet_args.push(hc);
-        // }
-        // for ea in self.extra_args.iter() {
-        //     puppet_args.push(&ea);
-        // }
-        // puppet_args.push(&self.manifest_file);
+        let in_wrapper_path = Path::new(&self.tmp_dir).join("puppet_wrapper.sh");
+        let mut puppet_cmd = Cmd::new("jexec");
+        puppet_cmd
+            .arg(jail.name())
+            .arg(in_wrapper_path)
+            .arg("apply");
 
-        // Cmd::new("jexec").args(puppet_args).exec()?;
+        if let Some(mp) = &self.module_path {
+            puppet_cmd.arg("--modulepath").arg(mp);
+        }
+        if let Some(hc) = &self.hiera_config {
+            puppet_cmd.arg("--hiera_config").arg(hc);
+        }
+        for ea in self.extra_args.iter() {
+            puppet_cmd.arg(ea);
+        }
+        puppet_cmd.arg(&self.manifest_file);
+        puppet_cmd.stream()?;
 
         Ok(())
     }
