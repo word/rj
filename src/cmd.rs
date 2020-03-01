@@ -1,7 +1,6 @@
 use crate::errors::RunError;
 use anyhow::Result;
 use log::{error, info};
-use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -20,7 +19,11 @@ impl Cmd {
         }
     }
 
-    #[allow(dead_code)]
+    pub fn arg<S: AsRef<OsStr>>(&mut self, arg: S) -> &mut Cmd {
+        self.command.arg(arg);
+        self
+    }
+
     pub fn args<I, S>(&mut self, args: I) -> &mut Cmd
     where
         I: IntoIterator<Item = S>,
@@ -30,7 +33,6 @@ impl Cmd {
         self
     }
 
-    #[allow(dead_code)]
     pub fn envs<I, K, V>(&mut self, vars: I) -> &mut Cmd
     where
         I: IntoIterator<Item = (K, V)>,
@@ -41,7 +43,6 @@ impl Cmd {
         self
     }
 
-    #[allow(dead_code)]
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Cmd {
         self.command.current_dir(dir);
         self
@@ -111,55 +112,6 @@ impl Cmd {
     }
 }
 
-// Run a command and stream stdout and stderr into the logger
-// Fail on exit status other than 0
-pub fn stream<T, U>(program: U, args: T) -> Result<()>
-where
-    U: AsRef<OsStr>,
-    U: AsRef<str>,
-    T: IntoIterator,
-    T::Item: ToString,
-{
-    let mut argv_vec = Vec::new();
-    argv_vec.extend(args.into_iter().map(|s| s.to_string()));
-
-    let mut child = Command::new(&program)
-        .args(&argv_vec)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-
-    let stdout = child.stdout.take().unwrap();
-    let stderr = child.stderr.take().unwrap();
-
-    let stderr_handle = thread::spawn(|| {
-        for line in BufReader::new(stderr).lines() {
-            error!("{}", line.unwrap());
-        }
-    });
-
-    for line in BufReader::new(stdout).lines() {
-        info!("{}", line?);
-    }
-
-    stderr_handle.join().unwrap();
-    let status = child.wait()?;
-
-    if status.success() {
-        Ok(())
-    } else {
-        let err = RunError {
-            code: status.code(),
-            message: format!(
-                "Failed command: {} {}",
-                AsRef::<str>::as_ref(&program),
-                argv_vec.join(" ")
-            ),
-        };
-        Err(anyhow::Error::new(err))
-    }
-}
-
 #[macro_export]
 macro_rules! cmd {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
@@ -201,6 +153,7 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
     use simplelog::{Config, LevelFilter, WriteLogger};
+    use std::collections::HashMap;
     use tempfile::NamedTempFile;
 
     #[test]

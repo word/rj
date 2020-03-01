@@ -70,21 +70,21 @@ impl Puppet {
         cmd!("rsync", "-r", trimmed_path, puppet_dir)?;
 
         // Construct puppet command
-        let mut puppet_args = vec!["apply"];
-        if let Some(mp) = &self.module_path {
-            puppet_args.push("--modulepath");
-            puppet_args.push(mp);
-        }
-        if let Some(hc) = &self.hiera_config {
-            puppet_args.push("--hiera_config");
-            puppet_args.push(hc);
-        }
-        for ea in self.extra_args.iter() {
-            puppet_args.push(&ea);
-        }
-        puppet_args.push(&self.manifest_file);
+        // let mut puppet_args = vec![jail.name(), "puppet", "apply"];
+        // if let Some(mp) = &self.module_path {
+        //     puppet_args.push("--modulepath");
+        //     puppet_args.push(mp);
+        // }
+        // if let Some(hc) = &self.hiera_config {
+        //     puppet_args.push("--hiera_config");
+        //     puppet_args.push(hc);
+        // }
+        // for ea in self.extra_args.iter() {
+        //     puppet_args.push(&ea);
+        // }
+        // puppet_args.push(&self.manifest_file);
 
-        cmd::stream("puppet", puppet_args.as_slice())?;
+        // Cmd::new("jexec").args(puppet_args).exec()?;
 
         Ok(())
     }

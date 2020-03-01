@@ -1,4 +1,4 @@
-use crate::cmd;
+use crate::cmd::Cmd;
 use crate::jail::Jail;
 use anyhow::Result;
 use log::{debug, info};
@@ -17,7 +17,7 @@ impl Exec {
 
         let mut args: Vec<&str> = self.cmd.split(' ').collect();
         args.insert(0, jail.name());
-        cmd::stream("jexec", args)
+        Cmd::new("jexec").args(args).stream()
     }
 
     pub fn validate(&self) -> Result<()> {
