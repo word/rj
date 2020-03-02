@@ -7,10 +7,7 @@ use crate::jail::Jail;
 use crate::pkg::Pkg;
 use anyhow::Result;
 use log::{debug, info};
-// use regex::Regex;
 use serde::Deserialize;
-// use std::collections::HashMap;
-// use std::fs::copy;
 use std::fs;
 use std::fs::{set_permissions, Permissions};
 use std::os::unix::prelude::*;
@@ -57,38 +54,36 @@ fn default_extra_args() -> Vec<String> {
 impl Puppet {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: puppet provisioner running", jail.name());
-        let pkg_name = format!("puppet{}", self.puppet_version);
-        let pkg = Pkg::new(&pkg_name, &jail.mountpoint());
+        let puppet_pkg_name = format!("puppet{}", self.puppet_version);
+        let puppet_pkg = Pkg::new(&puppet_pkg_name, &jail.mountpoint());
 
-        if !pkg.is_installed()? {
-            info!("{}: installing {}", jail.name(), pkg_name);
-            pkg.install()?;
+        if !puppet_pkg.is_installed()? {
+            info!("{}: installing {}", jail.name(), puppet_pkg_name);
+            puppet_pkg.install()?;
         }
 
         // Copy puppet manifest into the jail
-        // FIXME - improve variable naming (in/out)
-        let trimmed_src_path = Path::new(self.path.trim_end_matches('/'));
-        let src_path_dirname = Path::new(&trimmed_src_path).file_name().unwrap();
-        let dst_path = Path::new(&jail.mountpoint()).join(&self.tmp_dir.trim_start_matches('/'));
-        let puppet_dir = Path::new(&self.tmp_dir).join(src_path_dirname);
+        // out - means outside of jail
+        // in - means inside jail
+        let out_src_path = Path::new(self.path.trim_end_matches('/'));
+        let out_src_path_dirname = Path::new(&out_src_path).file_name().unwrap();
+        let out_dest_path =
+            Path::new(&jail.mountpoint()).join(&self.tmp_dir.trim_start_matches('/'));
+        let in_puppet_dir = Path::new(&self.tmp_dir).join(out_src_path_dirname);
 
-        fs::create_dir_all(&dst_path)?;
-        set_permissions(&dst_path, Permissions::from_mode(0o700))?;
+        fs::create_dir_all(&out_dest_path)?;
+        set_permissions(&out_dest_path, Permissions::from_mode(0o700))?;
         cmd!(
             "rsync",
             "-r",
             "--delete",
-            trimmed_src_path.to_str().unwrap(),
-            dst_path.to_str().unwrap()
+            out_src_path.to_str().unwrap(),
+            out_dest_path.to_str().unwrap()
         )?;
 
-        info!("Puppet dir: {}", puppet_dir.to_str().unwrap());
-        info!("dst path: {}", dst_path.to_str().unwrap());
-        info!("jail mountpoint: {}", jail.mountpoint());
-
         // Make exec wrapper
-        let puppet_wrapper = format!("#!/bin/sh\ncd {} && $@\n", puppet_dir.to_str().unwrap());
-        let out_wrapper_path = Path::new(&dst_path).join("puppet_wrapper.sh");
+        let puppet_wrapper = format!("#!/bin/sh\ncd {} && $@\n", in_puppet_dir.to_str().unwrap());
+        let out_wrapper_path = Path::new(&out_dest_path).join("puppet_wrapper.sh");
         let in_wrapper_path = Path::new(&self.tmp_dir).join("puppet_wrapper.sh");
         fs::write(&out_wrapper_path, puppet_wrapper)?;
         set_permissions(&out_wrapper_path, Permissions::from_mode(0o755))?;
@@ -156,16 +151,19 @@ mod tests {
 
         // clean up if left over from a failed test
         if jail.exists()? {
-            jail.destroy()?;
+            // jail.destroy()?;
         }
         jail.apply()?;
+
+        // FIXME - remove
+        jail.provision()?;
 
         let testfile_path = format!("{}/tmp/puppet_testfile", &jail.mountpoint());
         let testfile = fs::read(testfile_path)?;
         let testfile_content = String::from_utf8_lossy(&testfile);
         assert_eq!(&testfile_content, "/root");
 
-        jail.destroy()?;
+        // jail.destroy()?;
         Ok(())
     }
 
