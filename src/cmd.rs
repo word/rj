@@ -8,6 +8,7 @@ use std::path::Path;
 use std::process::{Command, Output, Stdio};
 use std::thread;
 
+#[derive(Debug)]
 pub struct Cmd {
     command: Command,
 }
@@ -43,6 +44,7 @@ impl Cmd {
         self
     }
 
+    #[allow(dead_code)]
     pub fn current_dir<P: AsRef<Path>>(&mut self, dir: P) -> &mut Cmd {
         self.command.current_dir(dir);
         self
@@ -96,7 +98,6 @@ impl Cmd {
     }
 
     // Return Err if exit status is not 0
-    #[allow(dead_code)]
     fn check_exit_status(&self, output: Output) -> Result<String> {
         let stdout = String::from_utf8(output.stdout)?;
         let stderr = String::from_utf8(output.stderr)?;

@@ -2,4 +2,3 @@ forge 'http://forge.puppetlabs.com'
 
 # Modules from the Puppet Forge
 mod 'puppetlabs-stdlib', '6.2.0'
-mod 'puppetlabs-rsync', '1.1.1'

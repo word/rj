@@ -1,5 +1,6 @@
 use crate::cmd;
 use crate::cmd::Cmd;
+use crate::cmd_stream;
 // use crate::errors::ProvError;
 // use crate::errors::RunError;
 use crate::jail::Jail;
@@ -65,15 +66,18 @@ impl Puppet {
         }
 
         // Copy puppet manifest into the jail
-        fs::create_dir_all(&self.tmp_dir)?;
-        // todo - set tight permissions on tmp_dir
+        // FIXME - improve variable naming (in/out)
         let trimmed_src_path = Path::new(self.path.trim_end_matches('/'));
         let src_path_dirname = Path::new(&trimmed_src_path).file_name().unwrap();
         let dst_path = Path::new(&jail.mountpoint()).join(&self.tmp_dir.trim_start_matches('/'));
         let puppet_dir = Path::new(&self.tmp_dir).join(src_path_dirname);
+
+        fs::create_dir_all(&dst_path)?;
+        set_permissions(&dst_path, Permissions::from_mode(0o700))?;
         cmd!(
             "rsync",
             "-r",
+            "--delete",
             trimmed_src_path.to_str().unwrap(),
             dst_path.to_str().unwrap()
         )?;
@@ -96,7 +100,7 @@ impl Puppet {
             info!("{}: installing {}", jail.name(), "rubygem-r10k");
             r10k_pkg.install()?;
         }
-        cmd!(
+        cmd_stream!(
             "jexec",
             jail.name(),
             in_wrapper_path.to_str().unwrap(),
@@ -123,6 +127,7 @@ impl Puppet {
             puppet_cmd.arg(ea);
         }
         puppet_cmd.arg(&self.manifest_file);
+        debug!("{:?}", &puppet_cmd);
         puppet_cmd.stream()?;
 
         Ok(())
@@ -138,7 +143,7 @@ impl Puppet {
 mod tests {
     use super::*;
     use crate::settings::Settings;
-    // use pretty_assertions::assert_eq;
+    use pretty_assertions::assert_eq;
     use serial_test::serial;
     // use std::os::unix::fs::MetadataExt;
 
@@ -151,15 +156,16 @@ mod tests {
 
         // clean up if left over from a failed test
         if jail.exists()? {
-            // jail.destroy()?;
+            jail.destroy()?;
         }
         jail.apply()?;
 
-        // check that puppet installed rsync using a module from the forge
-        let rsync_pkg = Pkg::new("rsync", &jail.mountpoint());
-        assert!(rsync_pkg.is_installed()?);
+        let testfile_path = format!("{}/tmp/puppet_testfile", &jail.mountpoint());
+        let testfile = fs::read(testfile_path)?;
+        let testfile_content = String::from_utf8_lossy(&testfile);
+        assert_eq!(&testfile_content, "/root");
 
-        // jail.destroy()?;
+        jail.destroy()?;
         Ok(())
     }
 
