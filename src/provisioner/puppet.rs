@@ -54,77 +54,97 @@ fn default_extra_args() -> Vec<String> {
 impl Puppet {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: puppet provisioner running", jail.name());
-        let puppet_pkg_name = format!("puppet{}", self.puppet_version);
-        let puppet_pkg = Pkg::new(&puppet_pkg_name, &jail.mountpoint());
 
-        if !puppet_pkg.is_installed()? {
-            info!("{}: installing {}", jail.name(), puppet_pkg_name);
-            puppet_pkg.install()?;
+        // TODO: can we trim paths on loading?
+        let path_tr = self.path.trim_end_matches('/');
+        let tmp_dir_tr = self.tmp_dir.trim_end_matches('/');
+        let src_path = Path::new(path_tr);
+        let dest_path = Path::new(&jail.mountpoint()).join(tmp_dir_tr);
+
+        self.install_puppet(jail)?;
+        self.copy_manifest(&src_path, &dest_path)?;
+
+        let src_dirname = Path::new(&src_path).file_name().unwrap();
+        let manifest_path = Path::new(&self.tmp_dir).join(src_dirname);
+        let wrapper_path = Path::new(jail.mountpoint())
+            .join(&manifest_path)
+            .join("puppet_wrapper.sh");
+
+        self.make_wrapper(&manifest_path, &wrapper_path)?;
+        // TODO - only if Puppetfile exists
+        self.run_r10k(jail, &wrapper_path)?;
+        self.run_puppet(jail, &wrapper_path)?;
+
+        Ok(())
+    }
+
+    fn install_puppet(&self, jail: &Jail) -> Result<()> {
+        let pkg_name = format!("puppet{}", &self.puppet_version);
+        let pkg = Pkg::new(&pkg_name, &jail.mountpoint());
+
+        if !pkg.is_installed()? {
+            info!("{}: installing {}", jail.name(), pkg_name);
+            pkg.install()?;
         }
+        Ok(())
+    }
 
-        // Copy puppet manifest into the jail
-        // out - means outside of jail
-        // in - means inside jail
-        let out_src_path = Path::new(self.path.trim_end_matches('/'));
-        let out_src_path_dirname = Path::new(&out_src_path).file_name().unwrap();
-        let out_dest_path =
-            Path::new(&jail.mountpoint()).join(&self.tmp_dir.trim_start_matches('/'));
-        let in_puppet_dir = Path::new(&self.tmp_dir).join(out_src_path_dirname);
-
-        fs::create_dir_all(&out_dest_path)?;
-        set_permissions(&out_dest_path, Permissions::from_mode(0o700))?;
+    fn copy_manifest(&self, src: &Path, dest: &Path) -> Result<()> {
+        fs::create_dir_all(&dest)?;
+        set_permissions(&dest, Permissions::from_mode(0o700))?;
         cmd!(
             "rsync",
             "-r",
             "--delete",
-            out_src_path.to_str().unwrap(),
-            out_dest_path.to_str().unwrap()
-        )?;
+            src.to_str().unwrap(),
+            dest.to_str().unwrap()
+        )
+    }
 
-        // Make exec wrapper
-        let puppet_wrapper = format!("#!/bin/sh\ncd {} && $@\n", in_puppet_dir.to_str().unwrap());
-        let out_wrapper_path = Path::new(&out_dest_path).join("puppet_wrapper.sh");
-        let in_wrapper_path = Path::new(&self.tmp_dir).join("puppet_wrapper.sh");
-        fs::write(&out_wrapper_path, puppet_wrapper)?;
-        set_permissions(&out_wrapper_path, Permissions::from_mode(0o755))?;
+    fn make_wrapper(&self, manifest_path: &Path, wrapper_path: &Path) -> Result<()> {
+        let wrapper = format!("#!/bin/sh\ncd {} && $@\n", &manifest_path.to_str().unwrap());
+        fs::write(&wrapper_path, wrapper)?;
+        set_permissions(&wrapper_path, Permissions::from_mode(0o755))?;
+        Ok(())
+    }
 
-        // Run r10k
-        // todo - only if puppetfile exists
-        let r10k_pkg = Pkg::new("rubygem-r10k", &jail.mountpoint());
-        if !r10k_pkg.is_installed()? {
+    fn run_r10k(&self, jail: &Jail, wrapper_path: &Path) -> Result<()> {
+        let pkg = Pkg::new("rubygem-r10k", &jail.mountpoint());
+        if !pkg.is_installed()? {
             info!("{}: installing {}", jail.name(), "rubygem-r10k");
-            r10k_pkg.install()?;
+            pkg.install()?;
         }
+
         cmd_stream!(
             "jexec",
             jail.name(),
-            in_wrapper_path.to_str().unwrap(),
+            wrapper_path.to_str().unwrap(),
             "r10k",
             "puppetfile",
             "install"
-        )?;
+        )
+    }
 
+    fn run_puppet(&self, jail: &Jail, wrapper_path: &Path) -> Result<()> {
         // Construct puppet command
-        let mut puppet_cmd = Cmd::new("jexec");
-        puppet_cmd
-            .arg(jail.name())
-            .arg(&in_wrapper_path)
+        let mut cmd = Cmd::new("jexec");
+        cmd.arg(jail.name())
+            .arg(&wrapper_path)
             .arg("puppet")
             .arg("apply");
 
         if let Some(mp) = &self.module_path {
-            puppet_cmd.arg("--modulepath").arg(mp);
+            cmd.arg("--modulepath").arg(mp);
         }
         if let Some(hc) = &self.hiera_config {
-            puppet_cmd.arg("--hiera_config").arg(hc);
+            cmd.arg("--hiera_config").arg(hc);
         }
         for ea in self.extra_args.iter() {
-            puppet_cmd.arg(ea);
+            cmd.arg(ea);
         }
-        puppet_cmd.arg(&self.manifest_file);
-        debug!("{:?}", &puppet_cmd);
-        puppet_cmd.stream()?;
-
+        cmd.arg(&self.manifest_file);
+        debug!("{:?}", &cmd);
+        cmd.stream()?;
         Ok(())
     }
 
