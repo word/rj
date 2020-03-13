@@ -154,6 +154,7 @@ impl Puppet {
         debug!("validating puppet provisioner");
         self.validate_path()?;
         self.validate_manifest_file()?;
+        self.validate_hiera_config()?;
         Ok(())
     }
 
@@ -180,6 +181,23 @@ impl Puppet {
             );
             Err(anyhow::Error::new(ProvError(msg)))
         }
+    }
+
+    fn validate_hiera_config(&self) -> Result<()> {
+        if let Some(h) = &self.hiera_config {
+            let hiera_config_path = Path::new(&self.path).join(h);
+            if hiera_config_path.is_file() {
+                return Ok(());
+            } else {
+                let msg = format!(
+                    "puppet provisioner, hiera config file doesn't exist in: {} or is not a file",
+                    hiera_config_path.to_str().unwrap()
+                );
+                return Err(anyhow::Error::new(ProvError(msg)));
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -258,6 +276,9 @@ mod tests {
         assert!(puppet.validate().is_err());
         puppet.path = "testdata/provisioners/puppet".to_string();
         puppet.manifest_file = "nonexistent".to_string();
+        assert!(puppet.validate().is_err());
+        puppet.manifest_file = "manifests/site.pp".to_string();
+        puppet.hiera_config = Some("nonexistent".to_string());
         assert!(puppet.validate().is_err());
 
         Ok(())
