@@ -55,25 +55,25 @@ impl Puppet {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: puppet provisioner running", jail.name());
 
-        // TODO: can we trim paths on loading?
         let path_tr = self.path.trim_end_matches('/');
         let tmp_dir_tr = self.tmp_dir.trim_end_matches('/');
+        let jail_path = Path::new(jail.mountpoint());
         let src_path = Path::new(path_tr);
-        let dest_path = Path::new(&jail.mountpoint()).join(tmp_dir_tr);
+        let dest_path = jail_path.join(tmp_dir_tr.trim_start_matches('/'));
 
         self.install_puppet(jail)?;
         self.copy_manifest(&src_path, &dest_path)?;
 
         let src_dirname = Path::new(&src_path).file_name().unwrap();
-        let manifest_path = Path::new(&self.tmp_dir).join(src_dirname);
-        let wrapper_path = Path::new(jail.mountpoint())
-            .join(&manifest_path)
-            .join("puppet_wrapper.sh");
+        let manifest_inside_path = Path::new(&self.tmp_dir).join(src_dirname);
+        let manifest_outside_path = jail_path.join(&manifest_inside_path.strip_prefix("/")?);
+        let wrapper_outside_path = manifest_outside_path.join("wrapper.sh");
+        let wrapper_inside_path = manifest_inside_path.join("wrapper.sh");
 
-        self.make_wrapper(&manifest_path, &wrapper_path)?;
+        self.make_wrapper(&manifest_inside_path, &wrapper_outside_path)?;
         // TODO - only if Puppetfile exists
-        self.run_r10k(jail, &wrapper_path)?;
-        self.run_puppet(jail, &wrapper_path)?;
+        self.run_r10k(jail, &wrapper_inside_path)?;
+        self.run_puppet(jail, &wrapper_inside_path)?;
 
         Ok(())
     }

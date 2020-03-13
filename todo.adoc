@@ -2,7 +2,6 @@
 
 == doing
 
-* run cmd with ENV
 * puppet provisioner
 
 == next up
@@ -28,6 +27,7 @@
 * breakout a zfs snapshot into a separate struct
 * factor out test jail set up (for serial tests)
 * remove dependency on rsync
+* provisioner tests: create base jail if it doesn't exist
 
 === Later
 
@@ -36,6 +36,7 @@
 
 == Done:
 
+* run cmd with ENV
 * file provisioner
 * settings: tidy up example/test config files
 * add provision sub-command
