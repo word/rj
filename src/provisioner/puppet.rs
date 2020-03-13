@@ -2,7 +2,6 @@ use crate::cmd;
 use crate::cmd::Cmd;
 use crate::cmd_stream;
 use crate::errors::ProvError;
-// use crate::errors::RunError;
 use crate::jail::Jail;
 use crate::pkg::Pkg;
 use anyhow::Result;
@@ -220,7 +219,6 @@ mod tests {
     use crate::settings::Settings;
     use pretty_assertions::assert_eq;
     use serial_test::serial;
-    // use std::os::unix::fs::MetadataExt;
 
     #[test]
     #[serial]
@@ -231,19 +229,16 @@ mod tests {
 
         // clean up if left over from a failed test
         if jail.exists()? {
-            // jail.destroy()?;
+            jail.destroy()?;
         }
         jail.apply()?;
-
-        // FIXME - remove
-        jail.provision()?;
 
         let testfile_path = format!("{}/tmp/puppet_testfile", &jail.mountpoint());
         let testfile = fs::read(testfile_path)?;
         let testfile_content = String::from_utf8_lossy(&testfile);
         assert_eq!(&testfile_content, "/root");
 
-        // jail.destroy()?;
+        jail.destroy()?;
         Ok(())
     }
 
@@ -257,19 +252,16 @@ mod tests {
 
         // clean up if left over from a failed test
         if jail.exists()? {
-            // jail.destroy()?;
+            jail.destroy()?;
         }
         jail.apply()?;
-
-        // FIXME - remove
-        jail.provision()?;
 
         let testfile_path = format!("{}/tmp/puppet_simple_testfile", &jail.mountpoint());
         let testfile = fs::read(testfile_path)?;
         let testfile_content = String::from_utf8_lossy(&testfile);
         assert_eq!(&testfile_content, "simple");
 
-        // jail.destroy()?;
+        jail.destroy()?;
         Ok(())
     }
     #[test]
