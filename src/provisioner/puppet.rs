@@ -189,6 +189,31 @@ mod tests {
         Ok(())
     }
 
+    // Test the simplest case where only init.pp is defined.
+    #[test]
+    #[serial]
+    fn provision_simple() -> Result<()> {
+        let s = Settings::new("testdata/config.toml")?;
+        let jails = s.to_jails()?;
+        let jail = &jails["puppet_simple_test"];
+
+        // clean up if left over from a failed test
+        if jail.exists()? {
+            // jail.destroy()?;
+        }
+        jail.apply()?;
+
+        // FIXME - remove
+        jail.provision()?;
+
+        let testfile_path = format!("{}/tmp/puppet_simple_testfile", &jail.mountpoint());
+        let testfile = fs::read(testfile_path)?;
+        let testfile_content = String::from_utf8_lossy(&testfile);
+        assert_eq!(&testfile_content, "simple");
+
+        // jail.destroy()?;
+        Ok(())
+    }
     #[test]
     fn validation() {}
 }

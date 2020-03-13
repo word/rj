@@ -47,6 +47,10 @@ hiera_config = "hiera.yaml"
 extra_args = []
 tmp_dir = "/var/rj/"
 
+[provisioner.puppet_simple]
+type = "puppet"
+path = "testdata/provisioners/puppet_simple"
+
 # Jails
 
 [jail.base]
@@ -87,3 +91,10 @@ provisioners = [ "puppet" ]
 [jail.puppet_test.conf]
 host_hostname = "puppet_test"
 ip4_addr = [ "lo0|10.11.11.4/32" ]
+
+[jail.puppet_simple_test]
+source = "base"
+provisioners = [ "puppet_simple" ]
+[jail.puppet_simple_test.conf]
+host_hostname = "puppet_simple_test"
+ip4_addr = [ "lo0|10.11.11.5/32" ]
