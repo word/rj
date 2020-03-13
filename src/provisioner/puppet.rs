@@ -71,8 +71,9 @@ impl Puppet {
         let wrapper_inside_path = manifest_inside_path.join("wrapper.sh");
 
         self.make_wrapper(&manifest_inside_path, &wrapper_outside_path)?;
-        // TODO - only if Puppetfile exists
-        self.run_r10k(jail, &wrapper_inside_path)?;
+        if manifest_outside_path.join("puppetfile").is_file() {
+            self.run_r10k(jail, &wrapper_inside_path)?;
+        }
         self.run_puppet(jail, &wrapper_inside_path)?;
 
         Ok(())
@@ -101,6 +102,7 @@ impl Puppet {
         )
     }
 
+    // Wrapper changes into the root of the manifest directory before executing a command.  Used for executing puppet and r10k.
     fn make_wrapper(&self, manifest_path: &Path, wrapper_path: &Path) -> Result<()> {
         let wrapper = format!("#!/bin/sh\ncd {} && $@\n", &manifest_path.to_str().unwrap());
         fs::write(&wrapper_path, wrapper)?;
