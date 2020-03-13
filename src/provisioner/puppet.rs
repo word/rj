@@ -155,6 +155,7 @@ impl Puppet {
         self.validate_path()?;
         self.validate_manifest_file()?;
         self.validate_hiera_config()?;
+        self.validate_puppet_version()?;
         Ok(())
     }
 
@@ -198,6 +199,18 @@ impl Puppet {
         }
 
         Ok(())
+    }
+
+    fn validate_puppet_version(&self) -> Result<()> {
+        if ["5", "6"].contains(&self.puppet_version.as_str()) {
+            Ok(())
+        } else {
+            let msg = format!(
+                "puppet provisioner, puppet version: {} is not supported",
+                &self.puppet_version
+            );
+            return Err(anyhow::Error::new(ProvError(msg)));
+        }
     }
 }
 
@@ -260,7 +273,7 @@ mod tests {
         Ok(())
     }
     #[test]
-    fn validation() -> Result<()> {
+    fn validation() {
         let mut puppet = Puppet {
             path: "testdata/provisioners/puppet".to_string(),
             manifest_file: "manifests/site.pp".to_string(),
@@ -280,7 +293,10 @@ mod tests {
         puppet.manifest_file = "manifests/site.pp".to_string();
         puppet.hiera_config = Some("nonexistent".to_string());
         assert!(puppet.validate().is_err());
-
-        Ok(())
+        puppet.hiera_config = Some("hiera.yaml".to_string());
+        puppet.puppet_version = "23".to_string();
+        assert!(puppet.validate().is_err());
+        puppet.puppet_version = default_version();
+        assert!(puppet.validate().is_ok());
     }
 }
