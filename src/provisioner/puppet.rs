@@ -1,7 +1,7 @@
 use crate::cmd;
 use crate::cmd::Cmd;
 use crate::cmd_stream;
-// use crate::errors::ProvError;
+use crate::errors::ProvError;
 // use crate::errors::RunError;
 use crate::jail::Jail;
 use crate::pkg::Pkg;
@@ -152,7 +152,34 @@ impl Puppet {
 
     pub fn validate(&self) -> Result<()> {
         debug!("validating puppet provisioner");
+        self.validate_path()?;
+        self.validate_manifest_file()?;
         Ok(())
+    }
+
+    fn validate_path(&self) -> Result<()> {
+        if Path::new(&self.path).is_dir() {
+            Ok(())
+        } else {
+            let msg = format!(
+                "puppet provisioner, path: {} doesn't exist or is not a directory",
+                &self.path
+            );
+            Err(anyhow::Error::new(ProvError(msg)))
+        }
+    }
+
+    fn validate_manifest_file(&self) -> Result<()> {
+        let manifest_file_path = Path::new(&self.path).join(&self.manifest_file);
+        if manifest_file_path.is_file() {
+            Ok(())
+        } else {
+            let msg = format!(
+                "puppet provisioner, manifest file doesn't exist in: {} or is not a file",
+                manifest_file_path.to_str().unwrap()
+            );
+            Err(anyhow::Error::new(ProvError(msg)))
+        }
     }
 }
 
@@ -215,5 +242,24 @@ mod tests {
         Ok(())
     }
     #[test]
-    fn validation() {}
+    fn validation() -> Result<()> {
+        let mut puppet = Puppet {
+            path: "testdata/provisioners/puppet".to_string(),
+            manifest_file: "manifests/site.pp".to_string(),
+            module_path: Some("site-modules:modules".to_string()),
+            hiera_config: Some("hiera.yaml".to_string()),
+            extra_args: vec![],
+            tmp_dir: default_tmp_dir(),
+            puppet_version: default_version(),
+        };
+
+        assert!(puppet.validate().is_ok());
+        puppet.path = "nonexistent".to_string();
+        assert!(puppet.validate().is_err());
+        puppet.path = "testdata/provisioners/puppet".to_string();
+        puppet.manifest_file = "nonexistent".to_string();
+        assert!(puppet.validate().is_err());
+
+        Ok(())
+    }
 }
