@@ -2,7 +2,7 @@
 
 == doing
 
-* puppet provisioner
+* refactor source.rs to work like provisioners
 
 == next up
 
@@ -12,63 +12,21 @@
  * settings: validate source name
  * settings: validate provisioner names
  * settings: validation for sources
- * setup resolv.conf in test basejail (needs file provisioner)
  * tidy up log messages
 
 === First release
 
 * confirmation before deleting all jails (and -f to force)
 * tidy up and tests for main
-* pick up config from cwd for self contained set ups
+* pick up config from cwd automatically for self contained set ups
 
 === Refactoring
 
-* refactor source.rs to work like provisioners
 * breakout a zfs snapshot into a separate struct
-* factor out test jail set up (for serial tests)
-* remove dependency on rsync
+* remove dependency on rsync for copying files recursively
 * provisioner tests: create base jail if it doesn't exist
 
 === Later
 
-* freebsd-update jail
-* config includes or conf.d style include
-
-== Done:
-
-* run cmd with ENV
-* file provisioner
-* settings: tidy up example/test config files
-* add provision sub-command
-* tests for Jail snapshots
-* exec provisioner
-* snapshots:
-  * add timestamps
-  * add pre-provision
-  * add function to get latest snap
-* tidy up zfs code
-* fail on unknown config options
-* apply config changes
-* jail
-  * start/stop
-  * enable/disable
-* create jail.conf
-* logger
-* cli args
-* read config from a toml file
-* zfs
-  * refactor zfs into a struct
-  * set zfs mountpoint: zfs set mountpoint=/jails zroot/jails
-  * zfs snapshot method
-  * zfs clone method
-* try testing commands with mockall
-
-
-== Puppet notes
-
-pkg install puppet6
-pkg install rubygem-r10k-3.3.3
-
-r10k puppetfile install
-puppet apply --hiera_config hiera.yaml --environmentpath /vagrant/testdata/provisioners --environment puppet manifests/site.pp
-puppet apply --hiera_config hiera.yaml --modulepath site-modules:modules manifests/site.pp
+* freebsd-update jails
+* ability to include config snippets (conf.d style)
