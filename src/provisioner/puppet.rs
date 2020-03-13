@@ -71,7 +71,7 @@ impl Puppet {
         let wrapper_inside_path = manifest_inside_path.join("wrapper.sh");
 
         self.make_wrapper(&manifest_inside_path, &wrapper_outside_path)?;
-        if manifest_outside_path.join("puppetfile").is_file() {
+        if manifest_outside_path.join("Puppetfile").is_file() {
             self.run_r10k(jail, &wrapper_inside_path)?;
         }
         self.run_puppet(jail, &wrapper_inside_path)?;
