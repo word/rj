@@ -132,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn validation() {
+    fn validate() {
         let mut file = ProvFile {
             source: "/tmp/whatever123".to_string(),
             dest: "/tmp/desttest".to_string(),

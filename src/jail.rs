@@ -37,6 +37,10 @@ impl Jail<'_> {
         &self.mountpoint
     }
 
+    pub fn zfs_ds(&self) -> &zfs::DataSet {
+        &self.zfs_ds
+    }
+
     pub fn new<'a>(
         ds_path: &str,
         source: &'a Source,
@@ -125,7 +129,7 @@ impl Jail<'_> {
     }
 
     pub fn install(&self) -> Result<()> {
-        self.source.install(&self.mountpoint, &self.zfs_ds)
+        self.source.install(&self)
     }
 
     pub fn configure(&self) -> Result<()> {

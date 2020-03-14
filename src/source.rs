@@ -1,4 +1,4 @@
-use crate::zfs;
+use crate::jail::Jail;
 use anyhow::Result;
 use serde::Deserialize;
 
@@ -15,10 +15,10 @@ pub enum Source {
 }
 
 impl Source {
-    pub fn install(&self, dest_path: &str, dest_dataset: &zfs::DataSet) -> Result<()> {
+    pub fn install(&self, jail: &Jail) -> Result<()> {
         match self {
-            Source::FreeBSD(s) => s.install(dest_path, dest_dataset),
-            Source::ZfsClone(s) => s.install(dest_path, dest_dataset),
+            Source::FreeBSD(s) => s.install(jail),
+            Source::ZfsClone(s) => s.install(jail),
         }
     }
 }

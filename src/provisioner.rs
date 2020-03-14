@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::jail::Jail;
 use anyhow::Result;
 use serde::Deserialize;
 
@@ -6,7 +7,6 @@ mod exec;
 mod file;
 mod puppet;
 mod test;
-use crate::jail::Jail;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "type")]

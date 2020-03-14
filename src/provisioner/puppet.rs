@@ -265,7 +265,7 @@ mod tests {
         Ok(())
     }
     #[test]
-    fn validation() {
+    fn validate() {
         let mut puppet = Puppet {
             path: "testdata/provisioners/puppet".to_string(),
             manifest_file: "manifests/site.pp".to_string(),
