@@ -1,4 +1,14 @@
-.PHONY: test test_trace test_nocapture clean up
+.PHONY: release release_vagrant test test_trace test_nocapture clean up
+
+release:
+	$(info => Building a release binary)
+	cargo build --release
+
+release_vagrant:
+	$(info => Building a release binary in Vagrant)
+	vagrant ssh -c 'cd /vagrant && cargo build --release'
+	mkdir -p target/release
+	vagrant scp default:/vagrant/target/release/rj target/release/
 
 up:
 	$(info => Bringing up vagrant box)
