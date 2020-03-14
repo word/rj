@@ -13,6 +13,7 @@
  * settings: validate provisioner names
  * settings: validation for sources
  * tidy up log messages
+ * check config file exists
 
 === First release
 
@@ -30,3 +31,5 @@
 
 * freebsd-update jails
 * ability to include config snippets (conf.d style)
+* resource limits
+* mount additional data sets in jails
