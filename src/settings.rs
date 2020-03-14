@@ -127,22 +127,8 @@ mod tests {
             ])
         );
 
-        // test sources
-
-        if let Source::FreeBSD {
-            release,
-            mirror,
-            dists,
-        } = &s.source["freebsd12"]
-        {
-            assert_eq!(release, "12.0-RELEASE");
-            assert_eq!(mirror, "ftp.uk.freebsd.org");
-            assert_eq!(dists, &vec!["base".to_string(), "lib32".to_string()]);
-        }
-
-        if let Source::Cloned { path } = &s.source["base"] {
-            assert_eq!(path, "zroot/jails/base");
-        }
+        // TODO test sources
+        // TODO test provisioners
 
         // test 'enabled' option
 
