@@ -15,19 +15,19 @@ use std::path::Path;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Puppet {
-    path: String,
+    pub path: String,
     #[serde(default = "default_manifest_file")]
-    manifest_file: String,
+    pub manifest_file: String,
     #[serde(default = "default_none")]
-    module_path: Option<String>,
+    pub module_path: Option<String>,
     #[serde(default = "default_none")]
-    hiera_config: Option<String>,
+    pub hiera_config: Option<String>,
     #[serde(default = "default_extra_args")]
-    extra_args: Vec<String>,
+    pub extra_args: Vec<String>,
     #[serde(default = "default_tmp_dir")]
-    tmp_dir: String,
+    pub tmp_dir: String,
     #[serde(default = "default_version")]
-    puppet_version: String,
+    pub puppet_version: String,
 }
 
 fn default_manifest_file() -> String {

@@ -2,8 +2,8 @@ use crate::jail::Jail;
 use anyhow::Result;
 use serde::Deserialize;
 
-mod freebsd;
-mod zfs_clone;
+pub(crate) mod freebsd;
+pub(crate) mod zfs_clone;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "type")]

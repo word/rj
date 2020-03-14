@@ -88,6 +88,7 @@ fn default_true() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::provisioner::Provisioner;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -127,8 +128,25 @@ mod tests {
             ])
         );
 
-        // TODO test sources
-        // TODO test provisioners
+        // test provisioners
+
+        if let Provisioner::Exec(prov) = &s.provisioner["exec"] {
+            assert_eq!(prov.cmd, "touch /tmp/exec_test".to_string());
+        }
+
+        if let Provisioner::Puppet(prov) = &s.provisioner["puppet"] {
+            assert_eq!(prov.path, "testdata/provisioners/puppet".to_string());
+        }
+
+        // test sources
+
+        if let Source::FreeBSD(src) = &s.source["freebsd12"] {
+            assert_eq!(src.mirror, "ftp.uk.freebsd.org".to_string());
+        }
+
+        if let Source::ZfsClone(src) = &s.source["base"] {
+            assert_eq!(src.path, "zroot/jails/base".to_string());
+        }
 
         // test 'enabled' option
 

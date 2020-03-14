@@ -7,9 +7,9 @@ use serde::Deserialize;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FreeBSD {
-    release: String,
-    mirror: String,
-    dists: Vec<String>,
+    pub release: String,
+    pub mirror: String,
+    pub dists: Vec<String>,
 }
 
 impl FreeBSD {

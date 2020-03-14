@@ -7,7 +7,7 @@ use serde::Deserialize;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Exec {
-    cmd: String,
+    pub cmd: String,
 }
 
 impl Exec {
