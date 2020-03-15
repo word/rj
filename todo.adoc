@@ -2,9 +2,10 @@
 
 == Doing
 
+ * tidy up log messages
+
 == Tasks
 
- * tidy up log messages
  * settings: validate jail conf sections (known fileds, types) (low)
 
 === Refactor
@@ -16,7 +17,7 @@
 === Later
 
 * freebsd-update jails
-* ability split configuration into 'include' snippets
+* ability to split configuration into 'include' snippets
 * jail resource limits
 * mount additional data sets in jails
-* provisioner change detection
+* detect if provisioner has made changes
