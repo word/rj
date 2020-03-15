@@ -1,7 +1,6 @@
 use crate::cmd;
-use crate::errors::ProvError;
 use crate::jail::Jail;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use log::{debug, info};
 use regex::Regex;
 use serde::Deserialize;
@@ -70,8 +69,7 @@ impl ProvFile {
         if Path::new(&self.source).is_file() {
             Ok(())
         } else {
-            let msg = format!("file provisioner, invalid source: {}", &self.source);
-            Err(anyhow::Error::new(ProvError(msg)))
+            bail!("file provisioner, invalid source: {}", &self.source);
         }
     }
 
@@ -79,11 +77,10 @@ impl ProvFile {
         if Path::new(&self.dest).is_absolute() {
             Ok(())
         } else {
-            let msg = format!(
+            bail!(
                 "file provisioner, dest path must be absolute: {}",
                 &self.dest
-            );
-            Err(anyhow::Error::new(ProvError(msg)))
+            )
         }
     }
 
@@ -92,8 +89,7 @@ impl ProvFile {
         if re.is_match(&self.mode) {
             Ok(())
         } else {
-            let msg = format!("file provisioner, invalid file mode: {}", &self.mode);
-            Err(anyhow::Error::new(ProvError(msg)))
+            bail!("file provisioner, invalid file mode: {}", &self.mode)
         }
     }
 }

@@ -1,4 +1,4 @@
-use anyhow::{bail, Error, Result};
+use anyhow::{bail, Result};
 use clap::ArgMatches;
 use log::{debug, error, info};
 use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
@@ -17,7 +17,6 @@ mod templates;
 mod util;
 mod zfs;
 
-use errors::InitError;
 use jail::Jail;
 use provisioner::Provisioner;
 use settings::Settings;
@@ -110,8 +109,7 @@ fn check_init(settings: &Settings) -> Result<()> {
 
     if !error_msgs.is_empty() {
         error_msgs.push("Run 'init' to fix".to_string());
-        let err = Error::new(InitError(error_msgs));
-        return Err(err);
+        bail!(error_msgs.join(" "));
     }
 
     Ok(())

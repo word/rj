@@ -1,5 +1,5 @@
 use crate::cmd::Cmd;
-use crate::errors::RunError;
+use crate::errors::CmdError;
 use anyhow::Result;
 use log::debug;
 use std::collections::HashMap;
@@ -44,7 +44,7 @@ impl Pkg {
 
         match result {
             Ok(_) => return Ok(true),
-            Err(e) => match e.downcast_ref::<RunError>() {
+            Err(e) => match e.downcast_ref::<CmdError>() {
                 Some(re) => {
                     // package not installed or no packages installed
                     if re.code.unwrap() == 70 || re.code.unwrap() == 69 {

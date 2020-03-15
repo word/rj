@@ -1,4 +1,4 @@
-use crate::errors::RunError;
+use crate::errors::CmdError;
 use anyhow::Result;
 use log::{error, info};
 use std::ffi::OsStr;
@@ -89,7 +89,7 @@ impl Cmd {
         if status.success() {
             Ok(())
         } else {
-            let err = RunError {
+            let err = CmdError {
                 code: status.code(),
                 message: format!("Failed command: {:?}", &self.command),
             };
@@ -104,7 +104,7 @@ impl Cmd {
         if output.status.success() {
             Ok(stdout)
         } else {
-            let cmd_err = RunError {
+            let cmd_err = CmdError {
                 code: output.status.code(),
                 message: format!("Failed command: '{:?}', stderr: {}", &self.command, stderr),
             };

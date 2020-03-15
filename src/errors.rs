@@ -2,12 +2,12 @@ use std::error;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct RunError {
+pub struct CmdError {
     pub code: Option<i32>,
     pub message: String,
 }
 
-impl fmt::Display for RunError {
+impl fmt::Display for CmdError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self.code {
             Some(code) => write!(f, "({}) {}", code, self.message),
@@ -16,64 +16,8 @@ impl fmt::Display for RunError {
     }
 }
 
-impl error::Error for RunError {
+impl error::Error for CmdError {
     fn description(&self) -> &str {
         &self.message
     }
 }
-
-#[derive(Debug, Clone)]
-pub struct JailError(pub String);
-
-impl fmt::Display for JailError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl error::Error for JailError {
-    fn description(&self) -> &str {
-        &self.0
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct SourceError(pub String);
-
-impl fmt::Display for SourceError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl error::Error for SourceError {
-    fn description(&self) -> &str {
-        &self.0
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ProvError(pub String);
-
-impl fmt::Display for ProvError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl error::Error for ProvError {
-    fn description(&self) -> &str {
-        &self.0
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct InitError(pub Vec<String>);
-
-impl fmt::Display for InitError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", self.0.join(" "))
-    }
-}
-
-impl error::Error for InitError {}

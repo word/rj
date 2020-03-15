@@ -10,11 +10,10 @@ use anyhow::Result;
 use difference::Changeset;
 use indexmap::{indexmap, IndexMap};
 use log::{debug, info};
+use settings::{JailConfValue, JailSettings};
 use std::fs;
 use std::path::Path;
 use std::process::Command;
-
-use settings::{JailConfValue, JailSettings};
 
 pub struct Jail<'a> {
     name: String,

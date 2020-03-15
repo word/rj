@@ -37,11 +37,11 @@ impl ZfsClone {
                 Ok(())
             }
             None => {
-                bail!(format!(
+                bail!(
                     "{}: 'ready' snapshot not found for source dataset: {}",
                     &jail.name(),
                     &self.path
-                ));
+                );
             }
         }
     }

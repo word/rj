@@ -1,12 +1,11 @@
+use crate::cmd;
+use crate::cmd_capture;
 use anyhow::Result;
 use chrono::{Local, NaiveDateTime};
 use log::{debug, info};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use regex::Regex;
-
-use crate::cmd;
-use crate::cmd_capture;
 
 #[derive(Debug)]
 pub struct DataSet {

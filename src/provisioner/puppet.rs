@@ -1,10 +1,9 @@
 use crate::cmd;
 use crate::cmd::Cmd;
 use crate::cmd_stream;
-use crate::errors::ProvError;
 use crate::jail::Jail;
 use crate::pkg::Pkg;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use log::{debug, info};
 use serde::Deserialize;
 use std::fs;
@@ -162,11 +161,10 @@ impl Puppet {
         if Path::new(&self.path).is_dir() {
             Ok(())
         } else {
-            let msg = format!(
+            bail!(
                 "puppet provisioner, path: {} doesn't exist or is not a directory",
                 &self.path
-            );
-            Err(anyhow::Error::new(ProvError(msg)))
+            )
         }
     }
 
@@ -175,11 +173,10 @@ impl Puppet {
         if manifest_file_path.is_file() {
             Ok(())
         } else {
-            let msg = format!(
+            bail!(
                 "puppet provisioner, manifest file doesn't exist in: {} or is not a file",
                 manifest_file_path.to_str().unwrap()
-            );
-            Err(anyhow::Error::new(ProvError(msg)))
+            )
         }
     }
 
@@ -189,11 +186,10 @@ impl Puppet {
             if hiera_config_path.is_file() {
                 return Ok(());
             } else {
-                let msg = format!(
+                bail!(
                     "puppet provisioner, hiera config file doesn't exist in: {} or is not a file",
                     hiera_config_path.to_str().unwrap()
-                );
-                return Err(anyhow::Error::new(ProvError(msg)));
+                )
             }
         }
 
@@ -204,11 +200,10 @@ impl Puppet {
         if ["5", "6"].contains(&self.puppet_version.as_str()) {
             Ok(())
         } else {
-            let msg = format!(
+            bail!(
                 "puppet provisioner, puppet version: {} is not supported",
                 &self.puppet_version
             );
-            return Err(anyhow::Error::new(ProvError(msg)));
         }
     }
 }

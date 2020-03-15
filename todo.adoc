@@ -1,27 +1,26 @@
 = Todo
 
-== doing
+== Doing
 
- * check if source dataset exists when using clone source
+* provisioner tests: create base jail if it doesn't exist
 
-== next up
+== Tasks
 
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names
  * tidy up log messages
 
-=== Refactoring
+=== Refactor
 
-* breakout a zfs snapshot into a separate struct
+* create a struct for zfs snapshots
 * remove dependency on rsync for copying files recursively
-* provisioner tests: create base jail if it doesn't exist
-* validators and tests for sources
-* use bail! and anyhow! for one off errors
+* tests and validation for FreeBSD source
 
 === Later
 
 * freebsd-update jails
-* ability split configuration into snippets using 'include'
+* ability split configuration into 'include' snippets
 * jail resource limits
 * mount additional data sets in jails
+* provisioner change detection
