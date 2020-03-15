@@ -10,9 +10,9 @@
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names
- * settings: validation for sources
  * tidy up log messages
- * check config file exists
+ * verify cli options
+ ** check config file exists
 
 === First release
 
