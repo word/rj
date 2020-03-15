@@ -59,6 +59,11 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                         .short("a")
                         .long("all")
                         .help("Destroy all jails"),
+                )
+                .arg(
+                    Arg::with_name("auto-approve")
+                        .long("auto-approve")
+                        .help("Don't prompt for confirmation"),
                 ),
         )
         .subcommand(

@@ -69,7 +69,7 @@ fn subcommand(sub_name: &str, sub_matches: &ArgMatches, settings: Settings) -> R
 
     // Confirm before destroying
 
-    if sub_name == "destroy" {
+    if sub_name == "destroy" && !sub_matches.is_present("auto-approve") {
         info!(
             "You are about to destroy jails: {}",
             selected_jails
