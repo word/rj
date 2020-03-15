@@ -2,8 +2,7 @@
 
 == doing
 
- * verify cli options
- ** check config file exists
+* confirmation before deleting all jails (and -f to force)
 
 == next up
 
@@ -11,11 +10,8 @@
  * settings: validate source name
  * settings: validate provisioner names
  * tidy up log messages
+ * check if source dataset exists when using clone source
 
-=== First release
-
-* confirmation before deleting all jails (and -f to force)
-* pick up config from cwd automatically for self contained set ups
 
 === Refactoring
 
@@ -28,6 +24,6 @@
 === Later
 
 * freebsd-update jails
-* ability to include config snippets (conf.d style)
-* resource limits
+* ability split configuration into snippets using 'include'
+* jail resource limits
 * mount additional data sets in jails

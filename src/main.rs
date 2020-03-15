@@ -1,4 +1,4 @@
-use anyhow::{Error, Result};
+use anyhow::{bail, Error, Result};
 use clap::ArgMatches;
 use log::{debug, error, info};
 use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
@@ -16,7 +16,6 @@ mod templates;
 mod util;
 mod zfs;
 
-use errors::ArgError;
 use errors::InitError;
 use jail::Jail;
 use provisioner::Provisioner;
@@ -35,8 +34,6 @@ fn jail_action(action: &str, jail: &Jail) -> Result<()> {
 
 // process the subcommand
 fn subcommand(sub_name: &str, sub_matches: &ArgMatches, settings: Settings) -> Result<()> {
-    let jails = &settings.to_jails()?;
-
     if sub_name == "init" {
         init(&settings)?;
         return Ok(());
@@ -44,32 +41,50 @@ fn subcommand(sub_name: &str, sub_matches: &ArgMatches, settings: Settings) -> R
         check_init(&settings)?
     }
 
-    // work on all jails if --all is set
+    // Workout which jails to operate on
+
+    let jails = settings.to_jails()?;
+    let mut selected_jails = Vec::new();
+
     if sub_matches.is_present("all") {
-        debug!("working on all jails");
         if sub_name == "destroy" {
-            // destroy jails in reverse order
+            // order jails in reverse when destroying all
             for (_, jail) in jails.iter().rev() {
-                jail_action(&sub_name, &jail)?
+                selected_jails.push(jail);
             }
         } else {
             for (_, jail) in jails.iter() {
-                jail_action(&sub_name, &jail)?
+                selected_jails.push(jail);
             }
         }
-        return Ok(());
-    }
-
-    let jname = sub_matches.value_of("jail_name").unwrap();
-    debug!("jail name: {}", jname);
-
-    if jails.contains_key(jname) {
-        jail_action(&sub_name, &jails[jname])
     } else {
-        let msg = format!("jail '{}' is not defined", jname);
-        let err = Error::new(ArgError(msg));
-        Err(err)
+        for jail_name in sub_matches.values_of("jail_name").unwrap() {
+            if !jails.contains_key(jail_name) {
+                bail!("jail '{}' is not defined", jail_name);
+            }
+            selected_jails.push(&jails[jail_name]);
+        }
     }
+
+    if sub_name == "destroy" {
+        info!(
+            "You are about to destroy jails: {}",
+            selected_jails
+                .iter()
+                .map(|j| j.name().to_owned())
+                .collect::<Vec<String>>()
+                .join(", ")
+        );
+        info!("Are you sure? [y/n]");
+    }
+
+    // run actions on selected jails
+
+    for jail in selected_jails.iter() {
+        jail_action(&sub_name, &jail)?
+    }
+
+    Ok(())
 }
 
 // check that rj has been initialised properly
@@ -123,7 +138,6 @@ fn make_it_so(matches: ArgMatches) -> Result<()> {
 fn main() {
     let matches = cli::parse_args();
 
-    // TODO: set log level using env
     if matches.is_present("debug") {
         TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed)
             .expect("No interactive terminal");

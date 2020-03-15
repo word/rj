@@ -13,14 +13,16 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
             Arg::with_name("config")
                 .short("c")
                 .long("config")
+                .env("RJ_CONFIG")
                 .value_name("FILE")
                 .help("Config file path")
                 .takes_value(true)
                 .validator(is_valid_config)
-                .default_value("/usr/local/etc/rj.conf"),
+                .default_value("rj.conf"),
         )
         .arg(
             Arg::with_name("debug")
+                .env("RJ_DEBUG")
                 .short("d")
                 .long("debug")
                 .help("Show debug messages"),
@@ -30,6 +32,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .about("Apply changes")
                 .arg(
                     Arg::with_name("jail_name")
+                        .multiple(true)
                         .help("Name of the jail to apply changes to")
                         .index(1)
                         .required_unless("all"),
@@ -46,6 +49,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .about("Destroy jails")
                 .arg(
                     Arg::with_name("jail_name")
+                        .multiple(true)
                         .help("Name of the jail to destroy")
                         .index(1)
                         .required_unless("all"),
@@ -62,6 +66,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .about("Provision jails")
                 .arg(
                     Arg::with_name("jail_name")
+                        .multiple(true)
                         .help("Name of the jail to provision")
                         .index(1)
                         .required_unless("all"),
