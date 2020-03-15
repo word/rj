@@ -71,6 +71,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                         .help("Provision all jails"),
                 ),
         )
+        .subcommand(SubCommand::with_name("init").about("Initialise rj"))
 }
 
 // Parses the command line arguments and returns the matches.

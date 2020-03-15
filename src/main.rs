@@ -1,7 +1,6 @@
 use anyhow::{Error, Result};
 use clap::ArgMatches;
-use indexmap::IndexMap;
-use log::{debug, error};
+use log::{debug, error, info};
 use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
 use std::process;
 
@@ -34,11 +33,14 @@ fn jail_action(action: &str, jail: &Jail) -> Result<()> {
 }
 
 // process the subcommand
-fn subcommand(
-    sub_name: &str,
-    sub_matches: &ArgMatches,
-    jails: IndexMap<String, Jail>,
-) -> Result<()> {
+fn subcommand(sub_name: &str, sub_matches: &ArgMatches, settings: Settings) -> Result<()> {
+    let jails = &settings.to_jails()?;
+
+    if sub_name == "init" {
+        init(&settings)?;
+        return Ok(());
+    }
+
     // work on all jails if --all is set
     if sub_matches.is_present("all") {
         debug!("working on all jails");
@@ -68,6 +70,7 @@ fn subcommand(
 }
 
 fn init(settings: &Settings) -> Result<()> {
+    info!("initializing");
     // Create jails root ZFS dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
@@ -81,14 +84,10 @@ fn init(settings: &Settings) -> Result<()> {
 fn make_it_so(matches: ArgMatches) -> Result<()> {
     // Load settings
     let settings = Settings::new(matches.value_of("config").unwrap())?;
-    let jails = settings.to_jails()?;
-
-    // TODO - put this behind a subcommand
-    init(&settings)?;
 
     // Execute the subcommand
     if let (sub_name, Some(sub_matches)) = matches.subcommand() {
-        subcommand(sub_name, sub_matches, jails)?;
+        subcommand(sub_name, sub_matches, settings)?;
     }
 
     Ok(())
@@ -109,5 +108,7 @@ fn main() {
     make_it_so(matches).unwrap_or_else(|err| {
         error!("{}", err);
         process::exit(1);
-    })
+    });
+
+    info!("done");
 }
