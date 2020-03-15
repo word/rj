@@ -2,8 +2,6 @@
 
 == Doing
 
-* provisioner tests: create base jail if it doesn't exist
-
 == Tasks
 
  * settings: deny unknown fields everywhere
