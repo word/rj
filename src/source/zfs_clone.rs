@@ -2,7 +2,7 @@ use crate::errors::SourceError;
 use crate::jail::Jail;
 use crate::zfs;
 use anyhow::Result;
-use log::info;
+use log::{debug, info};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -37,5 +37,10 @@ impl ZfsClone {
                 Err(anyhow::Error::new(SourceError(msg)))
             }
         }
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        debug!("Validating zfs clone source");
+        Ok(())
     }
 }

@@ -2,7 +2,6 @@
 
 == doing
 
-* refactor source.rs to work like provisioners
 
 == next up
 
@@ -26,6 +25,7 @@
 * breakout a zfs snapshot into a separate struct
 * remove dependency on rsync for copying files recursively
 * provisioner tests: create base jail if it doesn't exist
+* validators and tests for sources
 
 === Later
 

@@ -46,6 +46,11 @@ impl Settings {
     pub fn new(config_file: &str) -> Result<Self> {
         let settings: Settings = toml::from_str(&fs::read_to_string(config_file)?)?;
 
+        // Validate sources
+        for (_, source) in settings.source.iter() {
+            source.validate()?;
+        }
+
         // Validate provisioners
         for (_, provisioner) in settings.provisioner.iter() {
             provisioner.validate()?;

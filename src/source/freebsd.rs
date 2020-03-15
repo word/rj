@@ -1,7 +1,7 @@
 use crate::jail::Jail;
 use crate::util;
 use anyhow::Result;
-use log::info;
+use log::{debug, info};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -31,6 +31,11 @@ impl FreeBSD {
             );
             util::fetch_extract(&url, &jail.mountpoint())?;
         }
+        Ok(())
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        debug!("Validating FreeBSD source");
         Ok(())
     }
 }

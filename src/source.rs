@@ -21,4 +21,11 @@ impl Source {
             Source::ZfsClone(s) => s.install(jail),
         }
     }
+
+    pub fn validate(&self) -> Result<()> {
+        match self {
+            Source::FreeBSD(s) => s.validate(),
+            Source::ZfsClone(s) => s.validate(),
+        }
+    }
 }
