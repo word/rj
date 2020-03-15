@@ -27,10 +27,10 @@ impl DataSet {
     // create the zfs data set if it doesn't exist already
     pub fn create(&self) -> Result<bool> {
         if self.exists()? {
-            info!("Dataset {} already exists, skipping", &self.path);
+            info!("dataset {} already exists, skipping", &self.path);
             Ok(false)
         } else {
-            info!("Creating zfs dataset {}", &self.path);
+            info!("creating zfs dataset {}", &self.path);
             cmd!("zfs", "create", &self.path)?;
             Ok(true)
         }
@@ -48,21 +48,21 @@ impl DataSet {
     }
 
     pub fn destroy(&self) -> Result<()> {
-        info!("Destroying zfs dataset: {}", &self.path);
+        info!("destroying zfs dataset: {}", &self.path);
         cmd!("zfs", "destroy", &self.path)
     }
 
     // destroy recursively
     #[allow(dead_code)]
     pub fn destroy_r(&self) -> Result<()> {
-        info!("Destroying zfs dataset recursively: {}", &self.path);
+        info!("destroying zfs dataset recursively: {}", &self.path);
         cmd!("zfs", "destroy", "-r", &self.path)
     }
 
     #[allow(dead_code)]
     pub fn snap(&self, snap_name: &str) -> Result<()> {
         let snap_path = format!("{}@{}", &self.path, &snap_name);
-        info!("Creating snapshot: {}", &snap_path);
+        info!("creating snapshot: {}", &snap_path);
         cmd!("zfs", "snapshot", &snap_path)
     }
 
