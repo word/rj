@@ -98,3 +98,6 @@ provisioners = [ "puppet_simple" ]
 [jail.puppet_simple_test.conf]
 host_hostname = "puppet_simple_test"
 ip4_addr = [ "lo0|10.11.11.5/32" ]
+
+[jail.clone_test]
+source = "base"

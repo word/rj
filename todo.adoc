@@ -2,7 +2,7 @@
 
 == doing
 
-* confirmation before deleting all jails (and -f to force)
+ * check if source dataset exists when using clone source
 
 == next up
 
@@ -10,8 +10,6 @@
  * settings: validate source name
  * settings: validate provisioner names
  * tidy up log messages
- * check if source dataset exists when using clone source
-
 
 === Refactoring
 
