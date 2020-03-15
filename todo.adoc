@@ -2,19 +2,19 @@
 
 == doing
 
+ * verify cli options
+ ** check config file exists
+
 == next up
 
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names
  * tidy up log messages
- * verify cli options
- ** check config file exists
 
 === First release
 
 * confirmation before deleting all jails (and -f to force)
-* tidy up and tests for main
 * pick up config from cwd automatically for self contained set ups
 
 === Refactoring
@@ -23,6 +23,7 @@
 * remove dependency on rsync for copying files recursively
 * provisioner tests: create base jail if it doesn't exist
 * validators and tests for sources
+* use bail! and anyhow! for one off errors
 
 === Later
 

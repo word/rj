@@ -1,4 +1,5 @@
 use clap::{crate_description, crate_name, crate_version, AppSettings, Arg, SubCommand};
+use std::path::Path;
 
 // Create a clap app
 fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
@@ -15,6 +16,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .value_name("FILE")
                 .help("Config file path")
                 .takes_value(true)
+                .validator(is_valid_config)
                 .default_value("/usr/local/etc/rj.conf"),
         )
         .arg(
@@ -77,4 +79,12 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
 // Parses the command line arguments and returns the matches.
 pub fn parse_args<'a>() -> clap::ArgMatches<'a> {
     create_app().get_matches()
+}
+
+fn is_valid_config(s: String) -> Result<(), String> {
+    if Path::new(&s).is_file() {
+        Ok(())
+    } else {
+        Err(format!("file not found: {}", &s))
+    }
 }
