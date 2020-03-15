@@ -189,18 +189,26 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn unknown_source() {
         let mut s = Settings::new("testdata/config.toml").unwrap();
         s.jail["test1"].source = "nope".to_owned();
-        s.to_jails().unwrap();
+
+        let err = s.to_jails().unwrap_err();
+        assert_eq!(
+            err.downcast::<String>().unwrap(),
+            "test1: unknown source: nope".to_string()
+        )
     }
 
     #[test]
-    #[should_panic]
     fn unknown_provisioner() {
         let mut s = Settings::new("testdata/config.toml").unwrap();
         s.jail["test1"].provisioners = vec!["nope".to_owned()];
-        s.to_jails().unwrap();
+
+        let err = s.to_jails().unwrap_err();
+        assert_eq!(
+            err.downcast::<String>().unwrap(),
+            "test1: unknown provisioner: nope".to_string()
+        )
     }
 }
