@@ -17,6 +17,7 @@ mod util;
 mod zfs;
 
 use errors::ArgError;
+use errors::InitError;
 use jail::Jail;
 use provisioner::Provisioner;
 use settings::Settings;
@@ -39,6 +40,8 @@ fn subcommand(sub_name: &str, sub_matches: &ArgMatches, settings: Settings) -> R
     if sub_name == "init" {
         init(&settings)?;
         return Ok(());
+    } else {
+        check_init(&settings)?
     }
 
     // work on all jails if --all is set
@@ -69,6 +72,30 @@ fn subcommand(sub_name: &str, sub_matches: &ArgMatches, settings: Settings) -> R
     }
 }
 
+// check that rj has been initialised properly
+fn check_init(settings: &Settings) -> Result<()> {
+    debug!("checking init");
+    let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
+    let mut error_msgs: Vec<String> = Vec::new();
+
+    if !jails_ds.exists()? {
+        error_msgs.push(format!("jails dataset: {} doesn't exist.", jails_ds.path()));
+    }
+
+    if cmd!("sysrc", "-c", "jail_enable=YES").is_err() {
+        error_msgs.push("jails not enabled in rc.conf.".to_string());
+    }
+
+    if !error_msgs.is_empty() {
+        error_msgs.push("Run 'init' to fix".to_string());
+        let err = Error::new(InitError(error_msgs));
+        return Err(err);
+    }
+
+    Ok(())
+}
+
+// initialise rj - currently it creates the jails root dataset and enables jails in rc.conf
 fn init(settings: &Settings) -> Result<()> {
     info!("initializing");
     // Create jails root ZFS dataset
@@ -77,7 +104,7 @@ fn init(settings: &Settings) -> Result<()> {
     if jails_ds.get("mountpoint")? != settings.jails_mountpoint {
         jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
     }
-    // enable jails in rc.conf
+    info!("enabling jails in rc.conf");
     cmd!("sysrc", "jail_enable=YES")
 }
 

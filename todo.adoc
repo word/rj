@@ -2,11 +2,8 @@
 
 == doing
 
-
 == next up
 
- * add init sub-command (maybe perhaps)
-   ** meaningful error when forgot to init
  * settings: deny unknown fields everywhere
  * settings: validate source name
  * settings: validate provisioner names

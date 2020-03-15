@@ -1,3 +1,4 @@
+use std::error;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -15,7 +16,7 @@ impl fmt::Display for RunError {
     }
 }
 
-impl std::error::Error for RunError {
+impl error::Error for RunError {
     fn description(&self) -> &str {
         &self.message
     }
@@ -30,7 +31,7 @@ impl fmt::Display for JailError {
     }
 }
 
-impl std::error::Error for JailError {
+impl error::Error for JailError {
     fn description(&self) -> &str {
         &self.0
     }
@@ -45,7 +46,7 @@ impl fmt::Display for SourceError {
     }
 }
 
-impl std::error::Error for SourceError {
+impl error::Error for SourceError {
     fn description(&self) -> &str {
         &self.0
     }
@@ -60,7 +61,7 @@ impl fmt::Display for ProvError {
     }
 }
 
-impl std::error::Error for ProvError {
+impl error::Error for ProvError {
     fn description(&self) -> &str {
         &self.0
     }
@@ -75,8 +76,19 @@ impl fmt::Display for ArgError {
     }
 }
 
-impl std::error::Error for ArgError {
+impl error::Error for ArgError {
     fn description(&self) -> &str {
         &self.0
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct InitError(pub Vec<String>);
+
+impl fmt::Display for InitError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}", self.0.join(" "))
+    }
+}
+
+impl error::Error for InitError {}
