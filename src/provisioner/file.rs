@@ -108,6 +108,12 @@ mod tests {
         let s = Settings::new("testdata/config.toml")?;
         let jails = s.to_jails()?;
         let jail = &jails["file_test"];
+        let basejail = &jails["base"];
+
+        if !basejail.exists()? {
+            crate::init(&s).unwrap();
+            basejail.apply()?;
+        }
 
         // clean up if left over from a failed test
         if jail.exists()? {

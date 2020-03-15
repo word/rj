@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use indexmap::IndexMap; // like HashMap but preserves insertion order
 use serde::Deserialize;
 use std::fs;
@@ -31,6 +31,7 @@ pub struct JailSettings {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Settings {
     pub jails_dataset: String,
     pub jails_mountpoint: String,
@@ -63,9 +64,16 @@ impl Settings {
         let mut jails = IndexMap::new();
 
         for (jname, jsettings) in &mut self.jail.iter() {
+            if !&self.source.contains_key(&jsettings.source) {
+                bail!("{}: unknown source: {}", jname, jsettings.source);
+            }
+
             // gather jail provisioners
-            let mut provisioners = vec![];
+            let mut provisioners = Vec::new();
             for p in jsettings.provisioners.iter() {
+                if !&self.provisioner.contains_key(p) {
+                    bail!("{}: unknown provisioner: {}", jname, p);
+                }
                 provisioners.push(&self.provisioner[p]);
             }
 
@@ -178,5 +186,21 @@ mod tests {
         let pos = config.rfind(slice).unwrap() + slice.len();
         config.insert_str(pos, "\nunknown = whatever");
         let _s: Settings = toml::from_str(&config).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn unknown_source() {
+        let mut s = Settings::new("testdata/config.toml").unwrap();
+        s.jail["test1"].source = "nope".to_owned();
+        s.to_jails().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn unknown_provisioner() {
+        let mut s = Settings::new("testdata/config.toml").unwrap();
+        s.jail["test1"].provisioners = vec!["nope".to_owned()];
+        s.to_jails().unwrap();
     }
 }

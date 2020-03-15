@@ -4,10 +4,8 @@
 
 == Tasks
 
- * settings: deny unknown fields everywhere
- * settings: validate source name
- * settings: validate provisioner names
  * tidy up log messages
+ * settings: validate jail conf sections (known fileds, types) (low)
 
 === Refactor
 
