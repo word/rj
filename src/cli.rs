@@ -82,9 +82,8 @@ pub fn parse_args<'a>() -> clap::ArgMatches<'a> {
 }
 
 fn is_valid_config(s: String) -> Result<(), String> {
-    if Path::new(&s).is_file() {
-        Ok(())
-    } else {
-        Err(format!("file not found: {}", &s))
+    if !Path::new(&s).is_file() {
+        return Err(format!("file not found: {}", &s));
     }
+    Ok(())
 }
