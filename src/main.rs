@@ -3,6 +3,7 @@ use clap::ArgMatches;
 use log::{debug, error, info};
 use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
 use std::process;
+use text_io::read;
 
 mod cli;
 mod cmd;
@@ -66,6 +67,8 @@ fn subcommand(sub_name: &str, sub_matches: &ArgMatches, settings: Settings) -> R
         }
     }
 
+    // Confirm before destroying
+
     if sub_name == "destroy" {
         info!(
             "You are about to destroy jails: {}",
@@ -76,6 +79,10 @@ fn subcommand(sub_name: &str, sub_matches: &ArgMatches, settings: Settings) -> R
                 .join(", ")
         );
         info!("Are you sure? [y/n]");
+        let answer: String = read!("{}\n");
+        if answer != "y" {
+            bail!("aborting");
+        }
     }
 
     // run actions on selected jails
