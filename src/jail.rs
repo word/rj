@@ -75,11 +75,9 @@ impl Jail<'_> {
         self.configure()?;
         if self.settings.start {
             if !(self.is_enabled()?) {
-                info!("{}: disabled -> enabled", &self.name);
                 self.enable()?
             }
             if !(self.is_running()?) {
-                info!("{}: stopped -> running", &self.name);
                 self.start()?
             }
         }
@@ -170,7 +168,7 @@ impl Jail<'_> {
     }
 
     pub fn start(&self) -> Result<()> {
-        info!("{}: starting", &self.name);
+        debug!("{}: starting", &self.name);
         cmd!("service", "jail", "start", &self.name)
     }
 

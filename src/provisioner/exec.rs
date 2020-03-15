@@ -13,7 +13,7 @@ pub struct Exec {
 impl Exec {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: exec provisioner running", jail.name());
-        info!("{}: executing: {}", jail.name(), &self.cmd,);
+        info!("{}: running command: {}", jail.name(), &self.cmd,);
 
         let mut args: Vec<&str> = self.cmd.split(' ').collect();
         args.insert(0, jail.name());

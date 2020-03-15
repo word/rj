@@ -146,7 +146,7 @@ impl DataSet {
     }
 
     pub fn snap_destroy(&self, snap_name: &str) -> Result<()> {
-        info!("Destroying snapshot {}@{}", &self.path, snap_name);
+        info!("destroying snapshot {}@{}", &self.path, snap_name);
         let snap_full_name = format!("{}@{}", self.path, snap_name);
         cmd!("zfs", "destroy", &snap_full_name)
     }
