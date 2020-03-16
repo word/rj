@@ -91,9 +91,7 @@ impl Jail<'_> {
     }
 
     pub fn destroy(&self) -> Result<()> {
-        if self.exists()? {
-            info!("{}: destroying", &self.name);
-        } else {
+        if !self.exists()? {
             info!("{}: doesn't exist, skipping", &self.name);
             return Ok(());
         }
@@ -201,19 +199,22 @@ impl Jail<'_> {
 
     pub fn provision(&self) -> Result<()> {
         if self.provisioners.is_empty() {
-            info!("{}: no provisioners configured", &self.name);
+            debug!("{}: no provisioners configured", &self.name);
             // make a ready sanp first time round even if there are no provisioners.  We're assuming the jail is ready as it is.
             if self.zfs_ds.last_snap("ready")?.is_none() {
+                info!("{}: creating 'ready' snapshot", &self.name);
                 self.zfs_ds.snap_with_time("ready")?;
             }
             return Ok(());
         }
 
+        info!("{}: creating 'pre-provision' snapshot", &self.name);
         self.zfs_ds.snap_with_time("pre-provision")?;
         for p in self.provisioners.iter() {
             p.provision(&self)?;
         }
 
+        info!("{}: creating 'ready' snapshot", &self.name);
         self.zfs_ds.snap_with_time("ready")?;
         info!("{}: provisioning complete", &self.name);
         Ok(())
