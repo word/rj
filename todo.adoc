@@ -2,8 +2,6 @@
 
 == Doing
 
- * tidy up log messages
-
 == Tasks
 
  * settings: validate jail conf sections (known fileds, types) (low)
