@@ -2,20 +2,17 @@
 
 == Doing
 
-== Tasks
-
- * settings: validate jail conf sections (known fileds, types) (low)
-
-=== Refactor
-
-* create a struct for zfs snapshots
-* remove dependency on rsync for copying files recursively
-* tests and validation for FreeBSD source
-
-=== Later
+=== Tasks 
 
 * freebsd-update jails
 * ability to split configuration into 'include' snippets
 * jail resource limits
 * mount additional data sets in jails
 * detect if provisioner has made changes
+* settings: validate jail conf sections (known fileds, types)
+
+=== Refactor
+
+* create a struct for zfs snapshots
+* remove dependency on rsync for copying files recursively
+* tests and validation for FreeBSD source
