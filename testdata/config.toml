@@ -1,3 +1,5 @@
+# This file contains data used by tests
+
 jails_dataset = "zroot/jails"
 jails_mountpoint = "/jails"
 

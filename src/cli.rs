@@ -18,7 +18,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .help("Config file path")
                 .takes_value(true)
                 .validator(is_valid_config)
-                .default_value("rj.conf"),
+                .default_value("rj.toml"),
         )
         .arg(
             Arg::with_name("debug")
