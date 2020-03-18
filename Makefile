@@ -6,6 +6,7 @@ release:
 
 release_vagrant:
 	$(info => Building a release binary in Vagrant)
+	vagrant rsync
 	vagrant ssh -c 'cd /vagrant && cargo build --release'
 	mkdir -p target/release
 	vagrant scp default:/vagrant/target/release/rj target/release/
