@@ -98,9 +98,10 @@ impl DataSet {
 
     pub fn list_snaps(&self) -> Result<Vec<String>> {
         let output = cmd_capture!("zfs", "list", "-H", "-o", "name", "-t", "snap")?;
+        let filter = format!("{}@", &self.path);
         let snaps = output
             .lines()
-            .filter(|s| s.starts_with(&self.path))
+            .filter(|s| s.starts_with(&filter))
             .map(|s| s.split('@').last().unwrap().to_string())
             .collect::<Vec<String>>();
         Ok(snaps)
