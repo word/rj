@@ -32,6 +32,11 @@ dest = "/etc/resolv.conf"
 type = "exec"
 cmd = "touch /tmp/exec_test"
 
+[provisioner.exec_chroot]
+type = "exec"
+exec_mode = "chroot"
+cmd = "touch /tmp/exec_chroot_test"
+
 [provisioner.file]
 type = "file"
 source = "testdata/provisioners/file.txt"
@@ -82,6 +87,10 @@ ip4_addr = [ "lo0|10.11.11.3/32" ]
 [jail.exec_test]
 source = "base"
 provisioners = [ "exec" ]
+
+[jail.exec_chroot_test]
+source = "base"
+provisioners = [ "exec_chroot" ]
 
 [jail.file_test]
 source = "base"
