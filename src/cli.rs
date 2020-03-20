@@ -18,6 +18,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .help("Config file path")
                 .takes_value(true)
                 .validator(is_valid_config)
+                .hide_env_values(true)
                 .default_value("rj.toml"),
         )
         .arg(
@@ -25,6 +26,7 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .env("RJ_DEBUG")
                 .short("d")
                 .long("debug")
+                .takes_value(false)
                 .help("Show debug messages"),
         )
         .arg(
@@ -32,7 +34,8 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .env("RJ_NOOP")
                 .short("n")
                 .long("noop")
-                .help("Dry run (No Op)"),
+                .takes_value(false)
+                .help("Dry run"),
         )
         .subcommand(
             SubCommand::with_name("apply")
