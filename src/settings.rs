@@ -44,6 +44,10 @@ pub struct Settings {
     pub noop: bool,
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[allow(dead_code)]
 impl Settings {
     pub fn new(config_file: &str, noop: bool) -> Result<Self> {
@@ -97,10 +101,6 @@ impl Settings {
         }
         Ok(jails)
     }
-}
-
-fn default_true() -> bool {
-    true
 }
 
 #[cfg(test)]
