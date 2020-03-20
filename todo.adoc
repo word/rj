@@ -6,14 +6,16 @@
 
 * freebsd-update jails
 * ability to split configuration into 'include' snippets
-* mount additional data sets in jails
+* volumes support (fstab.jail)
 * detect if provisioner has made changes
 * settings: validate jail conf sections (known fileds, types)
-* rsync provisioner
 * jail resource limits
 * progress bar when extracting freebsd dists
 * pkg upgrade jails
 * jexec and chroot provisioning (for running jail and stopped)?
+* puppet: remove manifest after provision
+* rsync provisioner
+* dry-run
 
 === Bugs
 * provisioner didn't run on base
