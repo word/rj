@@ -69,7 +69,7 @@ mod tests {
     #[test]
     #[serial]
     fn pkg() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["pkg_test"];
         // clean up if left over from a failed test

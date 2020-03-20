@@ -218,7 +218,7 @@ mod tests {
     #[test]
     #[serial]
     fn provision() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["puppet_test"];
         let basejail = &jails["base"];
@@ -247,7 +247,7 @@ mod tests {
     #[test]
     #[serial]
     fn provision_simple() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["puppet_simple_test"];
 

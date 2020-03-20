@@ -27,6 +27,13 @@ fn create_app<'a, 'b>() -> clap::App<'a, 'b> {
                 .long("debug")
                 .help("Show debug messages"),
         )
+        .arg(
+            Arg::with_name("noop")
+                .env("RJ_NOOP")
+                .short("n")
+                .long("noop")
+                .help("Dry run (No Op)"),
+        )
         .subcommand(
             SubCommand::with_name("apply")
                 .about("Apply changes")

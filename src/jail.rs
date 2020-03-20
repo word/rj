@@ -26,6 +26,7 @@ pub struct Jail<'a> {
     conf_defaults: &'a IndexMap<String, JailConfValue>,
     conf_path: String,
     provisioners: Vec<&'a Provisioner>,
+    noop: &'a bool,
 }
 
 impl Jail<'_> {
@@ -47,6 +48,7 @@ impl Jail<'_> {
         settings: &'a JailSettings,
         conf_defaults: &'a IndexMap<String, JailConfValue>,
         provisioners: Vec<&'a Provisioner>,
+        noop: &'a bool,
     ) -> Jail<'a> {
         // Workout jail name from data set path (fixme: just get it from settings)
         let mut components: Vec<&str> = ds_path.split('/').collect();
@@ -63,6 +65,7 @@ impl Jail<'_> {
             conf_defaults,
             conf_path: format!("/etc/jail.{}.conf", name),
             provisioners,
+            noop,
         }
     }
 
@@ -242,7 +245,7 @@ mod tests {
 
     static INIT: Once = Once::new();
     lazy_static! {
-        static ref S: Settings = Settings::new("testdata/config.toml").unwrap();
+        static ref S: Settings = Settings::new("testdata/config.toml", false).unwrap();
     }
 
     // Initialise and create test jails from an example config file

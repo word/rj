@@ -71,7 +71,7 @@ mod tests {
     #[test]
     #[serial]
     fn install() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["clone_test"];
         let source_ds = DataSet::new("zroot/rjtest_clone");

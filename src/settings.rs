@@ -40,12 +40,16 @@ pub struct Settings {
     pub jail: IndexMap<String, JailSettings>,
     pub source: IndexMap<String, Source>,
     pub provisioner: IndexMap<String, Provisioner>,
+    #[serde(default)] // false
+    pub noop: bool,
 }
 
 #[allow(dead_code)]
 impl Settings {
-    pub fn new(config_file: &str) -> Result<Self> {
-        let settings: Settings = toml::from_str(&fs::read_to_string(config_file)?)?;
+    pub fn new(config_file: &str, noop: bool) -> Result<Self> {
+        let mut settings: Settings = toml::from_str(&fs::read_to_string(config_file)?)?;
+
+        settings.noop = noop;
 
         // Validate sources
         for (_, source) in settings.source.iter() {
@@ -87,6 +91,7 @@ impl Settings {
                 &jsettings,
                 &self.jail_conf_defaults,
                 provisioners,
+                &self.noop,
             );
             jails.insert(jname.to_string(), jail);
         }
@@ -106,7 +111,7 @@ mod tests {
 
     #[test]
     fn deserialize() {
-        let s = Settings::new("testdata/config.toml").unwrap();
+        let s = Settings::new("testdata/config.toml", false).unwrap();
         println!("{:?}", s);
 
         assert_eq!(s.jails_dataset, "zroot/jails");
@@ -170,7 +175,7 @@ mod tests {
 
     #[test]
     fn to_jail() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         assert_eq!(jails["base"].name(), "base");
         assert_eq!(jails["test1"].name(), "test1");
@@ -190,7 +195,7 @@ mod tests {
 
     #[test]
     fn unknown_source() {
-        let mut s = Settings::new("testdata/config.toml").unwrap();
+        let mut s = Settings::new("testdata/config.toml", false).unwrap();
         s.jail["test1"].source = "nope".to_owned();
 
         let err = s.to_jails().unwrap_err();
@@ -202,7 +207,7 @@ mod tests {
 
     #[test]
     fn unknown_provisioner() {
-        let mut s = Settings::new("testdata/config.toml").unwrap();
+        let mut s = Settings::new("testdata/config.toml", false).unwrap();
         s.jail["test1"].provisioners = vec!["nope".to_owned()];
 
         let err = s.to_jails().unwrap_err();

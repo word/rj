@@ -105,7 +105,7 @@ mod tests {
     #[test]
     #[serial]
     fn provision() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["file_test"];
         let basejail = &jails["base"];

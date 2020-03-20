@@ -130,7 +130,9 @@ fn init(settings: &Settings) -> Result<()> {
 
 fn make_it_so(matches: ArgMatches) -> Result<()> {
     // Load settings
-    let settings = Settings::new(matches.value_of("config").unwrap())?;
+    let conf_file = matches.value_of("config").unwrap();
+    let noop = matches.is_present("noop");
+    let settings = Settings::new(conf_file, noop)?;
 
     // Execute the subcommand
     if let (sub_name, Some(sub_matches)) = matches.subcommand() {

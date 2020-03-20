@@ -58,7 +58,7 @@ mod tests {
     #[test]
     #[serial]
     fn provision_jexec() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["exec_test"];
         let basejail = &jails["base"];
@@ -85,7 +85,7 @@ mod tests {
     #[test]
     #[serial]
     fn provision_chroot() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["exec_chroot_test"];
         let basejail = &jails["base"];

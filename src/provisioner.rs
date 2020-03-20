@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn provision() -> Result<()> {
-        let s = Settings::new("testdata/config.toml")?;
+        let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         Provisioner::Test(test::Test).provision(&jails["test1"])
     }
