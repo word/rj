@@ -125,21 +125,32 @@ impl Jail<'_> {
 
         // remove jail config file
         if Path::new(&self.conf_path).is_file() {
-            debug!("{}: removing config file: {}", &self.name, &self.conf_path);
-            fs::remove_file(&self.conf_path)?;
+            info!(
+                "{}: removing config file: {}{}",
+                &self.name, &self.conf_path, &self.noop_suffix
+            );
+            if !self.noop {
+                fs::remove_file(&self.conf_path)?;
+            }
         }
 
         // remove zfs snapshots
         let snaps = self.zfs_ds.list_snaps()?;
         if !(snaps.is_empty()) {
-            debug!("{}: destroying snapshots", &self.name);
-            for snap in snaps {
-                self.zfs_ds.snap_destroy(&snap)?;
+            info!("{}: destroying snapshots{}", &self.name, &self.noop_suffix);
+            if !self.noop {
+                for snap in snaps {
+                    self.zfs_ds.snap_destroy(&snap)?;
+                }
             }
         }
 
         // destroy zfs dataset
-        self.zfs_ds.destroy()
+        info!("{}: destroying dataset{}", &self.name, &self.noop_suffix);
+        if !self.noop {
+            self.zfs_ds.destroy()?;
+        }
+        Ok(())
     }
 
     pub fn install(&self) -> Result<()> {
@@ -436,6 +447,40 @@ mod tests {
         assert_eq!(jail2.is_running()?, false);
 
         Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn noop_apply_and_destroy() -> Result<()> {
+        // set up noop jail
+        let s_noop = Settings::new("testdata/config.toml", true)?;
+        let jails_noop = s_noop.to_jails()?;
+        let jail_noop = &jails_noop["test2"];
+
+        // set up same jail without noop (so we can create one for testing)
+        let s = Settings::new("testdata/config.toml", false)?;
+        let jails = s.to_jails()?;
+        let jail = &jails["test2"];
+
+        // test noop apply
+        jail_noop.apply()?;
+        assert_eq!(jail_noop.exists()?, false);
+        assert_eq!(Path::new("/etc/jail.test2.conf").is_file(), false);
+        assert_eq!(jail_noop.is_enabled()?, false);
+        assert_eq!(jail_noop.is_running()?, false);
+
+        // actually create it this time
+        jail.apply()?;
+
+        // test noop destroy - should have no effect
+        jail_noop.destroy()?;
+        assert!(jail_noop.exists()?);
+        assert!(Path::new("/etc/jail.test2.conf").is_file());
+        assert!(jail_noop.is_enabled()?);
+        assert!(jail_noop.is_running()?);
+
+        // cleanup
+        jail.destroy()
     }
 
     #[test]
