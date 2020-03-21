@@ -27,6 +27,7 @@ pub struct Jail<'a> {
     conf_path: String,
     provisioners: Vec<&'a Provisioner>,
     noop: &'a bool,
+    noop_suffix: String,
 }
 
 impl Jail<'_> {
@@ -42,6 +43,14 @@ impl Jail<'_> {
         &self.zfs_ds
     }
 
+    pub fn noop(&self) -> &bool {
+        &self.noop
+    }
+
+    pub fn noop_suffix(&self) -> &String {
+        &self.noop_suffix
+    }
+
     pub fn new<'a>(
         ds_path: &str,
         source: &'a Source,
@@ -55,6 +64,11 @@ impl Jail<'_> {
         components.remove(0); // remove the zfs pool name
         let name = (*components.last().unwrap()).to_string();
 
+        let mut noop_suffix = String::new();
+        if *noop {
+            noop_suffix = " (noop)".to_owned();
+        }
+
         Jail {
             name: name.clone(),
             mountpoint: format!("/{}", components.join("/")),
@@ -66,6 +80,7 @@ impl Jail<'_> {
             conf_path: format!("/etc/jail.{}.conf", name),
             provisioners,
             noop,
+            noop_suffix,
         }
     }
 
@@ -149,12 +164,22 @@ impl Jail<'_> {
             let current = fs::read_to_string(&self.conf_path)?;
             if current != rendered {
                 let diff = Changeset::new(&current, &rendered, "");
-                info!("{}: updating {}\n{}", &self.name, &self.conf_path, &diff);
-                fs::write(&self.conf_path, &rendered)?;
+                info!(
+                    "{}: updating {}{}\n{}",
+                    &self.name, &self.conf_path, &self.noop_suffix, &diff
+                );
+                if !self.noop {
+                    fs::write(&self.conf_path, &rendered)?;
+                }
             }
         } else {
-            info!("{}: creating {}", &self.name, &self.conf_path);
-            fs::write(&self.conf_path, &rendered)?;
+            info!(
+                "{}: creating {}{}",
+                &self.name, &self.conf_path, &self.noop_suffix
+            );
+            if !self.noop {
+                fs::write(&self.conf_path, &rendered)?;
+            }
         }
 
         Ok(())
@@ -169,13 +194,19 @@ impl Jail<'_> {
     }
 
     pub fn start(&self) -> Result<()> {
-        debug!("{}: starting", &self.name);
-        cmd!("service", "jail", "start", &self.name)
+        info!("{}: starting{}", &self.name, &self.noop_suffix);
+        if !self.noop {
+            cmd!("service", "jail", "start", &self.name)?;
+        }
+        Ok(())
     }
 
     pub fn stop(&self) -> Result<()> {
-        info!("{}: stopping", &self.name);
-        cmd!("service", "jail", "stop", &self.name)
+        info!("{}: stopping{}", &self.name, &self.noop_suffix);
+        if !self.noop {
+            cmd!("service", "jail", "stop", &self.name)?;
+        }
+        Ok(())
     }
 
     pub fn is_running(&self) -> Result<bool> {
@@ -189,15 +220,21 @@ impl Jail<'_> {
     }
 
     fn enable(&self) -> Result<()> {
-        info!("{}: enabling in rc.conf", &self.name);
+        info!("{}: enabling in rc.conf{}", &self.name, &self.noop_suffix);
         let arg = format!("jail_list+={}", &self.name);
-        cmd!("sysrc", arg)
+        if !self.noop {
+            cmd!("sysrc", arg)?;
+        }
+        Ok(())
     }
 
     fn disable(&self) -> Result<()> {
-        info!("{}: disabling in rc.conf", &self.name);
+        info!("{}: disabling in rc.conf{}", &self.name, &self.noop_suffix);
         let arg = format!("jail_list-={}", &self.name);
-        cmd!("sysrc", arg)
+        if !self.noop {
+            cmd!("sysrc", arg)?;
+        }
+        Ok(())
     }
 
     pub fn provision(&self) -> Result<()> {
@@ -205,21 +242,41 @@ impl Jail<'_> {
             debug!("{}: no provisioners configured", &self.name);
             // make a ready sanp first time round even if there are no provisioners.  We're assuming the jail is ready as it is.
             if self.zfs_ds.last_snap("ready")?.is_none() {
-                info!("{}: creating 'ready' snapshot", &self.name);
-                self.zfs_ds.snap_with_time("ready")?;
+                info!(
+                    "{}: creating 'ready' snapshot{}",
+                    &self.name, &self.noop_suffix
+                );
+                if !self.noop {
+                    self.zfs_ds.snap_with_time("ready")?;
+                }
             }
             return Ok(());
         }
 
-        info!("{}: creating 'pre-provision' snapshot", &self.name);
-        self.zfs_ds.snap_with_time("pre-provision")?;
-        for p in self.provisioners.iter() {
-            p.provision(&self)?;
+        info!(
+            "{}: creating 'pre-provision' snapshot{}",
+            &self.name, &self.noop_suffix
+        );
+
+        if !self.noop {
+            self.zfs_ds.snap_with_time("pre-provision")?;
         }
 
-        info!("{}: creating 'ready' snapshot", &self.name);
-        self.zfs_ds.snap_with_time("ready")?;
-        info!("{}: provisioning complete", &self.name);
+        info!("{}: provisioning{}", &self.name, &self.noop_suffix);
+
+        if !self.noop {
+            for p in self.provisioners.iter() {
+                p.provision(&self)?;
+            }
+        }
+
+        info!(
+            "{}: creating 'ready' snapshot{}",
+            &self.name, &self.noop_suffix
+        );
+        if !self.noop {
+            self.zfs_ds.snap_with_time("ready")?;
+        }
         Ok(())
     }
 

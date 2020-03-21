@@ -14,22 +14,32 @@ pub struct FreeBSD {
 
 impl FreeBSD {
     pub fn install(&self, jail: &Jail) -> Result<()> {
-        &jail.zfs_ds().create()?;
-        info!("{}: installing FreeBSD: {}", &jail.name(), &self.release);
+        info!(
+            "{}: installing FreeBSD: {}{}",
+            &jail.name(),
+            &self.release,
+            &jail.noop_suffix()
+        );
+        if !jail.noop() {
+            &jail.zfs_ds().create()?;
+        }
 
         for dist in &self.dists {
             info!(
-                "{}: extracing {} to {}",
+                "{}: extracing {} to {}{}",
                 &jail.name(),
                 &dist,
-                &jail.mountpoint()
+                &jail.mountpoint(),
+                &jail.noop_suffix(),
             );
 
             let url = format!(
                 "http://{}/pub/FreeBSD/releases/amd64/amd64/{}/{}.txz",
                 &self.mirror, &self.release, dist
             );
-            util::fetch_extract(&url, &jail.mountpoint())?;
+            if !jail.noop() {
+                util::fetch_extract(&url, &jail.mountpoint())?;
+            }
         }
         Ok(())
     }

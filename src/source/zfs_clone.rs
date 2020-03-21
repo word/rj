@@ -27,13 +27,16 @@ impl ZfsClone {
         match src_dataset.last_snap("ready")? {
             Some(snapshot) => {
                 info!(
-                    "{}: cloning {}@{} to {}",
+                    "{}: cloning {}@{} to {}{}",
                     &jail.name(),
                     &src_dataset.path(),
                     &snapshot,
-                    &dest_dataset.path()
+                    &dest_dataset.path(),
+                    &jail.noop_suffix(),
                 );
-                src_dataset.clone(&snapshot, &dest_dataset.path())?;
+                if !jail.noop() {
+                    src_dataset.clone(&snapshot, &dest_dataset.path())?;
+                }
                 Ok(())
             }
             None => {
