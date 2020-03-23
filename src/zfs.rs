@@ -7,7 +7,7 @@ use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct DataSet {
     path: String,
 }

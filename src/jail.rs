@@ -15,7 +15,7 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Jail<'a> {
     name: String,
     mountpoint: String,
