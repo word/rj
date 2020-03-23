@@ -2,6 +2,8 @@
 
 == Doing
 
+* dry-run
+
 === Tasks 
 
 * freebsd-update jails
@@ -12,13 +14,10 @@
 * jail resource limits
 * progress bar when extracting freebsd dists
 * pkg upgrade jails
-* jexec and chroot provisioning (for running jail and stopped)?
 * puppet: remove manifest after provision
 * rsync provisioner
-* dry-run
 
 === Bugs
-* provisioner didn't run on base
 
 === Refactor
 
