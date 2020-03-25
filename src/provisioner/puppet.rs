@@ -142,6 +142,9 @@ impl Puppet {
         for ea in self.extra_args.iter() {
             cmd.arg(ea);
         }
+        if *jail.noop() {
+            cmd.arg("--noop");
+        }
         cmd.arg(&self.manifest_file);
         debug!("{:?}", &cmd);
         cmd.stream()?;
@@ -233,6 +236,29 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    #[serial]
+    fn provision_noop() -> Result<()> {
+        let s = Settings::new("testdata/config.toml", false)?;
+        let jail = setup(&s, "puppet_test")?;
+
+        jail.apply()?;
+        // remove the created test file
+        let path = Path::new(jail.mountpoint()).join("tmp/puppet_testfile");
+        fs::remove_file(&path)?;
+
+        // make a noop jail
+        let s_noop = Settings::new("testdata/config.toml", true)?;
+        let jail_noop = setup(&s_noop, "puppet_test")?;
+
+        // on noop provision it shoudn't re-create the file
+        jail_noop.provision()?;
+        assert_eq!(path.is_file(), false);
+
+        jail.destroy()?;
+        Ok(())
+    }
+
     // Test the simplest case where only init.pp is defined.
     #[test]
     #[serial]
@@ -250,6 +276,7 @@ mod tests {
         jail.destroy()?;
         Ok(())
     }
+
     #[test]
     fn validate() {
         let mut puppet = Puppet {

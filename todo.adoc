@@ -2,8 +2,6 @@
 
 == Doing
 
-* dry-run
-
 === Tasks 
 
 * freebsd-update jails
