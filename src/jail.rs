@@ -275,7 +275,10 @@ impl Jail<'_> {
 
         info!("{}: provisioning{}", &self.name, &self.noop_suffix);
 
-        if !self.noop {
+        // Only run provisioners if the jail exists. Otherwise run the
+        // provisioners even if noop is set. Provisioners implement noop
+        // themselves.
+        if self.exists()? {
             for p in self.provisioners.iter() {
                 p.provision(&self)?;
             }

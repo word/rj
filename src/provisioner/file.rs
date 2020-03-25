@@ -41,19 +41,41 @@ impl ProvFile {
         let d = Path::new(&self.dest).strip_prefix("/")?;
         let full_dest = Path::new(&jail.mountpoint()).join(d);
 
+        // copy the file
         info!(
-            "{}: {} -> {}",
+            "{}: {} -> {}{}",
             jail.name(),
             &self.source,
-            full_dest.display()
+            full_dest.display(),
+            jail.noop_suffix(),
         );
-        copy(&self.source, &full_dest)?;
+        if !jail.noop() {
+            copy(&self.source, &full_dest)?;
+        }
+
+        // set permissions
         let mode_u32 = u32::from_str_radix(&self.mode, 8)?;
-        debug!("{}: mode -> {:o}", jail.name(), mode_u32);
-        set_permissions(&full_dest, Permissions::from_mode(mode_u32))?;
+        debug!(
+            "{}: mode -> {:o}{}",
+            jail.name(),
+            mode_u32,
+            jail.noop_suffix()
+        );
+        if !jail.noop() {
+            set_permissions(&full_dest, Permissions::from_mode(mode_u32))?;
+        }
+
+        // set ownership
         let user_group = format!("{}:{}", &self.owner, &self.group);
-        debug!("{}: user:group -> {}", jail.name(), user_group);
-        cmd!("chroot", jail.mountpoint(), "chown", user_group, &self.dest)?;
+        debug!(
+            "{}: user:group -> {}{}",
+            jail.name(),
+            user_group,
+            jail.noop_suffix()
+        );
+        if !jail.noop() {
+            cmd!("chroot", jail.mountpoint(), "chown", user_group, &self.dest)?;
+        }
 
         Ok(())
     }
@@ -101,6 +123,7 @@ mod tests {
     use crate::settings::Settings;
     use pretty_assertions::assert_eq;
     use serial_test::serial;
+    use std::fs;
     use std::os::unix::fs::MetadataExt;
 
     #[test]
@@ -118,6 +141,30 @@ mod tests {
         assert_eq!(mode_s, "100640");
         assert_eq!(metadata.uid(), 65534);
         assert_eq!(metadata.gid(), 65534);
+
+        jail.destroy()?;
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn provision_noop() -> Result<()> {
+        let s = Settings::new("testdata/config.toml", false)?;
+        let jail = setup(&s, "file_test")?;
+
+        jail.apply()?;
+        // remove the copied test file
+        let path = Path::new(jail.mountpoint()).join("tmp/file.txt");
+        assert_eq!(path.is_file(), true);
+        fs::remove_file(&path)?;
+
+        // make a noop jail
+        let s_noop = Settings::new("testdata/config.toml", true)?;
+        let jail_noop = setup(&s_noop, "file_test")?;
+
+        // on provision it shoudn't re-create the file
+        jail_noop.provision()?;
+        assert_eq!(path.is_file(), false);
 
         jail.destroy()?;
         Ok(())
