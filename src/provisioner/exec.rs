@@ -62,27 +62,11 @@ impl Exec {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::provisioner::test_helpers::setup;
     use crate::settings::Settings;
     use serial_test::serial;
     use std::fs;
     use std::path::Path;
-
-    fn setup<'a>(s: &'a Settings, name: &str) -> Result<Jail<'a>> {
-        let jails = s.to_jails()?;
-        let jail = &jails[name];
-        let basejail = &jails["base"];
-
-        if !basejail.exists()? {
-            crate::init(&s).unwrap();
-            basejail.apply()?;
-        }
-
-        // clean up if left over from a failed test
-        if jail.exists()? {
-            jail.destroy()?;
-        }
-        Ok(jail.to_owned())
-    }
 
     #[test]
     #[serial]

@@ -211,6 +211,7 @@ impl Puppet {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::provisioner::test_helpers::setup;
     use crate::settings::Settings;
     use pretty_assertions::assert_eq;
     use serial_test::serial;
@@ -219,19 +220,8 @@ mod tests {
     #[serial]
     fn provision() -> Result<()> {
         let s = Settings::new("testdata/config.toml", false)?;
-        let jails = s.to_jails()?;
-        let jail = &jails["puppet_test"];
-        let basejail = &jails["base"];
+        let jail = setup(&s, "puppet_test")?;
 
-        if !basejail.exists()? {
-            crate::init(&s).unwrap();
-            basejail.apply()?;
-        }
-
-        // clean up if left over from a failed test
-        if jail.exists()? {
-            jail.destroy()?;
-        }
         jail.apply()?;
 
         let testfile_path = format!("{}/tmp/puppet_testfile", &jail.mountpoint());
@@ -248,13 +238,8 @@ mod tests {
     #[serial]
     fn provision_simple() -> Result<()> {
         let s = Settings::new("testdata/config.toml", false)?;
-        let jails = s.to_jails()?;
-        let jail = &jails["puppet_simple_test"];
+        let jail = setup(&s, "puppet_simple_test")?;
 
-        // clean up if left over from a failed test
-        if jail.exists()? {
-            jail.destroy()?;
-        }
         jail.apply()?;
 
         let testfile_path = format!("{}/tmp/puppet_simple_testfile", &jail.mountpoint());

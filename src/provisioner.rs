@@ -7,6 +7,7 @@ pub(crate) mod exec;
 pub(crate) mod file;
 pub(crate) mod puppet;
 pub(crate) mod test;
+mod test_helpers;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "type")]

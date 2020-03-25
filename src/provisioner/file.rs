@@ -97,6 +97,7 @@ impl ProvFile {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::provisioner::test_helpers::setup;
     use crate::settings::Settings;
     use pretty_assertions::assert_eq;
     use serial_test::serial;
@@ -106,24 +107,13 @@ mod tests {
     #[serial]
     fn provision() -> Result<()> {
         let s = Settings::new("testdata/config.toml", false)?;
-        let jails = s.to_jails()?;
-        let jail = &jails["file_test"];
-        let basejail = &jails["base"];
+        let jail = setup(&s, "file_test")?;
 
-        if !basejail.exists()? {
-            crate::init(&s).unwrap();
-            basejail.apply()?;
-        }
-
-        // clean up if left over from a failed test
-        if jail.exists()? {
-            jail.destroy()?;
-        }
         jail.apply()?;
 
-        let full_dest = format!("{}/tmp/file.txt", jail.mountpoint());
-        let metadata = std::fs::metadata(full_dest)?;
-        assert!(metadata.is_file());
+        let path = Path::new(jail.mountpoint()).join("tmp/file.txt");
+        assert!(path.is_file());
+        let metadata = std::fs::metadata(path)?;
         let mode_s = format!("{:o}", metadata.mode());
         assert_eq!(mode_s, "100640");
         assert_eq!(metadata.uid(), 65534);
