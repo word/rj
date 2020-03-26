@@ -26,7 +26,7 @@ impl FreeBSD {
 
         for dist in &self.dists {
             info!(
-                "{}: extracing {} to {}{}",
+                "{}: fetching and extracting {} to {}{}",
                 &jail.name(),
                 &dist,
                 &jail.mountpoint(),
