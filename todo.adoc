@@ -2,15 +2,15 @@
 
 == Doing
 
+* volumes support (fstab.jail)
+
 === Tasks 
 
 * freebsd-update jails
 * ability to split configuration into 'include' snippets
-* volumes support (fstab.jail)
 * detect if provisioner has made changes
 * settings: validate jail conf sections (known fileds, types)
 * jail resource limits
-* progress bar when extracting freebsd dists
 * pkg upgrade jails
 * puppet: remove manifest after provision
 * rsync provisioner
