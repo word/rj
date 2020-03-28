@@ -183,10 +183,16 @@ impl Jail<'_> {
 
     pub fn configure(&self) -> Result<()> {
         // add any additional config params
-        let extra_conf = indexmap! {
-            "path".to_string() => JailConfValue::String(self.mountpoint.to_owned()),
-            "mount.fstab".to_string() => JailConfValue::String(self.fstab_path.to_owned()),
+        let mut extra_conf = indexmap! {
+            "path".to_owned() => JailConfValue::String(self.mountpoint.to_owned()),
         };
+
+        if !&self.volumes.is_empty() {
+            extra_conf.insert(
+                "mount.fstab".to_owned(),
+                JailConfValue::String(self.fstab_path.to_owned()),
+            );
+        }
 
         let rendered = templates::render_jail_conf(
             &self.name,
@@ -448,6 +454,7 @@ mod tests {
         assert!(Path::new(jail2_conf_path).is_file());
         assert_eq!(ok_jail_conf, fs::read_to_string(jail2_conf_path)?);
 
+        // check volumes are set up correctly
         let ok_fstab = indoc!(
             r#"
             /usr/local/share/examples /jails/test1/mnt nullfs rw 0 0
@@ -465,6 +472,14 @@ mod tests {
         // Check that it's running
         assert!(jail1.is_running()?);
         assert!(jail2.is_running()?);
+
+        // check the volumes are mounted
+        let mounted_filesystems = cmd_capture!("mount")?;
+        assert!(mounted_filesystems
+            .contains("/usr/local/share/examples on /jails/test1/mnt (nullfs, local)"));
+        assert!(mounted_filesystems.contains(
+            "/usr/local/share/examples on /jails/test1/media (nullfs, local, read-only)"
+        ));
 
         // Check that snapshots were created
         let re_preprov = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}_pre-provision$")?;
