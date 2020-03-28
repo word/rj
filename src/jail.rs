@@ -184,7 +184,8 @@ impl Jail<'_> {
     pub fn configure(&self) -> Result<()> {
         // add any additional config params
         let extra_conf = indexmap! {
-            "path".to_string() => JailConfValue::String(self.mountpoint.to_string()),
+            "path".to_string() => JailConfValue::String(self.mountpoint.to_owned()),
+            "mount.fstab".to_string() => JailConfValue::String(self.fstab_path.to_owned()),
         };
 
         let rendered = templates::render_jail_conf(
