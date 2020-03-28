@@ -17,12 +17,12 @@ pub struct Volume {
 
 #[derive(Clone, Debug, Template)]
 #[template(path = "fstab", escape = "none")]
-pub struct Volumes {
-    volumes: Vec<Volume>,
+pub struct Volumes<'a> {
+    pub volumes: Vec<&'a Volume>,
 }
 
-impl Volumes {
-    pub fn new(volumes: Vec<Volume>) -> Volumes {
+impl Volumes<'_> {
+    pub fn new<'a>(volumes: Vec<&'a Volume>) -> Volumes<'a> {
         Volumes { volumes }
     }
 }
@@ -54,7 +54,7 @@ mod tests {
             pass: 0,
         };
 
-        let volumes = Volumes::new(vec![volume1, volume2]);
+        let volumes = Volumes::new(vec![&volume1, &volume2]);
         let rendered = volumes.render()?;
 
         let ok = indoc!(

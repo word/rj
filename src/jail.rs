@@ -5,6 +5,7 @@ use crate::provisioner::Provisioner;
 use crate::settings;
 use crate::source::Source;
 use crate::templates;
+use crate::volumes::Volumes;
 use crate::zfs;
 use anyhow::Result;
 use difference::Changeset;
@@ -28,6 +29,7 @@ pub struct Jail<'a> {
     provisioners: Vec<&'a Provisioner>,
     noop: &'a bool,
     noop_suffix: String,
+    volumes: Volumes<'a>,
 }
 
 impl Jail<'_> {
@@ -58,7 +60,10 @@ impl Jail<'_> {
         conf_defaults: &'a IndexMap<String, JailConfValue>,
         provisioners: Vec<&'a Provisioner>,
         noop: &'a bool,
+        volumes: Volumes<'a>,
     ) -> Jail<'a> {
+        //
+        //
         // Workout jail name from data set path (fixme: just get it from settings)
         let mut components: Vec<&str> = ds_path.split('/').collect();
         components.remove(0); // remove the zfs pool name
@@ -81,6 +86,7 @@ impl Jail<'_> {
             provisioners,
             noop,
             noop_suffix,
+            volumes,
         }
     }
 

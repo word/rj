@@ -7,7 +7,7 @@ use toml;
 use super::Jail;
 use super::Provisioner;
 use super::Source;
-use super::Volume;
+use super::{Volume, Volumes};
 
 // Represents the different types of values a jail.conf option can have.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -83,10 +83,21 @@ impl Settings {
             // gather jail provisioners
             let mut provisioners = Vec::new();
             for p in jsettings.provisioners.iter() {
+                // error if the provisioner is not defined
                 if !&self.provisioner.contains_key(p) {
                     bail!("{}: unknown provisioner: {}", jname, p);
                 }
                 provisioners.push(&self.provisioner[p]);
+            }
+
+            // gather volumes
+            let mut volumes = vec![];
+            for v in jsettings.volumes.iter() {
+                // error if the volume is not defined
+                if !&self.volume.contains_key(v) {
+                    bail!("{}: unknown volume: {}", jname, v);
+                }
+                volumes.push(&self.volume[v]);
             }
 
             // make jail
@@ -100,6 +111,7 @@ impl Settings {
                 &self.jail_conf_defaults,
                 provisioners,
                 &self.noop,
+                Volumes::new(volumes),
             );
             jails.insert(jname.to_string(), jail);
         }
