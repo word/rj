@@ -7,6 +7,7 @@ use toml;
 use super::Jail;
 use super::Provisioner;
 use super::Source;
+use super::Volume;
 
 // Represents the different types of values a jail.conf option can have.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -28,6 +29,8 @@ pub struct JailSettings {
     pub conf: IndexMap<String, JailConfValue>,
     #[serde(default)]
     pub provisioners: Vec<String>,
+    #[serde(default)]
+    pub volumes: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -40,6 +43,7 @@ pub struct Settings {
     pub jail: IndexMap<String, JailSettings>,
     pub source: IndexMap<String, Source>,
     pub provisioner: IndexMap<String, Provisioner>,
+    pub volume: IndexMap<String, Volume>,
     #[serde(default)] // false
     pub noop: bool,
 }

@@ -58,6 +58,22 @@ tmp_dir = "/var/rj/"
 type = "puppet"
 path = "testdata/provisioners/puppet_simple"
 
+# Data Volumes
+
+[volume.test]
+device = "/tmp/testdev"
+mountpoint = "/tmp/testmount"
+fs_type = "nullfs"
+options = "rw"
+dump = 0
+pass = 0
+
+[volume.test2]
+device = "/tmp/testdev2"
+mountpoint = "/tmp/testmount2"
+fs_type = "nullfs"
+options = "ro"
+
 # Jails
 
 [jail.base]

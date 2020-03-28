@@ -15,12 +15,14 @@ mod settings;
 mod source;
 mod templates;
 mod util;
+mod volume;
 mod zfs;
 
 use jail::Jail;
 use provisioner::Provisioner;
 use settings::Settings;
 use source::Source;
+use volume::Volume;
 
 fn jail_action(action: &str, jail: &Jail) -> Result<()> {
     debug!("action {}", action);
