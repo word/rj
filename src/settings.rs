@@ -7,7 +7,7 @@ use toml;
 use super::Jail;
 use super::Provisioner;
 use super::Source;
-use super::{Volume, Volumes};
+use super::Volume;
 
 // Represents the different types of values a jail.conf option can have.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -111,7 +111,7 @@ impl Settings {
                 &self.jail_conf_defaults,
                 provisioners,
                 &self.noop,
-                Volumes::new(volumes),
+                volumes,
             );
             jails.insert(jname.to_string(), jail);
         }

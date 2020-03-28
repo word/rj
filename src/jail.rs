@@ -5,7 +5,7 @@ use crate::provisioner::Provisioner;
 use crate::settings;
 use crate::source::Source;
 use crate::templates;
-use crate::volumes::Volumes;
+use crate::volumes::Volume;
 use crate::zfs;
 use anyhow::Result;
 use difference::Changeset;
@@ -29,7 +29,7 @@ pub struct Jail<'a> {
     provisioners: Vec<&'a Provisioner>,
     noop: &'a bool,
     noop_suffix: String,
-    volumes: Volumes<'a>,
+    volumes: Vec<&'a Volume>,
 }
 
 impl Jail<'_> {
@@ -60,7 +60,7 @@ impl Jail<'_> {
         conf_defaults: &'a IndexMap<String, JailConfValue>,
         provisioners: Vec<&'a Provisioner>,
         noop: &'a bool,
-        volumes: Volumes<'a>,
+        volumes: Vec<&'a Volume>,
     ) -> Jail<'a> {
         //
         //

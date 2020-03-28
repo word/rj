@@ -14,6 +14,7 @@
 * pkg upgrade jails
 * puppet: remove manifest after provision
 * rsync provisioner
+* change paths represented as strings to Path
 
 === Bugs
 

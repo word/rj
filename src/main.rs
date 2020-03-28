@@ -13,6 +13,7 @@ mod pkg;
 mod provisioner;
 mod settings;
 mod source;
+mod template;
 mod templates;
 mod util;
 mod volumes;
@@ -22,7 +23,7 @@ use jail::Jail;
 use provisioner::Provisioner;
 use settings::Settings;
 use source::Source;
-use volumes::{Volume, Volumes};
+use volumes::Volume;
 
 fn jail_action(action: &str, jail: &Jail) -> Result<()> {
     debug!("action {}", action);
