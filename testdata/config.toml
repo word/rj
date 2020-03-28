@@ -61,16 +61,16 @@ path = "testdata/provisioners/puppet_simple"
 # Data Volumes
 
 [volume.test]
-device = "/tmp/testdev"
-mountpoint = "/tmp/testmount"
+device = "/usr/local/share/examples"
+mountpoint = "/mnt"
 fs_type = "nullfs"
 options = "rw"
 dump = 0
 pass = 0
 
 [volume.test2]
-device = "/tmp/testdev2"
-mountpoint = "/tmp/testmount2"
+device = "/usr/local/share/examples"
+mountpoint = "/media"
 fs_type = "nullfs"
 options = "ro"
 
@@ -83,6 +83,7 @@ start = false
 
 [jail.test1]
 source = "base"
+volumes = ["test", "test2"]
 
 [jail.test2]
 source = "base"

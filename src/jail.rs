@@ -4,10 +4,12 @@ use crate::cmd_capture;
 use crate::provisioner::Provisioner;
 use crate::settings;
 use crate::source::Source;
+use crate::template::fstab::Fstab;
 use crate::templates;
 use crate::volumes::Volume;
 use crate::zfs;
 use anyhow::Result;
+use askama::Template;
 use difference::Changeset;
 use indexmap::{indexmap, IndexMap};
 use log::{debug, info};
@@ -26,6 +28,7 @@ pub struct Jail<'a> {
     settings: &'a JailSettings,
     conf_defaults: &'a IndexMap<String, JailConfValue>,
     conf_path: String,
+    fstab_path: String,
     provisioners: Vec<&'a Provisioner>,
     noop: &'a bool,
     noop_suffix: String,
@@ -83,6 +86,7 @@ impl Jail<'_> {
             settings,
             conf_defaults,
             conf_path: format!("/etc/jail.{}.conf", name),
+            fstab_path: format!("/etc/fstab.{}", name),
             provisioners,
             noop,
             noop_suffix,
@@ -97,6 +101,9 @@ impl Jail<'_> {
             self.install()?;
         }
         self.configure()?;
+        if !self.volumes.is_empty() {
+            self.write_fstab()?;
+        }
         if self.settings.start {
             if !(self.is_enabled()?) {
                 self.enable()?
@@ -140,6 +147,17 @@ impl Jail<'_> {
             }
         }
 
+        // remove fstab
+        if Path::new(&self.fstab_path).is_file() {
+            info!(
+                "{}: removing fstab: {}{}",
+                &self.name, &self.fstab_path, &self.noop_suffix
+            );
+            if !self.noop {
+                fs::remove_file(&self.fstab_path)?;
+            }
+        }
+
         // remove zfs snapshots
         let snaps = self.zfs_ds.list_snaps()?;
         if !(snaps.is_empty()) {
@@ -176,7 +194,7 @@ impl Jail<'_> {
             &extra_conf,
         )?;
 
-        // check if a config file exists already
+        // FIXME - DRY this up
         if Path::is_file(Path::new(&self.conf_path)) {
             let current = fs::read_to_string(&self.conf_path)?;
             if current != rendered {
@@ -185,18 +203,47 @@ impl Jail<'_> {
                     "{}: updating {}{}\n{}",
                     &self.name, &self.conf_path, &self.noop_suffix, &diff
                 );
-                if !self.noop {
-                    fs::write(&self.conf_path, &rendered)?;
-                }
             }
         } else {
             info!(
                 "{}: creating {}{}",
                 &self.name, &self.conf_path, &self.noop_suffix
             );
-            if !self.noop {
-                fs::write(&self.conf_path, &rendered)?;
+        }
+
+        if !self.noop {
+            fs::write(&self.conf_path, &rendered)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn write_fstab(&self) -> Result<()> {
+        let fstab = Fstab {
+            volumes: &self.volumes,
+            jail_mountpoint: &self.mountpoint,
+        };
+        let rendered = fstab.render()?;
+
+        // FIXME - DRY this up
+        if Path::is_file(Path::new(&self.fstab_path)) {
+            let current = fs::read_to_string(&self.fstab_path)?;
+            if current != rendered {
+                let diff = Changeset::new(&current, &rendered, "");
+                info!(
+                    "{}: updating {}{}\n{}",
+                    &self.name, &self.fstab_path, &self.noop_suffix, &diff
+                );
             }
+        } else {
+            info!(
+                "{}: creating {}{}",
+                &self.name, &self.fstab_path, &self.noop_suffix
+            );
+        }
+
+        if !self.noop {
+            fs::write(&self.fstab_path, &rendered)?;
         }
 
         Ok(())
@@ -399,6 +446,16 @@ mod tests {
         assert!(Path::new(jail1_conf_path).is_file());
         assert!(Path::new(jail2_conf_path).is_file());
         assert_eq!(ok_jail_conf, fs::read_to_string(jail2_conf_path)?);
+
+        let ok_fstab = indoc!(
+            r#"
+            /usr/local/share/examples /jails/test1/mnt nullfs rw 0 0
+            /usr/local/share/examples /jails/test1/media nullfs ro 0 0
+            "#
+        );
+        let jail1_fstab_path = Path::new(&jail1.fstab_path);
+        assert!(jail1_fstab_path.is_file());
+        assert_eq!(ok_fstab, fs::read_to_string(jail1_fstab_path)?);
 
         // Check jail is enabled in rc.conf
         assert!(jail1.is_enabled()?);

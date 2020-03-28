@@ -1,1 +1,1 @@
-mod fstab;
+pub mod fstab;

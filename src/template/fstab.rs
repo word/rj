@@ -4,8 +4,8 @@ use askama::Template;
 #[derive(Clone, Debug, Template)]
 #[template(path = "fstab", escape = "none")]
 pub struct Fstab<'a> {
-    pub volumes: Vec<&'a Volume>,
-    pub jail_mountpoint: String,
+    pub volumes: &'a Vec<&'a Volume>,
+    pub jail_mountpoint: &'a String,
 }
 
 #[cfg(test)]
@@ -36,8 +36,8 @@ mod tests {
         };
 
         let fstab = Fstab {
-            volumes: vec![&volume1, &volume2],
-            jail_mountpoint: "/jails/jail".to_owned(),
+            volumes: &vec![&volume1, &volume2],
+            jail_mountpoint: &"/jails/jail".to_owned(),
         };
         let rendered = fstab.render()?;
 
