@@ -77,8 +77,7 @@ mod tests {
 
         jail.apply()?;
 
-        let path = Path::new(jail.mountpoint()).join("tmp/exec_test");
-        assert!(path.is_file());
+        assert!(jail.mountpoint().join("tmp/exec_test").is_file());
 
         jail.destroy()?;
         Ok(())
@@ -93,7 +92,7 @@ mod tests {
         // create the test jail
         jail.apply()?;
         // remove the created test file
-        let path = Path::new(jail.mountpoint()).join("tmp/exec_test");
+        let path = jail.mountpoint().join("tmp/exec_test");
         fs::remove_file(&path)?;
 
         // make a noop jail
@@ -132,7 +131,7 @@ mod tests {
         // create the test jail
         jail.apply()?;
         // remove created test file
-        let path = Path::new(jail.mountpoint()).join("tmp/exec_chroot_test");
+        let path = jail.mountpoint().join("tmp/exec_chroot_test");
         fs::remove_file(&path)?;
 
         // make a noop jail
