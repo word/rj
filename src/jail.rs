@@ -78,19 +78,19 @@ impl Jail<'_> {
         }
 
         Jail {
-            fstab_path: PathBuf::from(format!("/etc/fstab.{}", name)),
+            name: name.clone(),
+            mountpoint: format!("/{}", components.join("/")),
+            source,
+            zfs_ds_path: ds_path.to_string(),
+            zfs_ds: zfs::DataSet::new(ds_path),
+            settings,
             jail_conf_defaults,
             jail_conf_path: format!("/etc/jail.{}.conf", name),
-            mountpoint: format!("/{}", components.join("/")),
-            name: name.clone(),
+            fstab_path: PathBuf::from(format!("/etc/fstab.{}", name)),
+            provisioners,
             noop,
             noop_suffix,
-            provisioners,
-            settings,
-            source,
             volumes,
-            zfs_ds: zfs::DataSet::new(ds_path),
-            zfs_ds_path: ds_path.to_string(),
         }
     }
 
@@ -235,7 +235,7 @@ impl Jail<'_> {
         let rendered = fstab.render()?;
 
         // FIXME - DRY this up
-        if Path::is_file(Path::new(&self.fstab_path)) {
+        if self.fstab_path.is_file() {
             let current = fs::read_to_string(&self.fstab_path)?;
             if current != rendered {
                 let diff = Changeset::new(&current, &rendered, "");
