@@ -38,8 +38,8 @@ pub struct JailSettings {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Settings {
-    pub jails_dataset: String,
-    pub jails_mountpoint: String,
+    pub jails_dataset: PathBuf,
+    pub jails_mountpoint: PathBuf,
     #[serde(default)]
     pub jail_conf_defaults: IndexMap<String, JailConfValue>,
     pub jail: IndexMap<String, JailSettings>,
@@ -132,8 +132,8 @@ mod tests {
         let s = Settings::new("testdata/config.toml", false).unwrap();
         println!("{:?}", s);
 
-        assert_eq!(s.jails_dataset, "zroot/jails");
-        assert_eq!(s.jails_mountpoint, "/jails");
+        assert_eq!(s.jails_dataset, PathBuf::from("zroot/jails"));
+        assert_eq!(s.jails_mountpoint, PathBuf::from("/jails"));
         assert_eq!(
             s.jail_conf_defaults["exec_start"],
             JailConfValue::String("/bin/sh /etc/rc".to_string())
@@ -181,7 +181,7 @@ mod tests {
         }
 
         if let Source::ZfsClone(src) = &s.source["base"] {
-            assert_eq!(src.path, "zroot/jails/base".to_string());
+            assert_eq!(src.path, PathBuf::from("zroot/jails/base"));
         }
 
         // test 'enabled' option

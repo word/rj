@@ -130,7 +130,8 @@ macro_rules! cmd {
 macro_rules! cmd_capture {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
-            let args: &[String] = &[$( Into::<String>::into($arg) ),*];
+            use std::ffi::OsString;
+            let args: &[OsString] = &[$( Into::<OsString>::into($arg) ),*];
             let mut c = $crate::cmd::Cmd::new($program);
             c.args(args);
             c.capture()
@@ -142,7 +143,8 @@ macro_rules! cmd_capture {
 macro_rules! cmd_stream {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
-            let args: &[String] = &[$( Into::<String>::into($arg) ),*];
+            use std::ffi::OsString;
+            let args: &[OsString] = &[$( Into::<OsString>::into($arg) ),*];
             let mut c = $crate::cmd::Cmd::new($program);
             c.args(args);
             c.stream()

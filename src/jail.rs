@@ -32,7 +32,7 @@ pub struct Jail<'a> {
     source: &'a Source,
     volumes: Vec<&'a Volume>,
     zfs_ds: zfs::DataSet,
-    zfs_ds_path: String,
+    zfs_ds_path: PathBuf,
 }
 
 impl Jail<'_> {
@@ -58,8 +58,8 @@ impl Jail<'_> {
 
     pub fn new<'a>(
         name: &str,
-        jails_mountpoint: &str,
-        jails_dataset: &str,
+        jails_mountpoint: &Path,
+        jails_dataset: &Path,
         source: &'a Source,
         jail_settings: &'a JailSettings,
         jail_conf_defaults: &'a IndexMap<String, JailConfValue>,
@@ -70,11 +70,11 @@ impl Jail<'_> {
         //
         // Set the noop suffix which is displayed in log messages when noop is set
 
-        let zfs_dataset_path = format!("{}/{}", jails_dataset, name);
+        let zfs_dataset_path = jails_dataset.join(name);
 
         Jail {
             name: name.to_owned(),
-            mountpoint: PathBuf::from(format!("{}/{}", jails_mountpoint, name)),
+            mountpoint: jails_mountpoint.join(name),
             source,
             zfs_ds_path: zfs_dataset_path.to_owned(),
             zfs_ds: zfs::DataSet::new(&zfs_dataset_path),

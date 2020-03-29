@@ -6,30 +6,31 @@ use log::{debug, info};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use regex::Regex;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug)]
 pub struct DataSet {
-    path: String,
+    path: PathBuf,
 }
 
 impl DataSet {
-    pub fn new(path: &str) -> DataSet {
+    pub fn new<P: AsRef<Path>>(path: P) -> DataSet {
         DataSet {
-            path: path.to_string(),
+            path: path.as_ref().to_path_buf(),
         }
     }
 
-    pub fn path(&self) -> &String {
+    pub fn path(&self) -> &PathBuf {
         &self.path
     }
 
     // create the zfs data set if it doesn't exist already
     pub fn create(&self) -> Result<bool> {
         if self.exists()? {
-            info!("dataset {} already exists, skipping", &self.path);
+            info!("dataset {} already exists, skipping", &self.path.display());
             Ok(false)
         } else {
-            info!("creating zfs dataset {}", &self.path);
+            info!("creating zfs dataset {}", &self.path.display());
             cmd!("zfs", "create", &self.path)?;
             Ok(true)
         }
@@ -47,20 +48,23 @@ impl DataSet {
     }
 
     pub fn destroy(&self) -> Result<()> {
-        info!("destroying zfs dataset: {}", &self.path);
+        info!("destroying zfs dataset: {}", &self.path.display());
         cmd!("zfs", "destroy", &self.path)
     }
 
     // destroy recursively
     #[allow(dead_code)]
     pub fn destroy_r(&self) -> Result<()> {
-        info!("destroying zfs dataset recursively: {}", &self.path);
+        info!(
+            "destroying zfs dataset recursively: {}",
+            &self.path.display()
+        );
         cmd!("zfs", "destroy", "-r", &self.path)
     }
 
     #[allow(dead_code)]
     pub fn snap(&self, snap_name: &str) -> Result<()> {
-        let snap_path = format!("{}@{}", &self.path, &snap_name);
+        let snap_path = format!("{}@{}", &self.path.display(), &snap_name);
         info!("creating snapshot: {}", &snap_path);
         cmd!("zfs", "snapshot", &snap_path)
     }
@@ -68,7 +72,7 @@ impl DataSet {
     // create a snapshot with date time in the name
     pub fn snap_with_time(&self, snap_name: &str) -> Result<()> {
         let dt = Local::now().format("%Y-%m-%dT%H:%M:%S%.3f");
-        let snap_path = format!("{}@{}_{}", &self.path, &dt, &snap_name);
+        let snap_path = format!("{}@{}_{}", &self.path.display(), &dt, &snap_name);
         cmd!("zfs", "snapshot", &snap_path)
     }
 
@@ -76,29 +80,29 @@ impl DataSet {
     #[allow(dead_code)]
     pub fn snap_with_rand(&self, snap_name: &str) -> Result<()> {
         let rand: String = thread_rng().sample_iter(&Alphanumeric).take(8).collect();
-        let snap_path = format!("{}@{}_{}", &self.path, &rand, &snap_name);
+        let snap_path = format!("{}@{}_{}", &self.path.display(), &rand, &snap_name);
         cmd!("zfs", "snapshot", &snap_path)
     }
 
-    pub fn clone(&self, snap: &str, dest: &str) -> Result<DataSet> {
-        let snap_name = format!("{}@{}", &self.path, snap);
-        debug!("cloning {} to {}", snap_name, &dest);
-        cmd!("zfs", "clone", snap_name, dest)?;
+    pub fn clone<P: AsRef<Path>>(&self, snap: &str, dest: P) -> Result<DataSet> {
+        let snap_name = format!("{}@{}", &self.path.display(), snap);
+        debug!("cloning {} to {}", snap_name, &dest.as_ref().display());
+        cmd!("zfs", "clone", snap_name, dest.as_ref())?;
         Ok(DataSet::new(dest))
     }
 
     pub fn exists(&self) -> Result<bool> {
-        self.ds_exists(&self.path)
+        self.ds_exists(&self.path.to_str().unwrap())
     }
 
     #[allow(dead_code)]
     pub fn snap_exists(&self, snap_name: &str) -> Result<bool> {
-        self.ds_exists(&format!("{}@{}", &self.path, snap_name))
+        self.ds_exists(&format!("{}@{}", &self.path.display(), snap_name))
     }
 
     pub fn list_snaps(&self) -> Result<Vec<String>> {
         let output = cmd_capture!("zfs", "list", "-H", "-o", "name", "-t", "snap")?;
-        let filter = format!("{}@", &self.path);
+        let filter = format!("{}@", &self.path.display());
         let snaps = output
             .lines()
             .filter(|s| s.starts_with(&filter))
@@ -122,7 +126,7 @@ impl DataSet {
         )?;
         let re = Regex::new(r"^(.*)@(.*)\t(\d*)$")?;
         let mut snaps = Vec::new();
-        let ds_filter = format!("{}@", &self.path);
+        let ds_filter = format!("{}@", &self.path.display());
 
         // parse the list of snapshots.  Return only the snapshots that match the ds path and snapshot name pattern.
         for line in output.lines() {
@@ -148,13 +152,14 @@ impl DataSet {
     }
 
     pub fn snap_destroy(&self, snap_name: &str) -> Result<()> {
-        info!("destroying snapshot {}@{}", &self.path, snap_name);
-        let snap_full_name = format!("{}@{}", self.path, snap_name);
+        info!("destroying snapshot {}@{}", &self.path.display(), snap_name);
+        let snap_full_name = format!("{}@{}", self.path.display(), snap_name);
         cmd!("zfs", "destroy", &snap_full_name)
     }
 
     // checks if data set exists.
     // this is used by self.exists() and self.snap_exists()
+    // FIXME - refactor
     fn ds_exists(&self, ds_path: &str) -> Result<bool> {
         let msg_pattern = format!("cannot open \'{}\': dataset does not exist\n", &ds_path);
 
@@ -189,7 +194,7 @@ mod tests {
     {
         // Set up
         let rand_string: String = thread_rng().sample_iter(&Alphanumeric).take(5).collect();
-        let mut ds = DataSet::new(&format!("zroot/rjtest-{}", rand_string));
+        let mut ds = DataSet::new(Path::new(&format!("zroot/rjtest-{}", rand_string)));
         ds.create()?;
 
         // Run the test closure but catch the panic so that the teardown section below
@@ -216,7 +221,7 @@ mod tests {
 
     #[test]
     fn ds_double_destroy() {
-        let ds = DataSet::new("zroot/rjtest");
+        let ds = DataSet::new(Path::new("zroot/rjtest"));
         assert!(ds.create().is_ok());
         assert!(ds.destroy().is_ok());
         assert!(ds.destroy().is_err());
@@ -255,7 +260,7 @@ mod tests {
 
     #[test]
     fn ds_invalid_path() {
-        let inv_ds = DataSet::new("noexist/rjtest");
+        let inv_ds = DataSet::new(Path::new("noexist/rjtest"));
         assert!(inv_ds.create().is_err());
     }
 

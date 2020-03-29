@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 use clap::ArgMatches;
 use log::{debug, error, info};
 use simplelog::{Config, LevelFilter, TermLogger, TerminalMode};
+use std::path::Path;
 use std::process;
 use text_io::read;
 
@@ -103,7 +104,10 @@ fn check_init(settings: &Settings) -> Result<()> {
     let mut error_msgs: Vec<String> = Vec::new();
 
     if !jails_ds.exists()? {
-        error_msgs.push(format!("jails dataset: {} doesn't exist.", jails_ds.path()));
+        error_msgs.push(format!(
+            "jails dataset: {} doesn't exist.",
+            jails_ds.path().display()
+        ));
     }
 
     if cmd!("sysrc", "-c", "jail_enable=YES").is_err() {
@@ -124,8 +128,8 @@ fn init(settings: &Settings) -> Result<()> {
     // Create jails root ZFS dataset
     let jails_ds = zfs::DataSet::new(&settings.jails_dataset);
     jails_ds.create()?;
-    if jails_ds.get("mountpoint")? != settings.jails_mountpoint {
-        jails_ds.set("mountpoint", &settings.jails_mountpoint)?;
+    if Path::new(&jails_ds.get("mountpoint")?) != settings.jails_mountpoint {
+        jails_ds.set("mountpoint", &settings.jails_mountpoint.to_str().unwrap())?;
     }
     info!("enabling jails in rc.conf");
     cmd!("sysrc", "jail_enable=YES")

@@ -3,11 +3,12 @@ use crate::zfs;
 use anyhow::{bail, ensure, Result};
 use log::{debug, info};
 use serde::Deserialize;
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ZfsClone {
-    pub path: String,
+    pub path: PathBuf,
 }
 
 impl ZfsClone {
@@ -20,7 +21,7 @@ impl ZfsClone {
             format!(
                 "{}: source dataset {} doesn't exist",
                 &jail.name(),
-                &self.path
+                &self.path.display()
             ),
         );
 
@@ -29,9 +30,9 @@ impl ZfsClone {
                 info!(
                     "{}: cloning {}@{} to {}{}",
                     &jail.name(),
-                    &src_dataset.path(),
+                    &src_dataset.path().display(),
                     &snapshot,
-                    &dest_dataset.path(),
+                    &dest_dataset.path().display(),
                     &jail.noop_suffix(),
                 );
                 if !jail.noop() {
@@ -43,7 +44,7 @@ impl ZfsClone {
                 bail!(
                     "{}: 'ready' snapshot not found for source dataset: {}",
                     &jail.name(),
-                    &self.path
+                    &self.path.display()
                 );
             }
         }
@@ -62,6 +63,7 @@ mod tests {
     use crate::zfs::DataSet;
     use pretty_assertions::assert_eq;
     use serial_test::serial;
+    use std::path::Path;
 
     fn cleanup(source_ds: &DataSet, jail: &Jail) -> Result<()> {
         jail.destroy()?;
@@ -77,10 +79,10 @@ mod tests {
         let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["clone_test"];
-        let source_ds = DataSet::new("zroot/rjtest_clone");
+        let source_ds = DataSet::new(Path::new("zroot/rjtest_clone"));
 
         let clone_source = ZfsClone {
-            path: "zroot/rjtest_clone".to_owned(),
+            path: PathBuf::from("zroot/rjtest_clone"),
         };
 
         cleanup(&source_ds, &jail)?;
