@@ -9,40 +9,36 @@ use serde::Deserialize;
 use std::fs;
 use std::fs::{set_permissions, Permissions};
 use std::os::unix::prelude::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Puppet {
-    pub path: String,
+    pub path: PathBuf,
     #[serde(default = "default_manifest_file")]
-    pub manifest_file: String,
-    #[serde(default = "default_none")]
+    pub manifest_file: PathBuf,
+    #[serde(default)]
     pub module_path: Option<String>,
-    #[serde(default = "default_none")]
-    pub hiera_config: Option<String>,
+    #[serde(default)]
+    pub hiera_config: Option<PathBuf>,
     #[serde(default = "default_extra_args")]
     pub extra_args: Vec<String>,
     #[serde(default = "default_tmp_dir")]
-    pub tmp_dir: String,
+    pub tmp_dir: PathBuf,
     #[serde(default = "default_version")]
     pub puppet_version: String,
 }
 
-fn default_manifest_file() -> String {
-    "init.pp".to_string()
+fn default_manifest_file() -> PathBuf {
+    PathBuf::from("init.pp")
 }
 
-fn default_tmp_dir() -> String {
-    "/var/rj".to_string()
+fn default_tmp_dir() -> PathBuf {
+    PathBuf::from("/var/rj")
 }
 
 fn default_version() -> String {
     "6".to_string()
-}
-
-fn default_none() -> Option<String> {
-    None
 }
 
 fn default_extra_args() -> Vec<String> {
@@ -53,18 +49,14 @@ impl Puppet {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: puppet provisioner running", jail.name());
 
-        let path_tr = self.path.trim_end_matches('/');
-        let tmp_dir_tr = self.tmp_dir.trim_end_matches('/');
-        let jail_path = Path::new(jail.mountpoint());
-        let src_path = Path::new(path_tr);
-        let dest_path = jail_path.join(tmp_dir_tr.trim_start_matches('/'));
-
+        let dest_path = jail.mountpoint().join(self.tmp_dir.strip_prefix("/")?);
         self.install_puppet(jail)?;
-        self.copy_manifest(&src_path, &dest_path)?;
+        self.copy_manifest(&self.path, &dest_path)?;
 
-        let src_dirname = Path::new(&src_path).file_name().unwrap();
-        let manifest_inside_path = Path::new(&self.tmp_dir).join(src_dirname);
-        let manifest_outside_path = jail_path.join(&manifest_inside_path.strip_prefix("/")?);
+        let manifest_inside_path = &self.tmp_dir.join(self.path.file_name().unwrap());
+        let manifest_outside_path = jail
+            .mountpoint()
+            .join(&manifest_inside_path.strip_prefix("/")?);
         let wrapper_outside_path = manifest_outside_path.join("wrapper.sh");
         let wrapper_inside_path = manifest_inside_path.join("wrapper.sh");
 
@@ -161,37 +153,37 @@ impl Puppet {
     }
 
     fn validate_path(&self) -> Result<()> {
-        if Path::new(&self.path).is_dir() {
+        if self.path.is_dir() {
             Ok(())
         } else {
             bail!(
                 "puppet provisioner, path: {} doesn't exist or is not a directory",
-                &self.path
+                &self.path.display()
             )
         }
     }
 
     fn validate_manifest_file(&self) -> Result<()> {
-        let manifest_file_path = Path::new(&self.path).join(&self.manifest_file);
+        let manifest_file_path = self.path.join(&self.manifest_file);
         if manifest_file_path.is_file() {
             Ok(())
         } else {
             bail!(
                 "puppet provisioner, manifest file doesn't exist in: {} or is not a file",
-                manifest_file_path.to_str().unwrap()
+                manifest_file_path.display()
             )
         }
     }
 
     fn validate_hiera_config(&self) -> Result<()> {
         if let Some(h) = &self.hiera_config {
-            let hiera_config_path = Path::new(&self.path).join(h);
+            let hiera_config_path = self.path.join(h);
             if hiera_config_path.is_file() {
                 return Ok(());
             } else {
                 bail!(
                     "puppet provisioner, hiera config file doesn't exist in: {} or is not a file",
-                    hiera_config_path.to_str().unwrap()
+                    hiera_config_path.display()
                 )
             }
         }
@@ -280,25 +272,25 @@ mod tests {
     #[test]
     fn validate() {
         let mut puppet = Puppet {
-            path: "testdata/provisioners/puppet".to_string(),
-            manifest_file: "manifests/site.pp".to_string(),
+            path: PathBuf::from("testdata/provisioners/puppet"),
+            manifest_file: PathBuf::from("manifests/site.pp"),
             module_path: Some("site-modules:modules".to_string()),
-            hiera_config: Some("hiera.yaml".to_string()),
+            hiera_config: Some(PathBuf::from("hiera.yaml")),
             extra_args: vec![],
             tmp_dir: default_tmp_dir(),
             puppet_version: default_version(),
         };
 
         assert!(puppet.validate().is_ok());
-        puppet.path = "nonexistent".to_string();
+        puppet.path = PathBuf::from("nonexistent");
         assert!(puppet.validate().is_err());
-        puppet.path = "testdata/provisioners/puppet".to_string();
-        puppet.manifest_file = "nonexistent".to_string();
+        puppet.path = PathBuf::from("testdata/provisioners/puppet");
+        puppet.manifest_file = PathBuf::from("nonexistent");
         assert!(puppet.validate().is_err());
-        puppet.manifest_file = "manifests/site.pp".to_string();
-        puppet.hiera_config = Some("nonexistent".to_string());
+        puppet.manifest_file = PathBuf::from("manifests/site.pp");
+        puppet.hiera_config = Some(PathBuf::from("nonexistent"));
         assert!(puppet.validate().is_err());
-        puppet.hiera_config = Some("hiera.yaml".to_string());
+        puppet.hiera_config = Some(PathBuf::from("hiera.yaml"));
         puppet.puppet_version = "23".to_string();
         assert!(puppet.validate().is_err());
         puppet.puppet_version = default_version();

@@ -171,7 +171,7 @@ mod tests {
         }
 
         if let Provisioner::Puppet(prov) = &s.provisioner["puppet"] {
-            assert_eq!(prov.path, "testdata/provisioners/puppet".to_string());
+            assert_eq!(prov.path, PathBuf::from("testdata/provisioners/puppet"));
         }
 
         // test sources
