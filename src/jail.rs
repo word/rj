@@ -28,7 +28,7 @@ pub struct Jail<'a> {
     noop: &'a bool,
     noop_suffix: String,
     provisioners: Vec<&'a Provisioner>,
-    settings: &'a JailSettings,
+    jail_settings: &'a JailSettings,
     source: &'a Source,
     volumes: Vec<&'a Volume>,
     zfs_ds: zfs::DataSet,
@@ -57,41 +57,44 @@ impl Jail<'_> {
     }
 
     pub fn new<'a>(
-        ds_path: &str,
+        name: &str,
+        jails_mountpoint: &str,
+        jails_dataset: &str,
         source: &'a Source,
-        settings: &'a JailSettings,
+        jail_settings: &'a JailSettings,
         jail_conf_defaults: &'a IndexMap<String, JailConfValue>,
         provisioners: Vec<&'a Provisioner>,
         noop: &'a bool,
         volumes: Vec<&'a Volume>,
     ) -> Jail<'a> {
         //
-        //
-        // Workout jail name from data set path (fixme: just get it from settings)
-        let mut components: Vec<&str> = ds_path.split('/').collect();
-        components.remove(0); // remove the zfs pool name
-        let name = (*components.last().unwrap()).to_string();
+        // Set the noop suffix which is displayed in log messages when noop is set
 
-        let mut noop_suffix = String::new();
-        if *noop {
-            noop_suffix = " (noop)".to_owned();
-        }
+        let zfs_dataset_path = format!("{}/{}", jails_dataset, name);
 
         Jail {
-            name: name.clone(),
-            mountpoint: format!("/{}", components.join("/")),
+            name: name.to_owned(),
+            mountpoint: format!("{}/{}", jails_mountpoint, name),
             source,
-            zfs_ds_path: ds_path.to_string(),
-            zfs_ds: zfs::DataSet::new(ds_path),
-            settings,
+            zfs_ds_path: zfs_dataset_path.to_owned(),
+            zfs_ds: zfs::DataSet::new(&zfs_dataset_path),
+            jail_settings,
             jail_conf_defaults,
             jail_conf_path: PathBuf::from(format!("/etc/jail.{}.conf", name)),
             fstab_path: PathBuf::from(format!("/etc/fstab.{}", name)),
             provisioners,
             noop,
-            noop_suffix,
+            noop_suffix: Self::make_noop_suffix(noop),
             volumes,
         }
+    }
+
+    fn make_noop_suffix(noop: &bool) -> String {
+        let mut noop_suffix = String::new();
+        if *noop {
+            noop_suffix = " (noop)".to_owned();
+        }
+        noop_suffix
     }
 
     pub fn apply(&self) -> Result<()> {
@@ -104,7 +107,7 @@ impl Jail<'_> {
         if !self.volumes.is_empty() {
             self.write_fstab()?;
         }
-        if self.settings.start {
+        if self.jail_settings.start {
             if !(self.is_enabled()?) {
                 self.enable()?
             }
@@ -201,7 +204,7 @@ impl Jail<'_> {
         let rendered = templates::render_jail_conf(
             &self.name,
             &self.jail_conf_defaults,
-            &self.settings.conf,
+            &self.jail_settings.conf,
             &extra_conf,
         )?;
 
@@ -585,5 +588,11 @@ mod tests {
         assert_eq!(basejail.is_enabled().unwrap(), false);
         assert_eq!(basejail.is_running().unwrap(), false);
         Ok(())
+    }
+
+    #[test]
+    fn make_noop_suffix() -> () {
+        assert_eq!(Jail::make_noop_suffix(&true), String::from(" (noop)"));
+        assert_eq!(Jail::make_noop_suffix(&false), String::new());
     }
 }

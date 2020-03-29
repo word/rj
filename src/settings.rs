@@ -77,45 +77,45 @@ impl Settings {
     pub fn to_jails(&self) -> Result<IndexMap<String, Jail>> {
         let mut jails = IndexMap::new();
 
-        for (jname, jsettings) in &mut self.jail.iter() {
-            if !&self.source.contains_key(&jsettings.source) {
-                bail!("{}: unknown source: {}", jname, jsettings.source);
+        for (jail_name, jail_settings) in &mut self.jail.iter() {
+            if !&self.source.contains_key(&jail_settings.source) {
+                bail!("{}: unknown source: {}", jail_name, jail_settings.source);
             }
 
             // gather jail provisioners
             let mut provisioners = Vec::new();
-            for p in jsettings.provisioners.iter() {
+            for p in jail_settings.provisioners.iter() {
                 // error if the provisioner is not defined
                 if !&self.provisioner.contains_key(p) {
-                    bail!("{}: unknown provisioner: {}", jname, p);
+                    bail!("{}: unknown provisioner: {}", jail_name, p);
                 }
                 provisioners.push(&self.provisioner[p]);
             }
 
             // gather volumes
             let mut volumes = vec![];
-            for v in jsettings.volumes.iter() {
+            for v in jail_settings.volumes.iter() {
                 // error if the volume is not defined
                 if !&self.volume.contains_key(v) {
-                    bail!("{}: unknown volume: {}", jname, v);
+                    bail!("{}: unknown volume: {}", jail_name, v);
                 }
                 volumes.push(&self.volume[v]);
             }
 
             // make jail
             let jail = Jail::new(
-                // data set path
-                &format!("{}/{}", &self.jails_dataset, &jname),
+                jail_name,
+                &self.jails_mountpoint,
+                &self.jails_dataset,
                 // jail source
-                &self.source[&jsettings.source],
-                // jail conf
-                &jsettings,
+                &self.source[&jail_settings.source],
+                &jail_settings,
                 &self.jail_conf_defaults,
                 provisioners,
                 &self.noop,
                 volumes,
             );
-            jails.insert(jname.to_string(), jail);
+            jails.insert(jail_name.to_owned(), jail);
         }
         Ok(jails)
     }
