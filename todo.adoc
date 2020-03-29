@@ -17,9 +17,8 @@
 
 === Refactor
 
+* move jail conf template to template module
 * create a struct for zfs snapshots
 * remove dependency on rsync for copying files recursively
 * tests and validation for FreeBSD source
 * refactor 'update_with_diff'
-* move jail conf template to template module
-* change paths represented as strings to Path
