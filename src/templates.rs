@@ -31,6 +31,9 @@ fn prepare_lines(map: &IndexMap<String, JailConfValue>) -> Result<Vec<String>> {
             JailConfValue::Int(v) => {
                 lines.push(format!("{} = {};", key, v));
             }
+            JailConfValue::Path(v) => {
+                lines.push(format!("{} = {};", key, v.display()));
+            }
             JailConfValue::Vec(v) => {
                 for item in v.iter().enumerate() {
                     if item.0 == 0 {
@@ -75,6 +78,7 @@ mod tests {
     use indexmap::indexmap;
     use indoc::indoc;
     use pretty_assertions::assert_eq;
+    use std::path::PathBuf;
 
     #[test]
     fn test_render_jail_conf() {
@@ -90,6 +94,8 @@ mod tests {
                 JailConfValue::String("prison.example".to_string()),
             "allow_set_hostname".to_string() =>
                 JailConfValue::Int(1),
+            "mount.fstab".to_string() =>
+                JailConfValue::Path(PathBuf::from("/etc/fstab.prison")),
             "ip4_addr".to_string() =>
                 JailConfValue::Vec(vec![
                     "lo0|10.11.11.2/32".to_string(),
@@ -110,6 +116,7 @@ mod tests {
                 path = "/jails/prison";
                 host.hostname = "prison.example";
                 allow.set_hostname = 1;
+                mount.fstab = /etc/fstab.prison;
                 ip4.addr = "lo0|10.11.11.2/32";
                 ip4.addr += "lo0|10.23.23.2/32";
             }

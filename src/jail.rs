@@ -15,14 +15,14 @@ use indexmap::{indexmap, IndexMap};
 use log::{debug, info};
 use settings::{JailConfValue, JailSettings};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 #[derive(Clone, Debug)]
 pub struct Jail<'a> {
     conf_defaults: &'a IndexMap<String, JailConfValue>,
     conf_path: String,
-    fstab_path: String,
+    fstab_path: PathBuf,
     mountpoint: String,
     name: String,
     noop: &'a bool,
@@ -86,7 +86,7 @@ impl Jail<'_> {
             settings,
             conf_defaults,
             conf_path: format!("/etc/jail.{}.conf", name),
-            fstab_path: format!("/etc/fstab.{}", name),
+            fstab_path: PathBuf::from(format!("/etc/fstab.{}", name)),
             provisioners,
             noop,
             noop_suffix,
@@ -151,7 +151,9 @@ impl Jail<'_> {
         if Path::new(&self.fstab_path).is_file() {
             info!(
                 "{}: removing fstab: {}{}",
-                &self.name, &self.fstab_path, &self.noop_suffix
+                &self.name,
+                &self.fstab_path.display(),
+                &self.noop_suffix
             );
             if !self.noop {
                 fs::remove_file(&self.fstab_path)?;
@@ -190,7 +192,7 @@ impl Jail<'_> {
         if !&self.volumes.is_empty() {
             extra_conf.insert(
                 "mount.fstab".to_owned(),
-                JailConfValue::String(self.fstab_path.to_owned()),
+                JailConfValue::Path(self.fstab_path.to_owned()),
             );
         }
 
@@ -239,13 +241,18 @@ impl Jail<'_> {
                 let diff = Changeset::new(&current, &rendered, "");
                 info!(
                     "{}: updating {}{}\n{}",
-                    &self.name, &self.fstab_path, &self.noop_suffix, &diff
+                    &self.name,
+                    &self.fstab_path.display(),
+                    &self.noop_suffix,
+                    &diff
                 );
             }
         } else {
             info!(
                 "{}: creating {}{}",
-                &self.name, &self.fstab_path, &self.noop_suffix
+                &self.name,
+                &self.fstab_path.display(),
+                &self.noop_suffix
             );
         }
 
@@ -366,10 +373,10 @@ mod tests {
     use indoc::indoc;
     use lazy_static::lazy_static;
     use pretty_assertions::assert_eq;
-    use settings::Settings;
-    // use simplelog::*;
     use regex::Regex;
     use serial_test::serial;
+    use settings::Settings;
+    // use simplelog::*;
     use std::fs;
     use std::path::Path;
     use std::sync::Once;
@@ -385,8 +392,7 @@ mod tests {
 
         INIT.call_once(|| {
             // enable log messages for debugging
-            // TermLogger::init(LevelFilter::Debug, Config::default(),
-            // TerminalMode::Mixed).unwrap();
+            // TermLogger::init(LevelFilter::Debug, Config::default(), TerminalMode::Mixed).unwrap();
 
             // Initialise
             crate::init(&S).unwrap();

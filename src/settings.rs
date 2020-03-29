@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 use indexmap::IndexMap; // like HashMap but preserves insertion order
 use serde::Deserialize;
 use std::fs;
+use std::path::PathBuf;
 use toml;
 
 use super::Jail;
@@ -17,6 +18,7 @@ pub enum JailConfValue {
     Bool(bool),
     Vec(Vec<String>),
     Int(i32),
+    Path(PathBuf),
 }
 
 #[derive(Clone, Debug, Deserialize)]
