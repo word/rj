@@ -2,8 +2,6 @@
 
 == Doing
 
-* volumes support (fstab.jail)
-
 === Tasks 
 
 * freebsd-update jails
@@ -14,9 +12,6 @@
 * pkg upgrade jails
 * puppet: remove manifest after provision
 * rsync provisioner
-* change paths represented as strings to Path
-* refactor 'update_with_diff'
-* move jail conf template to template module
 
 === Bugs
 
@@ -25,3 +20,6 @@
 * create a struct for zfs snapshots
 * remove dependency on rsync for copying files recursively
 * tests and validation for FreeBSD source
+* refactor 'update_with_diff'
+* move jail conf template to template module
+* change paths represented as strings to Path
