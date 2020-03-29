@@ -7,13 +7,13 @@ use serde::Deserialize;
 use std::fs::copy;
 use std::fs::{set_permissions, Permissions};
 use std::os::unix::prelude::*;
-use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProvFile {
-    source: String,
-    dest: String,
+    source: PathBuf,
+    dest: PathBuf,
     #[serde(default = "default_mode")]
     mode: String,
     #[serde(default = "default_user")]
@@ -38,14 +38,13 @@ impl ProvFile {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
         info!("{}: file provisioner running", jail.name());
 
-        let d = Path::new(&self.dest).strip_prefix("/")?;
-        let full_dest = Path::new(&jail.mountpoint()).join(d);
+        let full_dest = jail.mountpoint().join(&self.dest.strip_prefix("/")?);
 
         // copy the file
         info!(
             "{}: {} -> {}{}",
             jail.name(),
-            &self.source,
+            self.source.display(),
             full_dest.display(),
             jail.noop_suffix(),
         );
@@ -88,20 +87,23 @@ impl ProvFile {
     }
 
     fn validate_source(&self) -> Result<()> {
-        if Path::new(&self.source).is_file() {
+        if self.source.is_file() {
             Ok(())
         } else {
-            bail!("file provisioner, invalid source: {}", &self.source);
+            bail!(
+                "file provisioner, invalid source: {}",
+                &self.source.display()
+            );
         }
     }
 
     fn validate_dest(&self) -> Result<()> {
-        if Path::new(&self.dest).is_absolute() {
+        if self.dest.is_absolute() {
             Ok(())
         } else {
             bail!(
                 "file provisioner, dest path must be absolute: {}",
-                &self.dest
+                &self.dest.display()
             )
         }
     }
@@ -134,7 +136,7 @@ mod tests {
 
         jail.apply()?;
 
-        let path = Path::new(jail.mountpoint()).join("tmp/file.txt");
+        let path = jail.mountpoint().join("tmp/file.txt");
         assert!(path.is_file());
         let metadata = std::fs::metadata(path)?;
         let mode_s = format!("{:o}", metadata.mode());
@@ -154,7 +156,7 @@ mod tests {
 
         jail.apply()?;
         // remove the copied test file
-        let path = Path::new(jail.mountpoint()).join("tmp/file.txt");
+        let path = jail.mountpoint().join("tmp/file.txt");
         assert_eq!(path.is_file(), true);
         fs::remove_file(&path)?;
 
@@ -173,18 +175,18 @@ mod tests {
     #[test]
     fn validate() {
         let mut file = ProvFile {
-            source: "/tmp/whatever123".to_string(),
-            dest: "/tmp/desttest".to_string(),
+            source: PathBuf::from("/tmp/whatever123"),
+            dest: PathBuf::from("/tmp/desttest"),
             mode: "640".to_string(),
             owner: "root".to_string(),
             group: "wheel".to_string(),
         };
         assert!(file.validate().is_err());
-        file.source = "/etc/hosts".to_string();
+        file.source = PathBuf::from("/etc/hosts");
         assert!(file.validate().is_ok());
-        file.dest = "tmp/desttest".to_string();
+        file.dest = PathBuf::from("tmp/desttest");
         assert!(file.validate().is_err());
-        file.dest = "/tmp/desttest".to_string();
+        file.dest = PathBuf::from("/tmp/desttest");
         file.mode = "999".to_string();
         assert!(file.validate().is_err());
         file.mode = "3644".to_string();
