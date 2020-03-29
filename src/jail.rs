@@ -20,19 +20,19 @@ use std::process::Command;
 
 #[derive(Clone, Debug)]
 pub struct Jail<'a> {
-    name: String,
-    mountpoint: String,
-    source: &'a Source,
-    zfs_ds_path: String,
-    zfs_ds: zfs::DataSet,
-    settings: &'a JailSettings,
     conf_defaults: &'a IndexMap<String, JailConfValue>,
     conf_path: String,
     fstab_path: String,
-    provisioners: Vec<&'a Provisioner>,
+    mountpoint: String,
+    name: String,
     noop: &'a bool,
     noop_suffix: String,
+    provisioners: Vec<&'a Provisioner>,
+    settings: &'a JailSettings,
+    source: &'a Source,
     volumes: Vec<&'a Volume>,
+    zfs_ds: zfs::DataSet,
+    zfs_ds_path: String,
 }
 
 impl Jail<'_> {
