@@ -117,7 +117,8 @@ impl Cmd {
 macro_rules! cmd {
     ( $program:expr $(, $arg:expr )* $(,)? ) => {
         {
-            let args: &[String] = &[$( Into::<String>::into($arg) ),*];
+            use std::ffi::OsString;
+            let args: &[OsString] = &[$( Into::<OsString>::into($arg) ),*];
             let mut c = $crate::cmd::Cmd::new($program);
             c.args(args);
             c.exec()

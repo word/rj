@@ -227,7 +227,7 @@ mod tests {
 
         jail.apply()?;
 
-        let testfile_path = format!("{}/tmp/puppet_testfile", &jail.mountpoint());
+        let testfile_path = &jail.mountpoint().join("tmp/puppet_testfile");
         let testfile = fs::read(testfile_path)?;
         let testfile_content = String::from_utf8_lossy(&testfile);
         assert_eq!(&testfile_content, "/root");
@@ -268,7 +268,7 @@ mod tests {
 
         jail.apply()?;
 
-        let testfile_path = format!("{}/tmp/puppet_simple_testfile", &jail.mountpoint());
+        let testfile_path = &jail.mountpoint().join("tmp/puppet_simple_testfile");
         let testfile = fs::read(testfile_path)?;
         let testfile_content = String::from_utf8_lossy(&testfile);
         assert_eq!(&testfile_content, "simple");

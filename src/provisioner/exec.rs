@@ -34,19 +34,20 @@ impl Exec {
             jail.noop_suffix()
         );
 
-        let mut args: Vec<&str> = self.cmd.split(' ').collect();
+        let args: Vec<&str> = self.cmd.split(' ').collect();
 
         match self.exec_mode {
             ExecMode::Jexec => {
-                args.insert(0, jail.name());
                 if !jail.noop() {
-                    Cmd::new("jexec").args(args).stream()?;
+                    Cmd::new("jexec").arg(jail.name()).args(args).stream()?;
                 }
             }
             ExecMode::Chroot => {
-                args.insert(0, jail.mountpoint());
                 if !jail.noop() {
-                    Cmd::new("chroot").args(args).stream()?;
+                    Cmd::new("chroot")
+                        .arg(jail.mountpoint())
+                        .args(args)
+                        .stream()?;
                 }
             }
         }

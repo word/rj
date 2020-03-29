@@ -1,11 +1,12 @@
 use crate::Volume;
 use askama::Template;
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, Template)]
 #[template(path = "fstab", escape = "none")]
 pub struct Fstab<'a> {
     pub volumes: &'a Vec<&'a Volume>,
-    pub jail_mountpoint: &'a String,
+    pub jail_mountpoint: &'a PathBuf,
 }
 
 #[cfg(test)]
@@ -37,7 +38,7 @@ mod tests {
 
         let fstab = Fstab {
             volumes: &vec![&volume1, &volume2],
-            jail_mountpoint: &"/jails/jail".to_owned(),
+            jail_mountpoint: &PathBuf::from("/jails/jail"),
         };
         let rendered = fstab.render()?;
 

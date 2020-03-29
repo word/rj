@@ -23,7 +23,7 @@ pub struct Jail<'a> {
     jail_conf_defaults: &'a IndexMap<String, JailConfValue>,
     jail_conf_path: PathBuf,
     fstab_path: PathBuf,
-    mountpoint: String,
+    mountpoint: PathBuf,
     name: String,
     noop: &'a bool,
     noop_suffix: String,
@@ -40,7 +40,7 @@ impl Jail<'_> {
         &self.name
     }
 
-    pub fn mountpoint(&self) -> &String {
+    pub fn mountpoint(&self) -> &PathBuf {
         &self.mountpoint
     }
 
@@ -74,7 +74,7 @@ impl Jail<'_> {
 
         Jail {
             name: name.to_owned(),
-            mountpoint: format!("{}/{}", jails_mountpoint, name),
+            mountpoint: PathBuf::from(format!("{}/{}", jails_mountpoint, name)),
             source,
             zfs_ds_path: zfs_dataset_path.to_owned(),
             zfs_ds: zfs::DataSet::new(&zfs_dataset_path),
@@ -191,7 +191,7 @@ impl Jail<'_> {
     pub fn configure(&self) -> Result<()> {
         // add any additional config params
         let mut extra_conf = indexmap! {
-            "path".to_owned() => JailConfValue::String(self.mountpoint.to_owned()),
+            "path".to_owned() => JailConfValue::Path(self.mountpoint.to_owned()),
         };
 
         if !&self.volumes.is_empty() {
@@ -427,7 +427,7 @@ mod tests {
     #[test]
     fn mountpoint() {
         let jails = setup_once();
-        assert_eq!(jails["base"].mountpoint, "/jails/base");
+        assert_eq!(jails["base"].mountpoint, PathBuf::from("/jails/base"));
     }
 
     #[test]

@@ -32,7 +32,7 @@ fn prepare_lines(map: &IndexMap<String, JailConfValue>) -> Result<Vec<String>> {
                 lines.push(format!("{} = {};", key, v));
             }
             JailConfValue::Path(v) => {
-                lines.push(format!("{} = {};", key, v.display()));
+                lines.push(format!("{} = \"{}\";", key, v.display()));
             }
             JailConfValue::Vec(v) => {
                 for item in v.iter().enumerate() {
@@ -116,7 +116,7 @@ mod tests {
                 path = "/jails/prison";
                 host.hostname = "prison.example";
                 allow.set_hostname = 1;
-                mount.fstab = /etc/fstab.prison;
+                mount.fstab = "/etc/fstab.prison";
                 ip4.addr = "lo0|10.11.11.2/32";
                 ip4.addr += "lo0|10.23.23.2/32";
             }

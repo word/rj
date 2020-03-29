@@ -29,7 +29,7 @@ impl FreeBSD {
                 "{}: fetching and extracting {} to {}{}",
                 &jail.name(),
                 &dist,
-                &jail.mountpoint(),
+                &jail.mountpoint().display(),
                 &jail.noop_suffix(),
             );
 

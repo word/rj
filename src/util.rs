@@ -7,7 +7,7 @@ use tar::Archive;
 use xz2::read::XzDecoder;
 
 // fetch an xz archive using http and extract it to a destination directory
-pub fn fetch_extract(url: &str, dest: &str) -> Result<()> {
+pub fn fetch_extract(url: &str, dest: &Path) -> Result<()> {
     let response = reqwest::get(url)?;
     let decompressor = XzDecoder::new(response);
     let mut archive = Archive::new(decompressor);
@@ -24,7 +24,7 @@ pub fn fetch_extract(url: &str, dest: &str) -> Result<()> {
     // the destination.
     for entry in archive.entries()? {
         let mut entry = entry?;
-        let file_dest = Path::new(dest).join(entry.path()?);
+        let file_dest = dest.join(entry.path()?);
 
         // Check if the archived file is a link (hard and soft)
         if entry.header().link_name().unwrap().is_some() {

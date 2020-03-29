@@ -3,30 +3,34 @@ use crate::errors::CmdError;
 use anyhow::Result;
 use log::debug;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 pub struct Pkg {
     name: String,
-    chroot: String,
+    chroot: PathBuf,
     env: HashMap<String, String>,
 }
 
 impl Pkg {
-    pub fn new(name: &str, chroot: &str) -> Pkg {
+    pub fn new(name: &str, chroot: &PathBuf) -> Pkg {
         let mut env = HashMap::new();
         env.insert("ASSUME_ALWAYS_YES".to_string(), "yes".to_string());
         env.insert("DEFAULT_ALWAYS_YES".to_string(), "yes".to_string());
 
         Pkg {
             name: name.to_string(),
-            chroot: chroot.to_string(),
+            chroot: chroot.to_owned(),
             env: env,
         }
     }
 
     pub fn install(&self) -> Result<()> {
-        debug!("pkg install {} in {}", &self.name, &self.chroot);
+        debug!("pkg install {} in {}", &self.name, &self.chroot.display());
         Cmd::new("pkg")
-            .args(&["-c", &self.chroot, "install", &self.name])
+            .arg("-c")
+            .arg(&self.chroot)
+            .arg("install")
+            .arg(&self.name)
             .envs(&self.env)
             .exec()
     }
@@ -35,10 +39,14 @@ impl Pkg {
     pub fn is_installed(&self) -> Result<bool> {
         debug!(
             "checking if pkg {} is installed in {}",
-            &self.name, &self.chroot
+            &self.name,
+            &self.chroot.display()
         );
         let result = Cmd::new("pkg")
-            .args(&["-c", &self.chroot, "info", &self.name])
+            .arg("-c")
+            .arg(&self.chroot)
+            .arg("info")
+            .arg(&self.name)
             .envs(&self.env)
             .exec();
 
