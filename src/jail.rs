@@ -20,8 +20,8 @@ use std::process::Command;
 
 #[derive(Clone, Debug)]
 pub struct Jail<'a> {
-    conf_defaults: &'a IndexMap<String, JailConfValue>,
-    conf_path: String,
+    jail_conf_defaults: &'a IndexMap<String, JailConfValue>,
+    jail_conf_path: String,
     fstab_path: PathBuf,
     mountpoint: String,
     name: String,
@@ -60,7 +60,7 @@ impl Jail<'_> {
         ds_path: &str,
         source: &'a Source,
         settings: &'a JailSettings,
-        conf_defaults: &'a IndexMap<String, JailConfValue>,
+        jail_conf_defaults: &'a IndexMap<String, JailConfValue>,
         provisioners: Vec<&'a Provisioner>,
         noop: &'a bool,
         volumes: Vec<&'a Volume>,
@@ -78,19 +78,19 @@ impl Jail<'_> {
         }
 
         Jail {
-            name: name.clone(),
-            mountpoint: format!("/{}", components.join("/")),
-            source,
-            zfs_ds_path: ds_path.to_string(),
-            zfs_ds: zfs::DataSet::new(ds_path),
-            settings,
-            conf_defaults,
-            conf_path: format!("/etc/jail.{}.conf", name),
             fstab_path: PathBuf::from(format!("/etc/fstab.{}", name)),
-            provisioners,
+            jail_conf_defaults,
+            jail_conf_path: format!("/etc/jail.{}.conf", name),
+            mountpoint: format!("/{}", components.join("/")),
+            name: name.clone(),
             noop,
             noop_suffix,
+            provisioners,
+            settings,
+            source,
             volumes,
+            zfs_ds: zfs::DataSet::new(ds_path),
+            zfs_ds_path: ds_path.to_string(),
         }
     }
 
@@ -137,13 +137,13 @@ impl Jail<'_> {
         }
 
         // remove jail config file
-        if Path::new(&self.conf_path).is_file() {
+        if Path::new(&self.jail_conf_path).is_file() {
             info!(
                 "{}: removing config file: {}{}",
-                &self.name, &self.conf_path, &self.noop_suffix
+                &self.name, &self.jail_conf_path, &self.noop_suffix
             );
             if !self.noop {
-                fs::remove_file(&self.conf_path)?;
+                fs::remove_file(&self.jail_conf_path)?;
             }
         }
 
@@ -198,30 +198,30 @@ impl Jail<'_> {
 
         let rendered = templates::render_jail_conf(
             &self.name,
-            &self.conf_defaults,
+            &self.jail_conf_defaults,
             &self.settings.conf,
             &extra_conf,
         )?;
 
         // FIXME - DRY this up
-        if Path::is_file(Path::new(&self.conf_path)) {
-            let current = fs::read_to_string(&self.conf_path)?;
+        if Path::is_file(Path::new(&self.jail_conf_path)) {
+            let current = fs::read_to_string(&self.jail_conf_path)?;
             if current != rendered {
                 let diff = Changeset::new(&current, &rendered, "");
                 info!(
                     "{}: updating {}{}\n{}",
-                    &self.name, &self.conf_path, &self.noop_suffix, &diff
+                    &self.name, &self.jail_conf_path, &self.noop_suffix, &diff
                 );
             }
         } else {
             info!(
                 "{}: creating {}{}",
-                &self.name, &self.conf_path, &self.noop_suffix
+                &self.name, &self.jail_conf_path, &self.noop_suffix
             );
         }
 
         if !self.noop {
-            fs::write(&self.conf_path, &rendered)?;
+            fs::write(&self.jail_conf_path, &rendered)?;
         }
 
         Ok(())
@@ -513,7 +513,7 @@ mod tests {
         jail2.apply()?;
         assert!(jail2.is_enabled()?);
         // Config changes
-        fs::write(&jail2.conf_path, "local change")?;
+        fs::write(&jail2.jail_conf_path, "local change")?;
         jail2.apply()?;
         assert_eq!(ok_jail_conf, fs::read_to_string(jail2_conf_path)?);
 
