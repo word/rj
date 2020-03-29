@@ -12,6 +12,7 @@
 * pkg upgrade jails
 * puppet: remove manifest after provision
 * rsync provisioner
+* check provisioner jail running requirement
 
 === Bugs
 
