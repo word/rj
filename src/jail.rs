@@ -21,7 +21,7 @@ use std::process::Command;
 #[derive(Clone, Debug)]
 pub struct Jail<'a> {
     jail_conf_defaults: &'a IndexMap<String, JailConfValue>,
-    jail_conf_path: String,
+    jail_conf_path: PathBuf,
     fstab_path: PathBuf,
     mountpoint: String,
     name: String,
@@ -85,7 +85,7 @@ impl Jail<'_> {
             zfs_ds: zfs::DataSet::new(ds_path),
             settings,
             jail_conf_defaults,
-            jail_conf_path: format!("/etc/jail.{}.conf", name),
+            jail_conf_path: PathBuf::from(format!("/etc/jail.{}.conf", name)),
             fstab_path: PathBuf::from(format!("/etc/fstab.{}", name)),
             provisioners,
             noop,
@@ -140,7 +140,9 @@ impl Jail<'_> {
         if Path::new(&self.jail_conf_path).is_file() {
             info!(
                 "{}: removing config file: {}{}",
-                &self.name, &self.jail_conf_path, &self.noop_suffix
+                &self.name,
+                &self.jail_conf_path.display(),
+                &self.noop_suffix
             );
             if !self.noop {
                 fs::remove_file(&self.jail_conf_path)?;
@@ -204,19 +206,24 @@ impl Jail<'_> {
         )?;
 
         // FIXME - DRY this up
-        if Path::is_file(Path::new(&self.jail_conf_path)) {
+        if self.jail_conf_path.is_file() {
             let current = fs::read_to_string(&self.jail_conf_path)?;
             if current != rendered {
                 let diff = Changeset::new(&current, &rendered, "");
                 info!(
                     "{}: updating {}{}\n{}",
-                    &self.name, &self.jail_conf_path, &self.noop_suffix, &diff
+                    &self.name,
+                    &self.jail_conf_path.display(),
+                    &self.noop_suffix,
+                    &diff
                 );
             }
         } else {
             info!(
                 "{}: creating {}{}",
-                &self.name, &self.jail_conf_path, &self.noop_suffix
+                &self.name,
+                &self.jail_conf_path.display(),
+                &self.noop_suffix
             );
         }
 
