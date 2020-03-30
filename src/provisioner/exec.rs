@@ -67,7 +67,6 @@ mod tests {
     use crate::settings::Settings;
     use serial_test::serial;
     use std::fs;
-    use std::path::Path;
 
     #[test]
     #[serial]
@@ -115,7 +114,7 @@ mod tests {
 
         jail.apply()?;
 
-        let path = Path::new(jail.mountpoint()).join("tmp/exec_chroot_test");
+        let path = jail.mountpoint().join("tmp/exec_chroot_test");
         assert!(path.is_file());
 
         jail.destroy()?;
