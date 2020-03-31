@@ -16,8 +16,6 @@
 
 === Bugs
 
-* volumes need to be optional
-
 === Refactor
 
 * create a struct for zfs snapshots

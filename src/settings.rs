@@ -44,7 +44,9 @@ pub struct Settings {
     pub jail_conf_defaults: IndexMap<String, JailConfValue>,
     pub jail: IndexMap<String, JailSettings>,
     pub source: IndexMap<String, Source>,
+    #[serde(default)]
     pub provisioner: IndexMap<String, Provisioner>,
+    #[serde(default)]
     pub volume: IndexMap<String, Volume>,
     #[serde(default)] // false
     pub noop: bool,
