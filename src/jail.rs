@@ -5,7 +5,7 @@ use crate::provisioner::Provisioner;
 use crate::settings;
 use crate::source::Source;
 use crate::template::fstab::Fstab;
-use crate::templates;
+use crate::template::jail_conf::JailConf;
 use crate::volumes::Volume;
 use crate::zfs;
 use anyhow::Result;
@@ -201,12 +201,13 @@ impl Jail<'_> {
             );
         }
 
-        let rendered = templates::render_jail_conf(
+        let jail_conf_template = JailConf::new(
             &self.name,
             &self.jail_conf_defaults,
             &self.jail_settings.conf,
             &extra_conf,
         )?;
+        let rendered = jail_conf_template.render()?;
 
         // FIXME - DRY this up
         if self.jail_conf_path.is_file() {

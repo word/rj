@@ -15,7 +15,6 @@ mod provisioner;
 mod settings;
 mod source;
 mod template;
-mod templates;
 mod util;
 mod volumes;
 mod zfs;
