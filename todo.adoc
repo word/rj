@@ -5,20 +5,21 @@
 === Tasks 
 
 * freebsd-update jails
-* ability to split configuration into 'include' snippets
+* ability to split configuration file into 'include' snippets
 * detect if provisioner has made changes
 * settings: validate jail conf sections (known fileds, types)
 * jail resource limits
 * pkg upgrade jails
 * puppet: remove manifest after provision
 * rsync provisioner
-* check provisioner jail running requirement
+* check when provisioner requires jail to be running
 
 === Bugs
 
+* volumes need to be optional
+
 === Refactor
 
-* move jail conf template to template module
 * create a struct for zfs snapshots
 * remove dependency on rsync for copying files recursively
 * tests and validation for FreeBSD source
