@@ -9,7 +9,7 @@ use serde::Deserialize;
 pub struct Exec {
     pub cmd: String,
     #[serde(default = "default_mode")]
-    pub exec_mode: ExecMode,
+    pub mode: ExecMode,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -36,7 +36,7 @@ impl Exec {
 
         let args: Vec<&str> = self.cmd.split(' ').collect();
 
-        match self.exec_mode {
+        match self.mode {
             ExecMode::Jexec => {
                 if !jail.noop() {
                     Cmd::new("jexec").arg(jail.name()).args(args).stream()?;

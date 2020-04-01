@@ -5,15 +5,11 @@
 === Tasks 
 
 * check that we're running as root
-* freebsd-update jails
-* ability to split configuration file into 'include' snippets
-* detect if provisioner has made changes
+* set name on provisioners and sources
 * settings: validate jail conf sections (known fileds, types)
-* jail resource limits
-* pkg upgrade jails
 * puppet: remove manifest after provision
-* rsync provisioner
-* check when provisioner requires jail to be running
+* start jail using the jail command rather than service
+  * so a boot disabled jail can still be started as a one off
 
 === Bugs
 
@@ -25,3 +21,13 @@
 * remove dependency on rsync for copying files recursively
 * tests and validation for FreeBSD source
 * refactor 'update_with_diff'
+
+==== Nice to have
+
+* flag provisioners that require jail to be running and handle when it's not the case.
+* rsync provisioner
+* pkg upgrade jails
+* freebsd-update jails
+* ability to split configuration file into 'include' snippets
+* detect if provisioner has made changes
+* jail resource limits

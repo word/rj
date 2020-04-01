@@ -34,7 +34,7 @@ cmd = "touch /tmp/exec_test"
 
 [provisioner.exec_chroot]
 type = "exec"
-exec_mode = "chroot"
+mode = "chroot"
 cmd = "touch /tmp/exec_chroot_test"
 
 [provisioner.file]
