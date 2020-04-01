@@ -4,6 +4,7 @@
 
 === Tasks 
 
+* check that we're running as root
 * freebsd-update jails
 * ability to split configuration file into 'include' snippets
 * detect if provisioner has made changes
@@ -15,6 +16,8 @@
 * check when provisioner requires jail to be running
 
 === Bugs
+
+ * Cannot remove a jail with invalid jail.conf (fails on stopping)
 
 === Refactor
 

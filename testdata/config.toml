@@ -80,6 +80,7 @@ options = "ro"
 source = "freebsd12"
 provisioners = ["resolv_conf" ]
 start = false
+enable = false
 
 [jail.test1]
 source = "base"

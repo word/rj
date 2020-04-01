@@ -107,10 +107,14 @@ impl Jail<'_> {
         if !self.volumes.is_empty() {
             self.write_fstab()?;
         }
-        if self.jail_settings.start {
+
+        if self.jail_settings.enable {
             if !(self.is_enabled()?) {
                 self.enable()?
             }
+        }
+
+        if self.jail_settings.start {
             if !(self.is_running()?) {
                 self.start()?
             }
@@ -556,7 +560,7 @@ mod tests {
         let jails_noop = s_noop.to_jails()?;
         let jail_noop = &jails_noop["test2"];
 
-        // set up same jail without noop (so we can create one for testing)
+        // set up same jail without noop (so we can create one for testing destroy)
         let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
         let jail = &jails["test2"];

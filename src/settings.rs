@@ -27,6 +27,8 @@ pub struct JailSettings {
     pub source: String,
     #[serde(default = "default_true")]
     pub start: bool,
+    #[serde(default = "default_true")]
+    pub enable: bool,
     #[serde(default)]
     pub conf: IndexMap<String, JailConfValue>,
     #[serde(default)]
