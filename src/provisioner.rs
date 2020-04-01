@@ -39,6 +39,15 @@ impl Provisioner {
             Provisioner::Puppet(p) => p.validate(),
         }
     }
+
+    pub fn name(&mut self, name: &str) {
+        match self {
+            Provisioner::File(p) => p.name = name.to_owned(),
+            Provisioner::Exec(p) => p.name = name.to_owned(),
+            Provisioner::Test(p) => p.name = name.to_owned(),
+            Provisioner::Puppet(p) => p.name = name.to_owned(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -50,6 +59,9 @@ mod tests {
     fn provision() -> Result<()> {
         let s = Settings::new("testdata/config.toml", false)?;
         let jails = s.to_jails()?;
-        Provisioner::Test(test::Test).provision(&jails["test1"])
+        Provisioner::Test(test::Test {
+            name: "test".to_owned(),
+        })
+        .provision(&jails["test1"])
     }
 }

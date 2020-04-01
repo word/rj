@@ -12,6 +12,8 @@ use std::path::PathBuf;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProvFile {
+    #[serde(skip)] // set in Settings based on the IndexMap key
+    pub name: String,
     source: PathBuf,
     dest: PathBuf,
     #[serde(default = "default_mode")]
@@ -175,6 +177,7 @@ mod tests {
     #[test]
     fn validate() {
         let mut file = ProvFile {
+            name: "test".to_owned(),
             source: PathBuf::from("/tmp/whatever123"),
             dest: PathBuf::from("/tmp/desttest"),
             mode: "640".to_string(),

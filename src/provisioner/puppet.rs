@@ -14,6 +14,8 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Puppet {
+    #[serde(skip)] // set in Settings based on the IndexMap key
+    pub name: String,
     pub path: PathBuf,
     #[serde(default = "default_manifest_file")]
     pub manifest_file: PathBuf,
@@ -272,6 +274,7 @@ mod tests {
     #[test]
     fn validate() {
         let mut puppet = Puppet {
+            name: "test".to_owned(),
             path: PathBuf::from("testdata/provisioners/puppet"),
             manifest_file: PathBuf::from("manifests/site.pp"),
             module_path: Some("site-modules:modules".to_string()),

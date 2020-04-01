@@ -70,8 +70,10 @@ impl Settings {
             source.validate()?;
         }
 
-        // Validate provisioners
-        for (_, provisioner) in settings.provisioner.iter() {
+        for (prov_name, provisioner) in settings.provisioner.iter_mut() {
+            // Set provisioner name
+            provisioner.name(prov_name);
+            // Validate provisioner
             provisioner.validate()?;
         }
 
@@ -106,7 +108,7 @@ impl Settings {
                 volumes.push(&self.volume[v]);
             }
 
-            // make jail
+            // make jails
             let jail = Jail::new(
                 jail_name,
                 &self.jails_mountpoint,
@@ -171,11 +173,21 @@ mod tests {
         // test provisioners
 
         if let Provisioner::Exec(prov) = &s.provisioner["exec"] {
+            assert_eq!(prov.name, "exec".to_string());
             assert_eq!(prov.cmd, "touch /tmp/exec_test".to_string());
         }
 
         if let Provisioner::Puppet(prov) = &s.provisioner["puppet"] {
+            assert_eq!(prov.name, "puppet".to_string());
             assert_eq!(prov.path, PathBuf::from("testdata/provisioners/puppet"));
+        }
+
+        if let Provisioner::Puppet(prov) = &s.provisioner["puppet_simple"] {
+            assert_eq!(prov.name, "puppet_simple".to_string());
+            assert_eq!(
+                prov.path,
+                PathBuf::from("testdata/provisioners/puppet_simple")
+            );
         }
 
         // test sources

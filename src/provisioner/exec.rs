@@ -7,6 +7,8 @@ use serde::Deserialize;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Exec {
+    #[serde(skip)] // set in Settings based on the IndexMap key
+    pub name: String,
     pub cmd: String,
     #[serde(default = "default_mode")]
     pub mode: ExecMode,
