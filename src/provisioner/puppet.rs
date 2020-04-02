@@ -49,7 +49,7 @@ fn default_extra_args() -> Vec<String> {
 
 impl Puppet {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
-        info!("{}: puppet provisioner running", jail.name());
+        info!("{}: running puppet provisioner: {}", jail.name(), self.name);
 
         let dest_path = jail.mountpoint().join(self.tmp_dir.strip_prefix("/")?);
         self.install_puppet(jail)?;
@@ -146,7 +146,7 @@ impl Puppet {
     }
 
     pub fn validate(&self) -> Result<()> {
-        debug!("validating puppet provisioner");
+        debug!("validating puppet provisioner: {}", self.name);
         self.validate_path()?;
         self.validate_manifest_file()?;
         self.validate_hiera_config()?;
@@ -159,8 +159,9 @@ impl Puppet {
             Ok(())
         } else {
             bail!(
-                "puppet provisioner, path: {} doesn't exist or is not a directory",
-                &self.path.display()
+                "puppet provisioner {}, path: {} doesn't exist or is not a directory",
+                self.name,
+                self.path.display()
             )
         }
     }
@@ -171,7 +172,8 @@ impl Puppet {
             Ok(())
         } else {
             bail!(
-                "puppet provisioner, manifest file doesn't exist in: {} or is not a file",
+                "puppet provisioner {}, manifest file doesn't exist in: {} or is not a file",
+                self.name,
                 manifest_file_path.display()
             )
         }
@@ -184,7 +186,8 @@ impl Puppet {
                 return Ok(());
             } else {
                 bail!(
-                    "puppet provisioner, hiera config file doesn't exist in: {} or is not a file",
+                    "puppet provisioner {}, hiera config file doesn't exist in: {} or is not a file",
+                    self.name,
                     hiera_config_path.display()
                 )
             }
@@ -198,8 +201,9 @@ impl Puppet {
             Ok(())
         } else {
             bail!(
-                "puppet provisioner, puppet version: {} is not supported",
-                &self.puppet_version
+                "puppet provisioner {}, puppet version: {} is not supported",
+                self.name,
+                self.puppet_version
             );
         }
     }

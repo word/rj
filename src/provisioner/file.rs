@@ -38,7 +38,7 @@ fn default_mode() -> String {
 
 impl ProvFile {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
-        info!("{}: file provisioner running", jail.name());
+        info!("{}: running file provisioner: {}", jail.name(), self.name);
 
         let full_dest = jail.mountpoint().join(&self.dest.strip_prefix("/")?);
 
@@ -67,7 +67,7 @@ impl ProvFile {
         }
 
         // set ownership
-        let user_group = format!("{}:{}", &self.owner, &self.group);
+        let user_group = format!("{}:{}", self.owner, self.group);
         debug!(
             "{}: user:group -> {}{}",
             jail.name(),
@@ -82,7 +82,7 @@ impl ProvFile {
     }
 
     pub fn validate(&self) -> Result<()> {
-        debug!("validating file provisioner");
+        debug!("validating file provisioner: {}", self.name);
         self.validate_source()?;
         self.validate_dest()?;
         self.validate_mode()
@@ -93,8 +93,9 @@ impl ProvFile {
             Ok(())
         } else {
             bail!(
-                "file provisioner, invalid source: {}",
-                &self.source.display()
+                "file provisioner {}, invalid source: {}",
+                self.name,
+                self.source.display()
             );
         }
     }
@@ -104,8 +105,9 @@ impl ProvFile {
             Ok(())
         } else {
             bail!(
-                "file provisioner, dest path must be absolute: {}",
-                &self.dest.display()
+                "file provisioner {}, dest path must be absolute: {}",
+                self.name,
+                self.dest.display()
             )
         }
     }
@@ -115,7 +117,11 @@ impl ProvFile {
         if re.is_match(&self.mode) {
             Ok(())
         } else {
-            bail!("file provisioner, invalid file mode: {}", &self.mode)
+            bail!(
+                "file provisioner {}, invalid file mode: {}",
+                self.name,
+                self.mode
+            )
         }
     }
 }

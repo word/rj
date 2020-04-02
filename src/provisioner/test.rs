@@ -14,12 +14,12 @@ pub struct Test {
 
 impl Test {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
-        info!("{}: test provisioner running", jail.name());
+        info!("{}: running test provisioner: {}", jail.name(), self.name);
         Ok(())
     }
 
     pub fn validate(&self) -> Result<()> {
-        info!("Validating test provisioner");
+        info!("Validating test provisioner: {}", self.name);
         Ok(())
     }
 }

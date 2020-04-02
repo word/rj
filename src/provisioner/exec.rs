@@ -28,11 +28,11 @@ fn default_mode() -> ExecMode {
 
 impl Exec {
     pub fn provision(&self, jail: &Jail) -> Result<()> {
-        info!("{}: exec provisioner running", jail.name());
+        info!("{}: running exec provisioner: {}", jail.name(), self.name);
         info!(
             "{}: running command: {}{}",
             jail.name(),
-            &self.cmd,
+            self.cmd,
             jail.noop_suffix()
         );
 
@@ -57,7 +57,7 @@ impl Exec {
     }
 
     pub fn validate(&self) -> Result<()> {
-        debug!("validating exec provisioner");
+        debug!("validating exec provisioner: {}", self.name);
         Ok(())
     }
 }
