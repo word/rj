@@ -65,14 +65,16 @@ impl Settings {
 
         settings.noop = noop;
 
-        // Validate sources
-        for (_, source) in settings.source.iter() {
+        for (s_name, source) in settings.source.iter_mut() {
+            // Set source name
+            source.name(s_name);
+            // Validate source
             source.validate()?;
         }
 
-        for (prov_name, provisioner) in settings.provisioner.iter_mut() {
+        for (p_name, provisioner) in settings.provisioner.iter_mut() {
             // Set provisioner name
-            provisioner.name(prov_name);
+            provisioner.name(p_name);
             // Validate provisioner
             provisioner.validate()?;
         }
@@ -193,10 +195,12 @@ mod tests {
         // test sources
 
         if let Source::FreeBSD(src) = &s.source["freebsd12"] {
+            assert_eq!(src.name, "freebsd12".to_string());
             assert_eq!(src.mirror, "ftp.uk.freebsd.org".to_string());
         }
 
         if let Source::ZfsClone(src) = &s.source["base"] {
+            assert_eq!(src.name, "base".to_string());
             assert_eq!(src.path, PathBuf::from("zroot/jails/base"));
         }
 

@@ -7,6 +7,8 @@ use serde::Deserialize;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FreeBSD {
+    #[serde(skip)] // set in Settings based on the IndexMap key
+    pub name: String,
     pub release: String,
     pub mirror: String,
     pub dists: Vec<String>,
@@ -15,9 +17,9 @@ pub struct FreeBSD {
 impl FreeBSD {
     pub fn install(&self, jail: &Jail) -> Result<()> {
         info!(
-            "{}: installing FreeBSD: {}{}",
+            "{}: installing FreeBSD from source: {}{}",
             &jail.name(),
-            &self.release,
+            self.name,
             &jail.noop_suffix()
         );
         if !jail.noop() {
@@ -45,7 +47,7 @@ impl FreeBSD {
     }
 
     pub fn validate(&self) -> Result<()> {
-        debug!("Validating FreeBSD source");
+        debug!("Validating FreeBSD source: {}", self.name);
         Ok(())
     }
 }

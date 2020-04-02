@@ -8,6 +8,8 @@ use std::path::PathBuf;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ZfsClone {
+    #[serde(skip)] // set in Settings based on the IndexMap key
+    pub name: String,
     pub path: PathBuf,
 }
 
@@ -19,9 +21,10 @@ impl ZfsClone {
         ensure!(
             src_dataset.exists()?,
             format!(
-                "{}: source dataset {} doesn't exist",
+                "{}: dataset {} doesn't exist in clone source: {}",
                 &jail.name(),
-                &self.path.display()
+                &self.path.display(),
+                self.name,
             ),
         );
 
@@ -51,7 +54,7 @@ impl ZfsClone {
     }
 
     pub fn validate(&self) -> Result<()> {
-        debug!("Validating zfs clone source");
+        debug!("Validating zfs clone source: {}", self.name);
         Ok(())
     }
 }
@@ -82,6 +85,7 @@ mod tests {
         let source_ds = DataSet::new(Path::new("zroot/rjtest_clone"));
 
         let clone_source = ZfsClone {
+            name: "test".to_owned(),
             path: PathBuf::from("zroot/rjtest_clone"),
         };
 
@@ -90,7 +94,8 @@ mod tests {
         let err = clone_source.install(jail).unwrap_err();
         assert_eq!(
             err.downcast::<String>().unwrap(),
-            "clone_test: source dataset zroot/rjtest_clone doesn't exist".to_string()
+            "clone_test: dataset zroot/rjtest_clone doesn't exist in clone source: test"
+                .to_string()
         );
 
         source_ds.create()?;

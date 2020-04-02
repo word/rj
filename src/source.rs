@@ -28,4 +28,11 @@ impl Source {
             Source::ZfsClone(s) => s.validate(),
         }
     }
+
+    pub fn name(&mut self, name: &str) {
+        match self {
+            Source::FreeBSD(s) => s.name = name.to_owned(),
+            Source::ZfsClone(s) => s.name = name.to_owned(),
+        }
+    }
 }

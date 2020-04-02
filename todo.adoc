@@ -5,9 +5,8 @@
 === Tasks 
 
 * check that we're running as root
-* set name on provisioners and sources
-* settings: validate jail conf sections (known fileds, types)
 * puppet: remove manifest after provision
+* settings: validate jail conf sections (known fileds, types)
 * start jail using the jail command rather than service
   * so a boot disabled jail can still be started as a one off
 
