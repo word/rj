@@ -333,45 +333,31 @@ impl Jail<'_> {
     pub fn provision(&self) -> Result<()> {
         if self.provisioners.is_empty() {
             debug!("{}: no provisioners configured", &self.name);
-            // make a ready sanp first time round even if there are no provisioners.  We're assuming the jail is ready as it is.
-            if self.zfs_ds.last_snap("ready")?.is_none() {
-                info!(
-                    "{}: creating 'ready' snapshot{}",
-                    &self.name, &self.noop_suffix
-                );
-                if !self.noop {
-                    self.zfs_ds.snap_with_time("ready")?;
-                }
-            }
+            // make a ready snap first time round even if there are no provisioners.  We're assuming the jail is ready as it is.
+            self.snap("ready")?;
             return Ok(());
         }
 
-        info!(
-            "{}: creating 'pre-provision' snapshot{}",
-            &self.name, &self.noop_suffix
-        );
-
-        if !self.noop {
-            self.zfs_ds.snap_with_time("pre-provision")?;
-        }
+        self.snap("pre-provision")?;
 
         info!("{}: provisioning{}", &self.name, &self.noop_suffix);
-
-        // Only run provisioners if the jail exists. Otherwise run the
-        // provisioners even if noop is set. Provisioners implement noop
-        // themselves.
         if self.exists()? {
             for p in self.provisioners.iter() {
+                // provisioners implement noop themselves
                 p.provision(&self)?;
             }
         }
 
+        self.snap("ready")
+    }
+
+    fn snap(&self, snap_name: &str) -> Result<()> {
         info!(
-            "{}: creating 'ready' snapshot{}",
-            &self.name, &self.noop_suffix
+            "{}: creating '{}' snapshot{}",
+            &self.name, snap_name, &self.noop_suffix
         );
         if !self.noop {
-            self.zfs_ds.snap_with_time("ready")?;
+            self.zfs_ds.snap_with_time(snap_name)?;
         }
         Ok(())
     }
