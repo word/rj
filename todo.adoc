@@ -4,6 +4,8 @@
 
 === Tasks 
 
+* ability to run provisioners before starting jail
+* add 'host' mode to exec provisioner to execute on the jail host
 * check that we're running as root
 * puppet: remove manifest after provision
 * settings: validate jail conf sections (known fileds, types)
