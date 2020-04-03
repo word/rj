@@ -35,6 +35,8 @@ pub struct JailSettings {
     pub provisioners: Vec<String>,
     #[serde(default)]
     pub volumes: Vec<String>,
+    #[serde(default)]
+    pub stop_after: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]

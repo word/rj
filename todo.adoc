@@ -4,8 +4,6 @@
 
 === Tasks 
 
-* ability to run provisioners before starting jail
-* add 'host' mode to exec provisioner to execute on the jail host
 * check that we're running as root
 * puppet: remove manifest after provision
 * settings: validate jail conf sections (known fileds, types)
@@ -18,13 +16,16 @@
 
 === Refactor
 
+* rename 'enabled' to something better (maybe 'on_boot')
 * Dry up provisioner/source enums using traits
 * create a struct for zfs snapshots
 * remove dependency on rsync for copying files recursively
 * tests and validation for FreeBSD source
 * refactor 'update_with_diff'
+* jail state changes test are naive
+* better way to deal with jail state changes
 
-==== Nice to have
+=== Nice to have
 
 * flag provisioners that require jail to be running and handle when it's not the case.
 * rsync provisioner
@@ -35,3 +36,8 @@
 * jail resource limits
 * make config more portable between machines
   * handle networking (jail IP changes)
+
+=== Maybe
+
+* ability to run provisioners before starting jail
+* add 'host' mode to exec provisioner to execute on the jail host

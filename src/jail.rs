@@ -103,7 +103,10 @@ impl Jail<'_> {
         if !self.exists()? {
             self.install()?;
         }
+
         self.configure()?;
+
+        // FIXME - what if all volumes are removed?
         if !self.volumes.is_empty() {
             self.write_fstab()?;
         }
@@ -112,17 +115,31 @@ impl Jail<'_> {
             if !(self.is_enabled()?) {
                 self.enable()?
             }
+        } else {
+            if self.is_enabled()? {
+                self.disable()?
+            }
         }
 
         if self.jail_settings.start {
             if !(self.is_running()?) {
                 self.start()?
             }
+        } else {
+            if self.is_running()? {
+                self.stop()?
+            }
         }
 
         // Only provision is not already provisioned or if previous provisioning attempt did not succeed.
         if self.zfs_ds.last_snap("ready")?.is_none() {
             self.provision()?;
+        }
+
+        if self.jail_settings.stop_after {
+            if self.is_running()? {
+                self.stop()?;
+            }
         }
 
         Ok(())
@@ -405,12 +422,14 @@ mod tests {
             if jails["test2"].exists().unwrap() {
                 jails["test2"].destroy().unwrap();
             }
-
-            if !(jails["base"].exists().unwrap()) {
-                jails["base"].apply().unwrap();
+            if jails["stopped"].exists().unwrap() {
+                jails["stopped"].destroy().unwrap();
             }
+
+            jails["base"].apply().unwrap();
             jails["test1"].apply().unwrap();
             jails["test2"].apply().unwrap();
+            jails["stopped"].apply().unwrap();
         });
         jails
     }
@@ -573,11 +592,30 @@ mod tests {
     }
 
     #[test]
-    fn base_disabled() -> Result<()> {
+    fn stop_after() -> Result<()> {
         let jails = setup_once();
         let basejail = &jails["base"];
         assert_eq!(basejail.is_enabled().unwrap(), false);
         assert_eq!(basejail.is_running().unwrap(), false);
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn stopped() -> Result<()> {
+        let jails = setup_once();
+        let jail = &jails["stopped"];
+        // should be disabled and stopped
+        assert_eq!(jail.is_enabled().unwrap(), false);
+        assert_eq!(jail.is_running().unwrap(), false);
+
+        // enable and start the jail
+        jail.enable()?;
+        jail.start()?;
+        jail.apply()?;
+        // the apply should disable and stop it
+        assert_eq!(jail.is_enabled().unwrap(), false);
+        assert_eq!(jail.is_running().unwrap(), false);
         Ok(())
     }
 
