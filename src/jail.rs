@@ -12,7 +12,7 @@ use anyhow::Result;
 use askama::Template;
 use difference::Changeset;
 use indexmap::{indexmap, IndexMap};
-use log::{debug, info};
+use log::info;
 use settings::{JailConfValue, JailSettings};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -131,16 +131,7 @@ impl Jail<'_> {
             }
         }
 
-        // Only provision is not already provisioned or if previous provisioning attempt did not succeed.
-        if self.zfs_ds.last_snap("ready")?.is_none() {
-            self.provision()?;
-        }
-
-        if self.jail_settings.stop_after {
-            if self.is_running()? {
-                self.stop()?;
-            }
-        }
+        self.provision()?;
 
         Ok(())
     }
@@ -348,16 +339,16 @@ impl Jail<'_> {
     }
 
     pub fn provision(&self) -> Result<()> {
-        if self.provisioners.is_empty() {
-            debug!("{}: no provisioners configured", &self.name);
-            // make a ready snap first time round even if there are no provisioners.  We're assuming the jail is ready as it is.
-            self.snap("ready")?;
-            return Ok(());
+        if !self.provisioners.is_empty() {
+            self.snap("pre-provision")?;
+
+            if !self.is_running()? {
+                self.start()?;
+            }
         }
 
-        self.snap("pre-provision")?;
-
         info!("{}: provisioning{}", &self.name, &self.noop_suffix);
+        // TODO - in case of noop before the jail exists, show a list of provisioners that would be run.
         if self.exists()? {
             for p in self.provisioners.iter() {
                 // provisioners implement noop themselves
@@ -365,7 +356,15 @@ impl Jail<'_> {
             }
         }
 
-        self.snap("ready")
+        self.snap("ready")?;
+
+        if self.jail_settings.stop_after {
+            if self.is_running()? {
+                self.stop()?;
+            }
+        }
+
+        Ok(())
     }
 
     fn snap(&self, snap_name: &str) -> Result<()> {

@@ -208,7 +208,8 @@ mod tests {
 
         // test 'enabled' option
 
-        assert_eq!(s.jail["base"].start, false);
+        assert_eq!(s.jail["base"].enable, false);
+        assert_eq!(s.jail["base"].stop_after, true);
         assert!(s.jail["test1"].start);
         assert!(s.jail["test2"].start);
     }
