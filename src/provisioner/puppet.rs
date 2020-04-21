@@ -53,6 +53,12 @@ impl Puppet {
 
         let dest_path = jail.mountpoint().join(self.tmp_dir.strip_prefix("/")?);
         self.install_puppet(jail)?;
+        debug!(
+            "{}: copying manifest from: {} to {}",
+            jail.name(),
+            self.path.display(),
+            dest_path.display()
+        );
         self.copy_manifest(&self.path, &dest_path)?;
 
         let manifest_inside_path = &self.tmp_dir.join(self.path.file_name().unwrap());
