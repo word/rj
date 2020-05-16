@@ -2,7 +2,7 @@
 
 == Doing
 
-=== Tasks 
+=== Tasks
 
 * check that we're running as root
 * puppet: remove manifest after provision
@@ -24,6 +24,7 @@
 * refactor 'update_with_diff'
 * jail state changes test are naive
 * better way to deal with jail state changes
+* test for restarting jail on config changes.
 
 === Nice to have
 

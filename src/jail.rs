@@ -18,6 +18,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+enum Change {
+    Created,
+    Modified,
+    None,
+}
+
 #[derive(Clone, Debug)]
 pub struct Jail<'a> {
     jail_conf_defaults: &'a IndexMap<String, JailConfValue>,
@@ -100,11 +106,15 @@ impl Jail<'_> {
     pub fn apply(&self) -> Result<()> {
         info!("{}: applying changes", self.name());
 
+        let mut restart = false;
+
         if !self.exists()? {
             self.install()?;
         }
 
-        self.configure()?;
+        if let Change::Modified = self.configure()? {
+            restart = true;
+        }
 
         // FIXME - what if all volumes are removed?
         if !self.volumes.is_empty() {
@@ -132,6 +142,11 @@ impl Jail<'_> {
         }
 
         self.provision()?;
+
+        if self.is_running()? && restart {
+            self.stop()?;
+            self.start()?;
+        }
 
         Ok(())
     }
@@ -196,11 +211,11 @@ impl Jail<'_> {
         Ok(())
     }
 
-    pub fn install(&self) -> Result<()> {
+    fn install(&self) -> Result<()> {
         self.source.install(&self)
     }
 
-    pub fn configure(&self) -> Result<()> {
+    fn configure(&self) -> Result<Change> {
         // add any additional config params
         let mut extra_conf = indexmap! {
             "path".to_owned() => JailConfValue::Path(self.mountpoint.to_owned()),
@@ -220,11 +235,13 @@ impl Jail<'_> {
             &extra_conf,
         )?;
         let rendered = jail_conf_template.render()?;
+        let mut change = Change::None;
 
         // FIXME - DRY this up
         if self.jail_conf_path.is_file() {
             let current = fs::read_to_string(&self.jail_conf_path)?;
             if current != rendered {
+                change = Change::Modified;
                 let diff = Changeset::new(&current, &rendered, "");
                 info!(
                     "{}: updating {}{}\n{}",
@@ -235,6 +252,7 @@ impl Jail<'_> {
                 );
             }
         } else {
+            change = Change::Created;
             info!(
                 "{}: creating {}{}",
                 &self.name,
@@ -247,10 +265,10 @@ impl Jail<'_> {
             fs::write(&self.jail_conf_path, &rendered)?;
         }
 
-        Ok(())
+        Ok(change)
     }
 
-    pub fn write_fstab(&self) -> Result<()> {
+    fn write_fstab(&self) -> Result<()> {
         let fstab = Fstab {
             volumes: &self.volumes,
             jail_mountpoint: &self.mountpoint,

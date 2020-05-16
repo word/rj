@@ -9,7 +9,7 @@ exec_stop = "/bin/sh /etc/rc.shutdown"
 exec_clean = true
 mount_devfs = true
 
-# Releases
+# Sources
 
 [source.freebsd12]
 type = "freebsd"
