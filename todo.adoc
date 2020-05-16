@@ -9,6 +9,8 @@
 * settings: validate jail conf sections (known fileds, types)
 * start jail using the jail command rather than service
   * so a boot disabled jail can still be started as a one off
+* restart jail when jail.conf changes
+* error when rsync isn't present and things depend on it (like puppet prov)
 
 === Bugs
 

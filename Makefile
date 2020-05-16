@@ -9,6 +9,8 @@ release_vagrant:
 	vagrant rsync
 	vagrant ssh -c 'cd /vagrant && cargo build --release'
 	mkdir -p target/release
+	# requires vagrant-scp plugin
+	# 	vagrant plugin install vagrant-scp
 	vagrant scp default:/vagrant/target/release/rj target/release/
 
 up:
