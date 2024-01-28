@@ -1,0 +1,6 @@
+= Rusty Jails
+
+Experimental FreeBSD Jails manager written in Rust.
+
+WARNING: I wrote this mostly as a pet project to learn some Rust and it's no
+longer developed.  While it may work you should NOT use it in production.
